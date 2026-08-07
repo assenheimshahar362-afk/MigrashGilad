@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "PowerShell(npm view next@15 version)",
+      "PowerShell(npm view react@19 version)",
+      "PowerShell(npm view react-hook-form version)",
+      "PowerShell(npm view date-fns version)",
+      "PowerShell(npm view date-fns-tz version)",
+      "PowerShell(npm view web-push version)",
+      "PowerShell(npm view resend version)",
+      "PowerShell(npm view sanitize-html version)",
+      "PowerShell(npm view @tailwindcss/postcss version)",
+      "PowerShell(npm install --no-audit --no-fund 2>&1)",
+      "PowerShell(npm install --no-audit --no-fund server-only @eslint/eslintrc 2>&1)",
+      "PowerShell(npm run test 2>&1)",
+      "PowerShell(npm uninstall @eslint/eslintrc --no-audit --no-fund 2>&1)",
+      "PowerShell(npm install -D @eslint/eslintrc --no-audit --no-fund 2>&1)",
+      "PowerShell(npm run typecheck 2>&1)",
+      "PowerShell(npm run lint 2>&1)",
+      "PowerShell(node scripts/generate-icons.mjs 2>&1)",
+      "PowerShell(npm run build 2>&1)",
+      "PowerShell(npm run check:secrets 2>&1)",
+      "PowerShell(npm uninstall @radix-ui/react-checkbox @radix-ui/react-radio-group @radix-ui/react-switch @radix-ui/react-tabs @radix-ui/react-tooltip @tanstack/react-query --no-audit --no-fund 2>&1)",
+      "PowerShell(Start-Process -NoNewWindow -FilePath \"npm\" -ArgumentList \"run\",\"start\" -RedirectStandardOutput \"$env:TEMP\\\\mg-start.log\" -RedirectStandardError \"$env:TEMP\\\\mg-start.err\"; Start-Sleep -Seconds 12; foreach \\($p in @\\('/','/trustees','/request','/rules','/memorial','/accessibility','/schedule/month','/offline','/login'\\)\\) { try { $r = Invoke-WebRequest -Uri \"http://localhost:3000$p\" -UseBasicParsing -TimeoutSec 20; \"$p -> $\\($r.StatusCode\\)\" } catch { \"$p -> FAILED $\\($_.Exception.Message\\)\" } })",
+      "Bash(pkill -f \"next start\")",
+      "Bash(pkill -f \"next-server\")",
+      "PowerShell(if \\(Test-Path node_modules\\\\sharp\\) { \"sharp: yes\" } else { \"sharp: no\" }; if \\(Test-Path $env:USERPROFILE\\\\AppData\\\\Local\\\\ms-playwright\\) { \"pw-browsers: yes\"; Get-ChildItem $env:USERPROFILE\\\\AppData\\\\Local\\\\ms-playwright -Name } else { \"pw-browsers: no\" })",
+      "PowerShell(npm run icons)",
+      "PowerShell(npm run typecheck)",
+      "PowerShell($c = \\(Get-Command supabase -ErrorAction SilentlyContinue\\); if \\($c\\) { \"supabase: $\\($c.Source\\)\" } else { \"supabase: not found\" }; $d = \\(Get-Command docker -ErrorAction SilentlyContinue\\); if \\($d\\) { \"docker: $\\($d.Source\\)\"; docker info --format '{{.ServerVersion}}' } else { \"docker: not found\" }; $p = \\(Get-Command psql -ErrorAction SilentlyContinue\\); if \\($p\\) { \"psql: $\\($p.Source\\)\" } else { \"psql: not found\" })",
+      "PowerShell(node \"C:\\\\Users\\\\Shahar.a\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--shahar-MigrashGilad\\\\eed4c98b-3442-4d97-9db3-e04db91ef5f4\\\\scratchpad\\\\verify-merge.mjs\")",
+      "PowerShell(node \"C:\\\\Users\\\\Shahar.a\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--shahar-MigrashGilad\\\\eed4c98b-3442-4d97-9db3-e04db91ef5f4\\\\scratchpad\\\\dead-code.mjs\")",
+      "PowerShell(Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue; try { Remove-Item tsconfig.tsbuildinfo -Force -ErrorAction Stop } catch {}; try { Remove-Item public\\\\sw.js -Force -ErrorAction Stop } catch {}; \"deleted: .next, tsconfig.tsbuildinfo, public/sw.js\"; \"\"; \"remaining supabase/:\"; Get-ChildItem -Recurse supabase -File | ForEach-Object { \"  \" + $_.FullName.Replace\\(\\(Get-Location\\).Path + '\\\\',''\\) })"
+    ]
+  }
+}
