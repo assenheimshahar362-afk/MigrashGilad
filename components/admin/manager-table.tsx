@@ -97,8 +97,10 @@ export function ManagerTable({ managers }: { managers: Manager[] }) {
       <section className="card p-4">
         <h2 className="mb-4 text-h3">{t('managers.add')}</h2>
         <p className="mb-4 text-sm text-(--ink-muted)">
-          {/* FR-36: an email only; the account materialises on first sign-in. */}
-          {t('login.help')}
+          {/* FR-36: an email only; the account materialises on first sign-in.
+              Adding here bypasses the /admin/access queue entirely — this is
+              the direct path, that one is the self-service one. */}
+          {t('managers.add_help')}
         </p>
 
         <form onSubmit={add} className="space-y-4">

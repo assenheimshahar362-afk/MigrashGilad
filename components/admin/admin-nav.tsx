@@ -19,6 +19,7 @@ const LINKS = [
   { href: '/admin/closures', label: t('admin.nav.closures'), super: false },
   { href: '/admin/trustees', label: t('admin.nav.trustees'), super: false },
   { href: '/admin/requests', label: t('admin.nav.requests'), super: false },
+  { href: '/admin/access', label: t('admin.nav.access'), super: true },
   { href: '/admin/managers', label: t('admin.nav.managers'), super: true },
   { href: '/admin/settings', label: t('admin.nav.settings'), super: true },
   { href: '/admin/audit', label: t('admin.nav.audit'), super: true },

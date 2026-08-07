@@ -42,18 +42,20 @@ test.describe('RTL and locale', () => {
   });
 
   /**
-   * §2 visitor rules: do not add a "sign in" affordance anywhere in the public
-   * UI. The only route to /login is by typing it.
+   * §2 as amended: a sign-in icon now exists on every public page, because
+   * people can ask for access themselves. What must NOT appear is anything
+   * that reads as an admin surface to a signed-out visitor — the link goes to
+   * /login and nowhere else, and no admin route is linked from public chrome.
    */
-  test('no sign-in affordance appears anywhere on the public site', async ({ page }) => {
+  test('the public chrome offers sign-in and nothing more', async ({ page }) => {
     // This one test navigates the whole public site in a single body, so its
     // budget scales with the number of routes rather than with the default.
     test.slow();
 
     for (const path of PUBLIC_PAGES) {
       await page.goto(path);
-      await expect(page.locator('a[href="/login"]')).toHaveCount(0);
-      await expect(page.getByText('כניסת מנהלים')).toHaveCount(0);
+      await expect(page.locator('header a[href="/login"]')).toHaveCount(1);
+      await expect(page.locator('a[href^="/admin"]')).toHaveCount(0);
     }
   });
 });

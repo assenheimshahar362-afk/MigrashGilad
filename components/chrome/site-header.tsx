@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import { AuthIcons } from '@/components/chrome/auth-icons';
 
 /**
  * Global header.
@@ -119,6 +120,12 @@ export function SiteHeader({ pitchName }: { pitchName: string }) {
             })}
           </ul>
         </nav>
+
+        {/* `ms-auto` lives here on a phone, where the navigation above is
+            hidden and this is the only thing left to push to the end. */}
+        <div className="ms-auto flex shrink-0 items-center lg:ms-2">
+          <AuthIcons onDark={!solid} />
+        </div>
       </div>
     </header>
   );

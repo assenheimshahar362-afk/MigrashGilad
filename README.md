@@ -20,11 +20,22 @@ Three tiers, and nothing between them:
 | Tier | Auth | Can |
 |---|---|---|
 | **visitor** | none, ever | view the schedule; submit and cancel a request via a tokenised link |
-| **admin** | Google OAuth, email on the allowlist | decide requests, manage events, recurring rules, closures, trustees |
-| **super admin** | same, `role = 'super_admin'` | manage admins, settings, memorial content, audit log, maintenance |
+| **admin** | Google OAuth **or** email + password, email on the allowlist | decide requests, manage events, recurring rules, closures, trustees |
+| **super admin** | same, `role = 'super_admin'` | manage admins, access requests, settings, memorial content, audit log, maintenance |
 
-There is no visitor account, no self-service admin signup, and no "sign in"
-control anywhere in the public UI.
+There is no visitor account. Anyone may *ask* for access — the header carries a
+sign-in icon and `/login` offers Google and email + password — but signing up
+grants nothing:
+
+1. email + password sign-ups must confirm the address (Supabase mail);
+2. Google sign-in and email confirmation both land on `/auth/callback`, which
+   files an `access_requests` row, emails the super admins, and **signs the
+   session out**;
+3. a super admin approves in `/admin/access`, which is the only path that writes
+   an `admin_allowlist` row — `decide_access_request()` in migration 0002.
+
+`is_admin()` still reads `admin_allowlist` and nothing else, so a pending or
+rejected person has exactly the permissions of a stranger.
 
 ---
 
@@ -183,6 +194,15 @@ tests/               unit · integration (RLS matrix) · e2e (Playwright + axe)
 `טרם התחבר` until they sign in once; the account materialises on first sign-in.
 No invitation email is sent — being on the list *is* the invitation.
 
+### Approve someone who signed up
+
+`/admin/access` (super admin only). Each pending row shows the name, address and
+which method they used. **אישור** writes the allowlist row and the audit entries
+in one transaction; **דחייה** marks the request rejected and a rejected address
+cannot re-queue itself — add it from `/admin/managers` if you change your mind.
+The notification email deliberately carries no approve link: approving grants
+admin rights, so it happens signed in, never from whoever holds the inbox.
+
 ### Remove an admin
 
 Same screen → **הסרת הרשאה**. This is a soft revoke (`revoked_at`), never a
@@ -242,12 +262,18 @@ bite. None of them blocks the build; all of them block launch.
 
 ## Deployment checklist
 
-1. Supabase project created; `supabase db push` applied `0001_init.sql` — or the
-   same file pasted whole into the dashboard SQL editor, which also works.
+1. Supabase project created; `supabase db push` applied `0001_init.sql` and
+   `0002_access_requests.sql` — or the same files pasted whole into the
+   dashboard SQL editor, which also works.
 2. The super admin address edited into "PART 4 — BOOTSTRAP" in `0001_init.sql`
    **before** that first run. There is no UI that can create the first one.
 3. Google OAuth configured in Supabase Auth → Providers, redirect URL set to
    `https://<domain>/auth/callback`.
+3a. Supabase Auth → Providers → Email: enabled with **Confirm email** ON, and
+   `https://<domain>/auth/callback` added to the redirect allowlist. With
+   confirmations off, an unverified address would reach the approval queue.
+3b. `RESEND_API_KEY` and `NOTIFY_FROM_EMAIL` set, or nobody is told a request
+   is waiting — the queue at `/admin/access` still holds it either way.
 4. All environment variables from `.env.example` set in Vercel.
 5. `vercel.json` crons active (expire at 02:00, materialise at 02:30).
 6. PWA icons rasterised — `npm run icons` writes both the SVGs and the five PNGs
