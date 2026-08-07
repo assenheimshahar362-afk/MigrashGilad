@@ -46,7 +46,7 @@ export default async function LoginPage({
 
         <Link
           href="/"
-          className="press-sm mt-8 inline-block rounded-sm text-sm text-white/80 underline decoration-white/30 underline-offset-4 transition-colors duration-(--duration-tip) ease-(--ease-out-quiet) hover:text-white hover:decoration-current"
+          className="press-sm mt-8 inline-flex min-h-11 items-center rounded-sm text-sm text-white/80 underline decoration-white/30 underline-offset-4 transition-colors duration-(--duration-tip) ease-(--ease-out-quiet) hover:text-white hover:decoration-current"
         >
           {t('common.back_home')}
         </Link>

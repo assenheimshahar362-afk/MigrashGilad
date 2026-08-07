@@ -63,7 +63,10 @@ export function InstallPrompt() {
     <div
       role="dialog"
       aria-label={t('pwa.install_title')}
-      className="fixed inset-x-0 bottom-16 z-40 mx-auto max-w-[720px] px-3 pb-2"
+      /* It has to clear BOTH the tab bar and the schedule's docked CTA, which
+         sits directly above it — at bottom-16 the banner covered the primary
+         booking button entirely. On lg there is neither, so it drops down. */
+      className="fixed inset-x-0 bottom-[8.5rem] z-40 mx-auto max-w-[560px] px-3 short:bottom-20 lg:bottom-6"
     >
       <div className="flex items-start gap-3 card p-4 shadow-lg">
         <Download className="mt-0.5 size-5 shrink-0 text-accent-ink" aria-hidden />

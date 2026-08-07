@@ -1,5 +1,11 @@
 @import 'tailwindcss';
 
+/* A landscape phone is ~390px tall. Anything sized for a portrait viewport —
+   a hero floor, a stack of docked chrome — has to stand down there, and the
+   only thing that distinguishes that case is VIEWPORT HEIGHT, which Tailwind
+   has no built-in variant for. */
+@custom-variant short (@media (max-height: 520px));
+
 /* ===========================================================================
    Migrash Gilad — design system
 
@@ -117,6 +123,11 @@
    blur reads as a sticker rather than as height.
    --------------------------------------------------------------------------- */
 :root {
+  /* The header's rendered height. Anything that sticks BELOW the header — the
+     schedule's day strip, anchor scroll-margin — offsets by this, so the two
+     never have to be kept in sync by hand. */
+  --header-h: 4.25rem;
+
   --surface: #f7f8fa;
   --surface-raised: #ffffff;
   --surface-sunken: #f1f3f6;
@@ -155,6 +166,12 @@
   --grid-ink-muted: var(--ink-muted);
   --grid-line: #eceef2; /* the hour ruling — quieter than a real border */
   --grid-line-strong: var(--hairline);
+}
+
+@media (min-width: 640px) {
+  :root {
+    --header-h: 4.75rem;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -246,7 +263,7 @@
   /* Content scrolls under a sticky header; without this the browser parks
      anchors and focused cells beneath it. */
   :target {
-    scroll-margin-block-start: 6rem;
+    scroll-margin-block-start: calc(var(--header-h) + 1.5rem);
   }
 
   /* Images never overflow their column, on any page. */

@@ -69,7 +69,7 @@ export default async function ContactPage() {
                     <Phone className="size-4 shrink-0" aria-hidden />
                     <a
                       href={telLink(onDuty.phone_e164)}
-                      className="underline decoration-(--hairline-strong) underline-offset-4 transition-colors hover:text-(--ink) hover:decoration-current"
+                      className="inline-flex min-h-7 items-center underline decoration-(--hairline-strong) underline-offset-4 transition-colors hover:text-(--ink) hover:decoration-current"
                     >
                       <Ltr>{formatIsraeliPhone(onDuty.phone_e164)}</Ltr>
                     </a>

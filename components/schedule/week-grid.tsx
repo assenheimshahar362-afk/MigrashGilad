@@ -59,7 +59,7 @@ export function WeekGrid({
 
   return (
     <GridKeyboardScope>
-      <div className="pitch-field overflow-hidden rounded-(--radius-card) border border-(--hairline) shadow-(--shadow-sm)">
+      <div className="pitch-field overflow-clip rounded-(--radius-card) border border-(--hairline) shadow-(--shadow-sm)">
         <DayHeader days={days} today={today} />
 
         {/* No `role="grid"` here. The layout is seven day-COLUMNS with no
@@ -99,7 +99,7 @@ function DayHeader({ days, today }: { days: LocalDate[]; today: LocalDate }) {
   return (
     // The strip sticks under the week navigation so the day you are looking at
     // is still named once you have scrolled down to the evening hours.
-    <div className="sticky top-0 z-20 flex border-b border-(--grid-line-strong) bg-(--surface-raised)">
+    <div className="sticky top-(--header-h) z-20 flex border-b border-(--grid-line-strong) bg-(--surface-raised)">
       {/* Spacer matching the hour axis width. */}
       <div className="w-14 shrink-0 pitch-touchline" aria-hidden />
 
@@ -139,6 +139,16 @@ function DayHeader({ days, today }: { days: LocalDate[]; today: LocalDate }) {
   );
 }
 
+/** The height every hour row gets, so a one-hour slot clears A11Y-1's 44px. */
+const MIN_HOUR_HEIGHT = 44;
+
+/** The grid's body height: 68vh, but never so short that an hour row falls
+ *  below a comfortable tap target. */
+function bodyStyle(startMinute: number, endMinute: number) {
+  const hours = (endMinute - startMinute) / 60;
+  return { minHeight: `${Math.ceil(hours * MIN_HOUR_HEIGHT)}px` };
+}
+
 /** The touchline: the hour axis, on the right in RTL. */
 function HourAxis({
   hourMarks,
@@ -153,7 +163,7 @@ function HourAxis({
 
   return (
     <div className="relative w-14 shrink-0 pitch-touchline" aria-hidden>
-      <div className="relative h-[68vh] min-h-[32rem]">
+      <div className="relative h-[68vh]" style={bodyStyle(startMinute, endMinute)}>
         {hourMarks.map((minute) => (
           <div
             key={minute}
@@ -199,7 +209,7 @@ function DayColumn({
     <div
       className={cn('relative flex-1', dayIndex > 0 && 'pitch-daydivider', isToday && 'pitch-today')}
     >
-      <div className="relative h-[68vh] min-h-[32rem]">
+      <div className="relative h-[68vh]" style={bodyStyle(startMinute, endMinute)}>
         {/* Hour hairlines. */}
         {hourMarks.map((minute) => (
           <div

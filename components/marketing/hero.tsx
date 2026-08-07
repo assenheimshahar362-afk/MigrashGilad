@@ -24,11 +24,14 @@ export function Hero() {
         'relative isolate flex flex-col justify-end overflow-hidden',
         // Capped rather than proportional on a phone: the schedule has to stay
         // within one thumb-flick of the top, because it is what most people
-        // opened the site for.
-        'min-h-[30rem] max-h-[38rem] sm:min-h-[34rem] sm:max-h-none',
-        'lg:min-h-[80svh]',
+        // opened the site for. The `min()` is what keeps the floor from
+        // exceeding the viewport on a landscape phone, where 30rem is taller
+        // than the whole screen.
+        'min-h-[min(30rem,88svh)] max-h-[38rem]',
+        'sm:min-h-[min(34rem,88svh)] sm:max-h-none lg:min-h-[80svh]',
         // The header floats over this section, so the content needs clearance.
         'pt-24 pb-9 sm:pt-28 sm:pb-12 lg:pb-16',
+        'short:pt-20 short:pb-6',
       )}
     >
       {/* The image. `background-image` rather than <Image> because it is purely
@@ -85,7 +88,9 @@ export function Hero() {
 
         {/* Three facts, not a marketing grid. Each answers a question someone
             actually arrives with. */}
-        <dl className="animate-rise-in mt-8 grid max-w-lg grid-cols-3 gap-4 border-t border-white/15 pt-5 [animation-delay:240ms]">
+        {/* On a landscape phone the three facts are the first thing to go —
+            the headline and the two actions are what the screen is for. */}
+        <dl className="animate-rise-in mt-8 grid max-w-lg grid-cols-3 gap-4 border-t border-white/15 pt-5 [animation-delay:240ms] short:hidden">
           <Stat value={t('hero.stat_days_value')} label={t('hero.stat_days')} />
           <Stat value={t('hero.stat_free_value')} label={t('hero.stat_free')} />
           <Stat value={t('hero.stat_response_value')} label={t('hero.stat_response')} />

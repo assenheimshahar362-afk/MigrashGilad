@@ -97,7 +97,7 @@ export default async function WeeklySchedulePage({
             <Link
               href="/schedule/month"
               className={cn(
-                'press-sm inline-flex items-center gap-1.5 rounded-(--radius-input) px-4 py-2',
+                'press-sm inline-flex min-h-11 items-center gap-1.5 rounded-(--radius-input) px-4 py-2',
                 'text-sm font-semibold text-(--ink-muted)',
                 'border border-(--hairline) bg-(--surface-raised)',
                 'transition-[background-color,border-color,color] duration-(--duration-tip)',
@@ -144,7 +144,7 @@ function ScheduleCta({
 }) {
   if (!requestsOpen) {
     return (
-      <div className="fixed inset-x-0 bottom-[4.5rem] z-20 mx-auto max-w-[560px] px-4 lg:hidden">
+      <div className="fixed inset-x-0 bottom-[4.5rem] z-20 mx-auto max-w-[560px] px-4 lg:hidden short:hidden">
         <p
           role="status"
           className="card animate-rise-in px-4 py-3 text-center text-sm font-semibold text-(--ink-muted)"
@@ -156,7 +156,7 @@ function ScheduleCta({
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-[4.5rem] z-20 mx-auto max-w-[560px] px-4 lg:hidden">
+    <div className="fixed inset-x-0 bottom-[4.5rem] z-20 mx-auto max-w-[560px] px-4 lg:hidden short:hidden">
       <Button asChild size="lg" className="animate-rise-in w-full shadow-(--shadow-lg)">
         <Link href="/request">{t('schedule.cta')}</Link>
       </Button>

@@ -79,7 +79,7 @@ export default async function MonthSchedulePage({
       <div className="pt-2">
         <Link
           href="/"
-          className="press-sm inline-flex items-center gap-1.5 rounded-(--radius-input) border border-(--hairline) bg-(--surface-raised) px-4 py-2 text-sm font-semibold text-(--ink-muted) transition-[background-color,border-color,color] duration-(--duration-tip) ease-(--ease-out-quiet) hover:border-(--hairline-strong) hover:text-(--ink)"
+          className="press-sm inline-flex min-h-11 items-center gap-1.5 rounded-(--radius-input) border border-(--hairline) bg-(--surface-raised) px-4 py-2 text-sm font-semibold text-(--ink-muted) transition-[background-color,border-color,color] duration-(--duration-tip) ease-(--ease-out-quiet) hover:border-(--hairline-strong) hover:text-(--ink)"
         >
           <CalendarDays className="size-4" aria-hidden />
           {t('nav.week')}

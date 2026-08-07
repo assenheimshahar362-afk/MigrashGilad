@@ -137,7 +137,7 @@ export function SiteHeader({
           <Link
             href="/memorial"
             className={cn(
-              'group hidden items-center gap-1.5 rounded-(--radius-chip) px-2.5 py-1 text-xs sm:inline-flex',
+              'group hidden min-h-7 items-center gap-1.5 rounded-(--radius-chip) px-2.5 py-1 text-xs sm:inline-flex',
               'transition-colors duration-(--duration-tip) ease-(--ease-out-quiet)',
               solid
                 ? 'text-memorial-ink hover:bg-(--surface-sunken)'

@@ -101,13 +101,16 @@ export function SiteFooter({ pitchName }: { pitchName: string }) {
               <p className="font-display text-sm font-semibold tracking-normal text-white">
                 {column.heading}
               </p>
-              <ul className="mt-4 space-y-2.5 text-sm">
+              <ul className="mt-3 space-y-1 text-sm">
                 {column.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
+                      /* 36px: comfortably past WCAG 2.2's 24px minimum and
+                         close to a thumb-friendly target, without the 44px that
+                         would stretch a four-link column by an extra 60px. */
                       className={cn(
-                        'inline-block rounded-sm',
+                        'inline-flex min-h-9 items-center rounded-sm',
                         'transition-colors duration-(--duration-tip) ease-(--ease-out-quiet)',
                         'hover:text-white focus-visible:outline-white',
                       )}
@@ -127,7 +130,7 @@ export function SiteFooter({ pitchName }: { pitchName: string }) {
           </p>
           <Link
             href="/memorial"
-            className="text-memorial-chrome transition-colors duration-(--duration-tip) hover:text-white sm:ms-auto"
+            className="inline-flex min-h-7 items-center text-memorial-chrome transition-colors duration-(--duration-tip) hover:text-white sm:ms-auto"
           >
             {t('memorial.title')}
           </Link>
