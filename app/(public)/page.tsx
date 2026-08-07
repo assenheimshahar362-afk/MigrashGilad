@@ -14,11 +14,11 @@ import {
 } from '@/lib/time';
 import { closuresForDate } from '@/lib/schedule';
 import { WeekGrid } from '@/components/schedule/week-grid';
+import { WeekAgenda } from '@/components/schedule/week-agenda';
 import { WeekNav } from '@/components/schedule/week-nav';
 import { DayList } from '@/components/schedule/day-list';
 import { Legend } from '@/components/schedule/legend';
 import { OfflineBanner } from '@/components/pwa/offline-banner';
-import { Button } from '@/components/ui/button';
 import { Hero } from '@/components/marketing/hero';
 
 export const metadata: Metadata = {
@@ -65,7 +65,10 @@ export default async function WeeklySchedulePage({
 
   return (
     <>
-      <Hero />
+      <Hero
+        requestsOpen={settings.requestsOpen}
+        closedMessage={settings.requestsClosedMsg}
+      />
 
       <section id="schedule" className="scroll-mt-24 pb-28 lg:pb-16">
         <div className="shell pt-8 sm:pt-10 lg:pt-14">
@@ -89,7 +92,27 @@ export default async function WeeklySchedulePage({
             </p>
           ) : null}
 
-          <WeekGrid weekStart={weekStart} events={events} closures={closures} settings={settings} />
+          {/* Two forms of the same week. Below `sm` a phone column is 39px
+              wide, which cannot hold a time range, so the grid is replaced by
+              the day agenda rather than shrunk into illegibility. Only one is
+              in the DOM's accessibility tree at a time, because `hidden`
+              removes the other from it entirely. */}
+          <WeekAgenda
+            weekStart={weekStart}
+            events={events}
+            closures={closures}
+            settings={settings}
+            className="sm:hidden"
+          />
+
+          <div className="hidden sm:block">
+            <WeekGrid weekStart={weekStart} events={events} closures={closures} settings={settings} />
+
+            {/* A11Y-5: the screen-reader alternative to the grid. The agenda is
+                already a semantic list, so this belongs to the grid and is
+                hidden with it. */}
+            <DayList dates={days} events={events} headingId="week-sr-list" />
+          </div>
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <Legend />
@@ -112,55 +135,9 @@ export default async function WeeklySchedulePage({
           {isEmpty ? (
             <p className="empty-state mt-4">{t('schedule.empty')}</p>
           ) : null}
-
-          {/* A11Y-5: the screen-reader alternative to the grid. */}
-          <DayList dates={days} events={events} headingId="week-sr-list" />
         </div>
       </section>
-
-      <ScheduleCta
-        requestsOpen={settings.requestsOpen}
-        closedMessage={settings.requestsClosedMsg}
-      />
     </>
-  );
-}
-
-/**
- * §10.1 CTA: a persistent bottom button, hidden when requests are paused and
- * replaced by the closed-reason banner (FR-37).
- *
- * It is docked above the tab bar on a phone, where the schedule fills the
- * screen and the button is the only way forward. From `lg` — where the hero
- * already carries the same call to action and the tab bar is gone — it is not
- * rendered at all, because a floating button over a desktop layout is clutter.
- */
-function ScheduleCta({
-  requestsOpen,
-  closedMessage,
-}: {
-  requestsOpen: boolean;
-  closedMessage: string | null;
-}) {
-  if (!requestsOpen) {
-    return (
-      <div className="fixed inset-x-0 bottom-[4.5rem] z-20 mx-auto max-w-[560px] px-4 lg:hidden short:hidden">
-        <p
-          role="status"
-          className="card animate-rise-in px-4 py-3 text-center text-sm font-semibold text-(--ink-muted)"
-        >
-          {closedMessage ?? t('error.ERR_REQUESTS_CLOSED')}
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="fixed inset-x-0 bottom-[4.5rem] z-20 mx-auto max-w-[560px] px-4 lg:hidden short:hidden">
-      <Button asChild size="lg" className="animate-rise-in w-full shadow-(--shadow-lg)">
-        <Link href="/request">{t('schedule.cta')}</Link>
-      </Button>
-    </div>
   );
 }
 

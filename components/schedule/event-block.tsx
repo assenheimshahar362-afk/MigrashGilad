@@ -94,6 +94,58 @@ export function EventBlock({
 }
 
 /**
+ * The phone-width form of an event (§10.1). Below `sm` the seven-column grid
+ * gives each day about 39px, which is not enough for a time range, so the week
+ * is rendered as a day agenda instead and this is one of its rows.
+ *
+ * It is the same tinted card as <EventBlock> — same fill, same leading rule,
+ * same pattern (A11Y-3) — laid out horizontally and sized as a real tap target,
+ * so nothing has to truncate. It opens the same sheet.
+ */
+export function EventRow({ event }: { event: PublicEvent }) {
+  const [open, setOpen] = useState(false);
+  const style = usageTypeStyle(event.usageType);
+
+  const range = formatTimeRange(event.startsAt, event.endsAt);
+  const title = displayTitle(event);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label={`${title}, ${range}, ${style.label}`}
+        className={cn(
+          'press flex min-h-14 w-full items-center gap-3 rounded-(--radius-card-sm) px-3 py-2.5 text-start',
+          'transition-[box-shadow,transform] duration-(--duration-press) ease-(--ease-out-quiet)',
+          'motion-reduce:transition-none',
+          style.block,
+          style.patternClass,
+        )}
+      >
+        <TimeRange
+          range={range}
+          className="tnum shrink-0 text-sm font-semibold tabular-nums"
+        />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-semibold">{title}</span>
+          {/* No opacity on this line: the block colours are already the light
+              end of their hue, and dimming the label further drops it under
+              4.5:1 (A11Y-10 catches it on the amber fill at 3.5:1). */}
+          <span className="block truncate text-xs font-normal">{style.label}</span>
+        </span>
+      </button>
+
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent title={title} description={style.label}>
+          <EventDetail event={event} />
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+}
+
+/**
  * FR-4: for approved public requests, the requester's FIRST NAME only. The
  * `events` row created by approve_request() stores the full name as the title,
  * so the trimming happens at render.

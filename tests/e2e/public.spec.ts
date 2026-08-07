@@ -11,11 +11,8 @@ const PUBLIC_PAGES = [
   '/schedule/month',
   '/request',
   '/about',
-  '/gallery',
-  '/faq',
   '/contact',
   '/trustees',
-  '/memorial',
   '/rules',
   '/accessibility',
 ];

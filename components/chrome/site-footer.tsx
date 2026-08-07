@@ -17,7 +17,6 @@ const NAV_COLUMNS = [
       { href: '/', label: t('nav.schedule') },
       { href: '/schedule/month', label: t('nav.month') },
       { href: '/request', label: t('nav.request') },
-      { href: '/gallery', label: t('nav.gallery') },
     ],
   },
   {
@@ -25,8 +24,7 @@ const NAV_COLUMNS = [
     links: [
       { href: '/about', label: t('nav.about') },
       { href: '/trustees', label: t('nav.trustees') },
-      { href: '/faq', label: t('nav.faq') },
-      { href: '/memorial', label: t('nav.memorial') },
+      { href: '/about#memorial', label: t('nav.memorial') },
     ],
   },
   {
@@ -129,7 +127,7 @@ export function SiteFooter({ pitchName }: { pitchName: string }) {
             © {year} {pitchName}. {t('footer.rights')}
           </p>
           <Link
-            href="/memorial"
+            href="/about#memorial"
             className="inline-flex min-h-7 items-center text-memorial-chrome transition-colors duration-(--duration-tip) hover:text-white sm:ms-auto"
           >
             {t('memorial.title')}

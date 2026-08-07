@@ -11,6 +11,8 @@
  * runtime `undefined`.
  */
 import type {
+  AccessRequestRow,
+  AccessRequestStatus,
   AdminRole,
   BookingRequestRow,
   ClosureRow,
@@ -69,6 +71,23 @@ export type Database = {
           avatar_url: string | null;
           last_seen: string | null;
         }>;
+        Relationships: [];
+      };
+      access_requests: {
+        Row: AccessRequestRow;
+        Insert: Insertable<
+          AccessRequestRow,
+          | 'id'
+          | 'full_name'
+          | 'provider'
+          | 'user_id'
+          | 'status'
+          | 'created_at'
+          | 'decided_at'
+          | 'decided_by'
+          | 'decided_note'
+        >;
+        Update: Partial<AccessRequestRow>;
         Relationships: [];
       };
       trustees: {
@@ -262,6 +281,15 @@ export type Database = {
         Args: { p_email: string; p_full_name?: string | null; p_role?: AdminRole };
         Returns: ManagerRow;
       };
+      decide_access_request: {
+        Args: {
+          p_request_id: string;
+          p_approve: boolean;
+          p_role?: AdminRole;
+          p_note?: string | null;
+        };
+        Returns: AccessRequestRow;
+      };
       approve_request: {
         Args: {
           p_request_id: string;
@@ -306,6 +334,7 @@ export type Database = {
       event_status: 'scheduled' | 'cancelled';
       event_source: 'manual' | 'request' | 'recurring';
       admin_role: AdminRole;
+      access_request_status: AccessRequestStatus;
     };
 
     CompositeTypes: Record<string, never>;

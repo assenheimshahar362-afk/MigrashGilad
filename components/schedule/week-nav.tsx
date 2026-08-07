@@ -51,7 +51,7 @@ export function WeekNav({ weekStart }: { weekStart: LocalDate }) {
   return (
     <div
       className={cn(
-        'flex items-center gap-1.5 px-1 pb-3',
+        'flex flex-wrap items-center justify-between gap-1.5 px-1 pb-3',
       )}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
@@ -60,8 +60,13 @@ export function WeekNav({ weekStart }: { weekStart: LocalDate }) {
         <ChevronRight className="size-5" aria-hidden />
       </NavLink>
 
-      <div className="flex-1 px-1 text-center sm:text-start">
-        <span className="tnum text-h3 font-bold text-(--ink)" dir="ltr">
+      {/* Four controls plus a date range do not fit on one line at 280–360px:
+          the range either wraps or truncates to nothing. Below `sm` it takes
+          its own line above the controls, where it reads as the heading it
+          visually is; from `sm` it shares the row and `min-w-0` lets it shrink
+          rather than push the buttons off the end. */}
+      <div className="order-first w-full min-w-0 px-1 pb-1 text-center sm:order-none sm:w-auto sm:flex-1 sm:pb-0 sm:text-start">
+        <span className="tnum block truncate text-h3 font-bold text-(--ink)" dir="ltr">
           {formatWeekRange(weekStart)}
         </span>
       </div>

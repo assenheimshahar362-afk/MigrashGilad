@@ -396,32 +396,6 @@
     transform: scale(0.985);
   }
 
-  /* The FAQ accordion.
-
-     `interpolate-size: allow-keywords` is what makes a height transition to
-     `auto` possible at all; without it there is nothing to interpolate towards
-     and the panel snaps. Browsers that support neither this nor
-     `::details-content` simply toggle instantly, which is the correct
-     degradation for a disclosure — the content is never unreachable. */
-  .faq-item {
-    interpolate-size: allow-keywords;
-  }
-
-  .faq-item::details-content {
-    block-size: 0;
-    overflow: clip;
-    opacity: 0;
-    transition:
-      block-size var(--duration-pop) var(--ease-out-quiet),
-      content-visibility var(--duration-pop) allow-discrete,
-      opacity var(--duration-pop) var(--ease-out-quiet);
-  }
-
-  .faq-item[open]::details-content {
-    block-size: auto;
-    opacity: 1;
-  }
-
   /* Frosted chrome. The @supports fallback matters: without backdrop-filter the
      bar must be opaque, or scrolling content crosses the navigation text. */
   .chrome-blur {

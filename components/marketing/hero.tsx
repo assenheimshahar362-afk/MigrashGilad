@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowLeft, CalendarDays, ChevronDown } from 'lucide-react';
+import { ArrowLeft, CalendarDays, ChevronDown, Info } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,21 @@ import { Button } from '@/components/ui/button';
  * The background is `public/images/hero-pitch.svg`, a placeholder. Swap it for
  * a real photograph of the pitch; the overlay below is tuned to keep the
  * headline legible over a mid-tone image either way.
+ *
+ * This is the ONLY place the booking call to action lives. It used to be echoed
+ * by a button docked over the schedule, which said the same thing twice and
+ * covered the grid; FR-37's "requests are paused" notice came with it, so that
+ * state is handled here too — the action and the reason it is unavailable
+ * belong in the same spot.
  */
-export function Hero() {
+export function Hero({
+  requestsOpen = true,
+  closedMessage = null,
+}: {
+  requestsOpen?: boolean;
+  /** FR-37: the admin's reason, shown in place of the button when paused. */
+  closedMessage?: string | null;
+}) {
   return (
     <section
       className={cn(
@@ -72,12 +85,26 @@ export function Hero() {
         </p>
 
         <div className="animate-rise-in mt-7 flex flex-wrap items-center gap-3 [animation-delay:180ms]">
-          <Button asChild size="lg">
-            <Link href="/request">
-              {t('hero.cta_primary')}
-              <ArrowLeft className="size-5" aria-hidden />
-            </Link>
-          </Button>
+          {requestsOpen ? (
+            <Button asChild size="lg">
+              <Link href="/request">
+                {t('hero.cta_primary')}
+                <ArrowLeft className="size-5" aria-hidden />
+              </Link>
+            </Button>
+          ) : (
+            /* FR-37. It takes the button's place rather than sitting beside a
+               disabled one: there is nothing to press, and a greyed-out button
+               invites the tap anyway. */
+            <p
+              role="status"
+              className="flex max-w-[46ch] items-start gap-2.5 rounded-(--radius-input) border border-white/25 bg-white/12 px-4 py-3 text-sm font-semibold text-white backdrop-blur-sm"
+            >
+              <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
+              {closedMessage ?? t('error.ERR_REQUESTS_CLOSED')}
+            </p>
+          )}
+
           <Button asChild size="lg" variant="onField">
             <Link href="#schedule">
               <CalendarDays className="size-5" aria-hidden />

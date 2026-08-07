@@ -4,11 +4,14 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import { getSettingsRow } from '@/lib/data';
+import { sanitizeMemorialHtml } from '@/lib/sanitize';
 import { Button } from '@/components/ui/button';
 import { Reveal } from '@/components/marketing/reveal';
 import { CountUp } from '@/components/marketing/count-up';
 
 export const metadata: Metadata = { title: t('about.title') };
+export const revalidate = 3600;
 
 /**
  * The about page. Two columns from `lg` up, stacked below — the image leads on
@@ -47,7 +50,12 @@ const TIMELINE = [
   },
 ] as const;
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const settings = await getSettingsRow();
+  const memorialHtml = settings?.memorial_html
+    ? sanitizeMemorialHtml(settings.memorial_html)
+    : null;
+
   return (
     <>
       <section className="section">
@@ -129,6 +137,36 @@ export default function AboutPage() {
             ))}
           </ol>
         </div>
+      </section>
+
+      {/* FR-38 / §10.6. Gilad's memorial. It used to be its own route; it now
+          closes the about page, which is where visitors look for who the pitch
+          is named after. The tone stays separate from the rest of the page —
+          memorial rule, no colour accents, no CTA, and the wider line height of
+          .memorial-prose (globals.css).
+
+          [DECISION NEEDED — open decision #3] The final text, the portrait and
+          the dedication photographs must be supplied and approved by the family
+          before launch. Until the super admin saves that content in settings,
+          this section shows an honest placeholder rather than invented copy. */}
+      <section id="memorial" className="section scroll-mt-24">
+        <article className="shell-narrow">
+          <header className="border-b border-memorial/40 pb-8">
+            <p className="text-sm tracking-normal text-memorial-ink">{t('memorial.title')}</p>
+            <h2 className="mt-2 font-display text-h1 leading-tight">גלעד</h2>
+          </header>
+
+          {memorialHtml ? (
+            <div
+              className="memorial-prose mt-10"
+              // The value has been through the strict allowlist in lib/sanitize.ts
+              // on the way in (PATCH /api/admin/settings) and again just now.
+              dangerouslySetInnerHTML={{ __html: memorialHtml }}
+            />
+          ) : (
+            <p className="memorial-prose mt-10 text-(--ink-muted)">{t('memorial.pending')}</p>
+          )}
+        </article>
       </section>
     </>
   );

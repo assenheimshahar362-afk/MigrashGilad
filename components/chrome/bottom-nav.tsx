@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { CalendarDays, FilePlus2, Users, Images, Phone } from 'lucide-react';
+import { CalendarDays, FilePlus2, Users, Info, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { t } from '@/lib/i18n';
 
@@ -22,7 +22,7 @@ import { t } from '@/lib/i18n';
 const TABS = [
   { href: '/', label: t('nav.schedule'), Icon: CalendarDays, exact: true },
   { href: '/request', label: t('nav.request'), Icon: FilePlus2, exact: false },
-  { href: '/gallery', label: t('nav.gallery'), Icon: Images, exact: false },
+  { href: '/about', label: t('nav.about'), Icon: Info, exact: false },
   { href: '/trustees', label: t('nav.trustees'), Icon: Users, exact: false },
   { href: '/contact', label: t('nav.contact'), Icon: Phone, exact: false },
 ] as const;

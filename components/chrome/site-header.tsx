@@ -3,10 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Phone, MessageCircle } from 'lucide-react';
 import { t } from '@/lib/i18n';
-import { telLink, whatsappLink, cn } from '@/lib/utils';
-import type { TrusteeRow } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 /**
  * Global header.
@@ -16,17 +14,14 @@ import type { TrusteeRow } from '@/lib/types';
  * on purpose — the swap should happen as soon as the hero starts to leave, not
  * halfway down it, or the bar spends a long stretch unreadable over content.
  *
- * FR-39: the memorial mark links to /memorial from every screen. It is
- * deliberately discreet — a thin rule and a word, not a badge — and it is the
- * only place the memorial tone is allowed in the chrome.
+ * FR-39: the memorial mark is no longer carried in the header. It lives in the
+ * footer, which links to the memorial section of /about.
  */
 const LINKS = [
   { href: '/', label: t('nav.schedule'), exact: true },
   { href: '/request', label: t('nav.request'), exact: false },
   { href: '/about', label: t('nav.about'), exact: false },
-  { href: '/gallery', label: t('nav.gallery'), exact: false },
   { href: '/trustees', label: t('nav.trustees'), exact: false },
-  { href: '/faq', label: t('nav.faq'), exact: false },
   { href: '/contact', label: t('nav.contact'), exact: false },
 ] as const;
 
@@ -34,13 +29,7 @@ const LINKS = [
  *  transparent and sit over it. */
 const HERO_ROUTES = new Set<string>(['/']);
 
-export function SiteHeader({
-  pitchName,
-  onDuty,
-}: {
-  pitchName: string;
-  onDuty?: TrusteeRow | null;
-}) {
+export function SiteHeader({ pitchName }: { pitchName: string }) {
   const pathname = usePathname();
   const overHero = HERO_ROUTES.has(pathname);
   const [solid, setSolid] = useState(!overHero);
@@ -130,89 +119,7 @@ export function SiteHeader({
             })}
           </ul>
         </nav>
-
-        <div className="ms-auto flex shrink-0 items-center gap-2 lg:ms-0">
-          {onDuty ? <OnDutyChip trustee={onDuty} solid={solid} /> : null}
-
-          <Link
-            href="/memorial"
-            className={cn(
-              'group hidden min-h-7 items-center gap-1.5 rounded-(--radius-chip) px-2.5 py-1 text-xs sm:inline-flex',
-              'transition-colors duration-(--duration-tip) ease-(--ease-out-quiet)',
-              solid
-                ? 'text-memorial-ink hover:bg-(--surface-sunken)'
-                : 'text-white/75 hover:bg-white/12 hover:text-white',
-            )}
-          >
-            {/* The rule lengthens on hover — the quietest way for a deliberately
-                unemphatic link to acknowledge the pointer. */}
-            <span
-              aria-hidden
-              className={cn(
-                'inline-block h-px w-3.5 bg-current',
-                'transition-[width] duration-200 ease-(--ease-out-quiet)',
-                'group-hover:w-6',
-              )}
-            />
-            {t('memorial.title')}
-          </Link>
-        </div>
       </div>
     </header>
-  );
-}
-
-/** FR-29: the primary trustee appears as the "on duty" contact. */
-function OnDutyChip({ trustee, solid }: { trustee: TrusteeRow; solid: boolean }) {
-  const actionClass = cn(
-    'press tap-target flex items-center justify-center rounded-(--radius-input)',
-    'transition-[background-color,border-color,color,transform] duration-(--duration-press)',
-    'ease-(--ease-out-quiet)',
-    solid
-      ? 'border border-(--hairline) bg-(--surface-raised) text-(--ink) hover:border-(--hairline-strong) hover:bg-(--surface-hover)'
-      : 'border border-white/25 bg-white/12 text-white backdrop-blur-sm hover:bg-white/22',
-  );
-
-  return (
-    <div className="flex shrink-0 items-center gap-2">
-      <div className="hidden text-end xl:block">
-        {/* Amber earns its keep here: "on duty" is one of the two time-critical
-            facts in the product, and it is the only chrome that gets the
-            accent. */}
-        <div
-          className={cn(
-            'flex items-center justify-end gap-1.5 text-[0.6875rem] font-semibold',
-            solid ? 'text-accent-ink' : 'text-accent',
-          )}
-        >
-          <span aria-hidden className="size-1.5 rounded-full bg-current" />
-          {t('trustees.on_duty')}
-        </div>
-        <div className={cn('text-sm font-semibold', solid ? 'text-(--ink)' : 'text-white')}>
-          {trustee.full_name}
-        </div>
-      </div>
-
-      <a
-        href={telLink(trustee.phone_e164)}
-        className={actionClass}
-        aria-label={`${t('trustees.call')} — ${trustee.full_name}`}
-      >
-        {/* A phone icon does not imply direction, so it must NOT mirror. */}
-        <Phone className="size-5" aria-hidden />
-      </a>
-
-      {trustee.whatsapp_ok ? (
-        <a
-          href={whatsappLink(trustee.phone_e164, t('trustees.whatsapp_prefill'))}
-          className={actionClass}
-          aria-label={`${t('trustees.whatsapp')} — ${trustee.full_name}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <MessageCircle className="size-5" aria-hidden />
-        </a>
-      ) : null}
-    </div>
   );
 }

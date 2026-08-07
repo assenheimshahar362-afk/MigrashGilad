@@ -44,7 +44,7 @@ const DEVICES = [
   { name: 'wide', w: 1920, h: 1080, dpr: 1, touch: false },
 ];
 
-const PAGES = ['/', '/schedule/month', '/request', '/about', '/gallery', '/faq', '/contact', '/trustees', '/rules', '/memorial', '/login'];
+const PAGES = ['/', '/schedule/month', '/request', '/about', '/contact', '/trustees', '/rules', '/login'];
 
 const browser = await chromium.launch();
 const problems = [];

@@ -33,7 +33,7 @@ export async function PATCH(request: Request) {
     if (input.memorialDays !== undefined) patch.memorial_days = input.memorialDays;
 
     // §7 rich text: sanitised server-side before storage, with the same strict
-    // allowlist that runs again at render (app/(public)/memorial/page.tsx).
+    // allowlist that runs again at render (app/(public)/about/page.tsx).
     if (input.memorialHtml !== undefined) {
       patch.memorial_html = input.memorialHtml ? sanitizeMemorialHtml(input.memorialHtml) : null;
     }

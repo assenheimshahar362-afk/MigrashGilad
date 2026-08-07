@@ -216,6 +216,39 @@ export type Manager = {
   isSelf: boolean;
 }
 
+/**
+ * §2 access requests. A row here grants NOTHING: `is_admin()` still reads
+ * `admin_allowlist`, and only `decide_access_request()` can write to it.
+ */
+export type AccessRequestStatus = 'pending' | 'approved' | 'rejected';
+
+export type AccessRequestRow = {
+  id: string;
+  email: string;
+  full_name: string | null;
+  /** Whatever Supabase Auth reported: `google`, `password`, … */
+  provider: string;
+  user_id: string | null;
+  status: AccessRequestStatus;
+  created_at: string;
+  decided_at: string | null;
+  decided_by: string | null;
+  decided_note: string | null;
+}
+
+export type AccessRequest = {
+  id: string;
+  email: string;
+  fullName: string | null;
+  provider: string;
+  status: AccessRequestStatus;
+  createdAt: string;
+  decidedAt: string | null;
+  decidedNote: string | null;
+  /** True when the address is already an active manager, decided or not. */
+  alreadyAdmin: boolean;
+}
+
 export type AuditEntry = {
   id: number;
   actorId: string | null;

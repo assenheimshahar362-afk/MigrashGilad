@@ -152,7 +152,7 @@ to anyone testing in English. Times and phone numbers are wrapped in `<bdi>`
 
 ```
 app/
-  (public)/          schedule, month, request, status, trustees, memorial, rules, a11y
+  (public)/          schedule, month, request, status, trustees, about, rules, a11y
   (admin)/           dashboard, calendar, recurring, closures, trustees, requests,
                      managers, settings, audit    [auth; last three super admin only]
   api/               §8 contract — public routes, admin routes, cron
@@ -231,7 +231,7 @@ bite. None of them blocks the build; all of them block launch.
 |---|---|---|
 | 1 | Does the association manage its own hours? If yes, that is a fourth tier (`scoped_admin`) in v1.1 — not a variation of `admin`. | role model |
 | 2 | Automated SMS to requesters — budget approved? v1 ships the one-tap WhatsApp link plus the status page. | `lib/notifications/whatsapp.ts` |
-| 3 | Memorial page text, portrait, family approval. `/memorial` shows an honest placeholder until settings carry the content. | launch |
+| 3 | Memorial text, portrait, family approval. The memorial section of `/about` shows an honest placeholder until settings carry the content. | launch |
 | 5 | Which emails are on the `admin` tier. | `/admin/managers` |
 | 6 | Real trustee names, titles, phones, photos. `supabase/seed.sql` has placeholders. | `/trustees` |
 | 7 | Opening hours per weekday, max duration, lead time. Seeded at 06:00–23:00 every day. | `/admin/settings` |
