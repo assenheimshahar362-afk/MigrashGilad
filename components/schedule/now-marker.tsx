@@ -43,8 +43,13 @@ export function NowMarker({
     <div
       className="now-marker pointer-events-none absolute inset-x-0 z-20 h-0.5"
       style={{ top: `${top}%` }}
-      role="presentation"
-      aria-label={t('schedule.now')}
-    />
+    >
+      {/* The line itself is decoration — `aria-label` on a presentational div is
+          prohibited and, worse, is dropped from the accessibility tree, so the
+          label never reached anyone. The text below is what actually announces
+          it; the marker's position is meaningless to a screen reader either way,
+          which is what A11Y-5's <DayList> exists to solve. */}
+      <span className="sr-only">{t('schedule.now')}</span>
+    </div>
   );
 }

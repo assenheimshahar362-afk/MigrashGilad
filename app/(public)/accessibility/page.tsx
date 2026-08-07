@@ -20,7 +20,7 @@ const COORDINATOR = {
 
 export default function AccessibilityPage() {
   return (
-    <div className="mx-auto max-w-[720px] px-4 py-6 pb-24">
+    <div className="shell-narrow py-14 sm:py-20">
       <h1 className="text-h1">{t('a11y.title')}</h1>
 
       <section className="mt-6 space-y-3">

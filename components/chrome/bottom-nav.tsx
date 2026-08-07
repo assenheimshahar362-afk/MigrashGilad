@@ -2,22 +2,29 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { CalendarDays, FilePlus2, Users, Flower2 } from 'lucide-react';
+import { CalendarDays, FilePlus2, Users, Images, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { t } from '@/lib/i18n';
 
 /**
- * §3 global chrome: the bottom tab bar on mobile.
+ * The mobile tab bar. Hidden from `lg` up, where the header navigation takes
+ * over — the two are never on screen together.
  *
  * §2 visitor rules: there is deliberately no "sign in" affordance here or
  * anywhere else in the public UI. The only route to /login is by typing it or
  * following an admin's bookmark.
+ *
+ * Motion: the active indicator does NOT animate between tabs. This bar is
+ * tapped dozens of times a day, and at that frequency any transition — however
+ * short — is felt as the app lagging behind the finger. What does animate is
+ * the press itself, which is feedback rather than decoration.
  */
 const TABS = [
-  { href: '/', label: t('nav.schedule'), Icon: CalendarDays },
-  { href: '/request', label: t('nav.request'), Icon: FilePlus2 },
-  { href: '/trustees', label: t('nav.trustees'), Icon: Users },
-  { href: '/memorial', label: t('nav.memorial'), Icon: Flower2 },
+  { href: '/', label: t('nav.schedule'), Icon: CalendarDays, exact: true },
+  { href: '/request', label: t('nav.request'), Icon: FilePlus2, exact: false },
+  { href: '/gallery', label: t('nav.gallery'), Icon: Images, exact: false },
+  { href: '/trustees', label: t('nav.trustees'), Icon: Users, exact: false },
+  { href: '/contact', label: t('nav.contact'), Icon: Phone, exact: false },
 ] as const;
 
 export function BottomNav() {
@@ -25,28 +32,41 @@ export function BottomNav() {
 
   return (
     <nav
-      aria-label={t('nav.schedule')}
-      className="sticky bottom-0 z-30 border-t border-[--hairline] bg-[--surface-raised]/95 backdrop-blur safe-bottom"
+      aria-label={t('nav.primary')}
+      className={cn(
+        'chrome-blur sticky bottom-0 z-30 border-t border-(--hairline) safe-bottom lg:hidden',
+      )}
     >
-      <ul className="mx-auto flex max-w-[720px]">
-        {TABS.map(({ href, label, Icon }) => {
-          const active = href === '/' ? pathname === '/' : pathname.startsWith(href);
+      <ul className="mx-auto flex max-w-[560px]">
+        {TABS.map(({ href, label, Icon, exact }) => {
+          const active = exact ? pathname === href : pathname.startsWith(href);
           return (
             <li key={href} className="flex-1">
               <Link
                 href={href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'tap-target flex flex-col items-center justify-center gap-0.5 py-2 text-xs font-semibold',
-                  active ? 'text-[--ink]' : 'text-[--ink-muted]',
+                  'press tap-target relative flex flex-col items-center justify-center gap-1 py-2',
+                  'text-[0.6875rem] font-medium',
+                  active ? 'text-primary-700 font-semibold' : 'text-(--ink-muted)',
                 )}
               >
-                <Icon
-                  className={cn('size-6', active && 'text-floodlight')}
+                {/* The lit pill behind the active icon. Brand green at 10% is
+                    enough to read as "you are here" without competing with the
+                    primary CTA that often sits directly above it. */}
+                <span
                   aria-hidden
-                  strokeWidth={active ? 2.4 : 1.8}
+                  className={cn(
+                    'absolute top-1 h-8 w-14 rounded-(--radius-chip)',
+                    active ? 'bg-primary-50' : 'bg-transparent',
+                  )}
                 />
-                {label}
+                <Icon
+                  className={cn('relative size-[22px]', active && 'text-primary-600')}
+                  aria-hidden
+                  strokeWidth={active ? 2.25 : 1.75}
+                />
+                <span className="relative">{label}</span>
               </Link>
             </li>
           );

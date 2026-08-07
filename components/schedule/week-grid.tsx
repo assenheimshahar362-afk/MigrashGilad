@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { t } from '@/lib/i18n';
 import {
@@ -58,10 +59,19 @@ export function WeekGrid({
 
   return (
     <GridKeyboardScope>
-      <div className="pitch-field overflow-hidden">
+      <div className="pitch-field overflow-hidden rounded-(--radius-card) border border-(--hairline) shadow-(--shadow-sm)">
         <DayHeader days={days} today={today} />
 
-        <div className="flex" role="grid" aria-label={t('schedule.title')}>
+        {/* No `role="grid"` here. The layout is seven day-COLUMNS with no
+            rows, so the grid role's required `row` children can never exist and
+            asserting it produces a broken accessibility tree rather than a
+            useful one. A11Y-5's <DayList> is the accessible representation of
+            this data, and A11Y-4's arrow-key movement is driven by the
+            `data-grid-*` attributes, not by ARIA. */}
+        {/* The half-row of padding gives the first and last hour labels, which
+            are centred on their own rule, somewhere to sit without being
+            clipped by the day strip above or the card edge below. */}
+        <div className="flex pt-3 pb-3" role="presentation">
           <HourAxis hourMarks={hourMarks} startMinute={startMinute} endMinute={endMinute} />
 
           {days.map((date, dayIndex) => (
@@ -87,33 +97,36 @@ export function WeekGrid({
 /** §10.1 week strip: Hebrew day letters plus day-of-month, today highlighted. */
 function DayHeader({ days, today }: { days: LocalDate[]; today: LocalDate }) {
   return (
-    <div className="flex border-b border-[--grid-line]">
+    // The strip sticks under the week navigation so the day you are looking at
+    // is still named once you have scrolled down to the evening hours.
+    <div className="sticky top-0 z-20 flex border-b border-(--grid-line-strong) bg-(--surface-raised)">
       {/* Spacer matching the hour axis width. */}
-      <div className="w-11 shrink-0 pitch-touchline" aria-hidden />
+      <div className="w-14 shrink-0 pitch-touchline" aria-hidden />
 
       {days.map((date, index) => {
         const isToday = date === today;
         return (
           <div
             key={date}
-            className={cn(
-              'flex-1 py-2 text-center',
-              index > 0 && 'pitch-daydivider',
-              isToday && 'bg-chalk-050/10',
-            )}
+            className={cn('relative flex-1 py-2.5 text-center', index > 0 && 'pitch-daydivider')}
           >
             <div
               className={cn(
-                'text-xs',
-                isToday ? 'font-bold text-floodlight' : 'text-chalk-200',
+                'text-[0.6875rem] font-medium',
+                isToday ? 'font-semibold text-primary-600' : 'text-(--ink-faint)',
               )}
             >
               {WEEKDAY_LETTERS[new Date(`${date}T12:00:00Z`).getUTCDay()]}
             </div>
+            {/* Today's date sits in a filled green disc. It is the one thing on
+                the strip that is a shape rather than a weight, which is why the
+                eye finds it before it has read anything. */}
             <div
               className={cn(
-                'tnum text-sm',
-                isToday ? 'font-bold text-floodlight' : 'text-chalk-050',
+                'tnum mx-auto mt-1 flex size-7 items-center justify-center rounded-full text-sm',
+                isToday
+                  ? 'bg-primary font-bold text-white shadow-(--shadow-xs)'
+                  : 'font-medium text-(--ink)',
               )}
             >
               {dayOfMonth(date)}
@@ -139,15 +152,17 @@ function HourAxis({
   const span = endMinute - startMinute;
 
   return (
-    <div className="relative w-11 shrink-0 pitch-touchline" aria-hidden>
-      <div className="relative h-[60vh] min-h-[26rem]">
+    <div className="relative w-14 shrink-0 pitch-touchline" aria-hidden>
+      <div className="relative h-[68vh] min-h-[32rem]">
         {hourMarks.map((minute) => (
           <div
             key={minute}
-            className="absolute inset-x-0 -translate-y-1/2 pe-1.5 text-end"
+            className="absolute inset-x-0 -translate-y-1/2 pe-2 text-end"
             style={{ top: `${((minute - startMinute) / span) * 100}%` }}
           >
-            <span className="tnum text-[0.65rem] text-chalk-200">{timeFromMinutes(minute)}</span>
+            <span className="tnum text-[0.6875rem] font-medium text-(--ink-faint)">
+              {timeFromMinutes(minute)}
+            </span>
           </div>
         ))}
       </div>
@@ -182,11 +197,10 @@ function DayColumn({
 
   return (
     <div
-      role="gridcell"
-      className={cn('relative flex-1', dayIndex > 0 && 'pitch-daydivider', isToday && 'bg-chalk-050/5')}
+      className={cn('relative flex-1', dayIndex > 0 && 'pitch-daydivider', isToday && 'pitch-today')}
     >
-      <div className="relative h-[60vh] min-h-[26rem]">
-        {/* Chalk hairlines. */}
+      <div className="relative h-[68vh] min-h-[32rem]">
+        {/* Hour hairlines. */}
         {hourMarks.map((minute) => (
           <div
             key={minute}
@@ -200,7 +214,7 @@ function DayColumn({
             column — it is never removed from the week. */}
         {!dayHours ? (
           <div className="closure-hatch absolute inset-0 z-10 flex items-center justify-center">
-            <span className="rounded-[--radius-chip] bg-pitch-900/80 px-2 py-1 text-[0.65rem] text-chalk-050">
+            <span className="rounded-(--radius-chip) bg-(--surface-raised) px-2.5 py-1 text-[0.65rem] font-semibold text-danger-ink shadow-(--shadow-xs) ring-1 ring-danger/25">
               {t('schedule.closed_day')}
             </span>
           </div>
@@ -240,12 +254,38 @@ function DayColumn({
                   data-grid-col={dayIndex}
                   data-grid-row={slotIndex}
                   aria-label={`${formatWeekdayLong(date)} ${timeFromMinutes(slot.from)} — ${t('schedule.free_slot')}`}
-                  className="absolute inset-x-0 hover:bg-chalk-050/10 focus-visible:bg-chalk-050/15"
+                  /* A free hour is an invitation, so it warms rather than
+                     greys under the pointer — the same amber the CTA uses,
+                     at the lowest alpha that still registers. The inset ring
+                     draws the slot's own edges, which is what tells you the
+                     tap will book that hour and not the whole column. */
+                  /* A free hour is an invitation: it warms to the brand green
+                     under the pointer and reveals a "+" that is not drawn until
+                     there is a pointer to draw it for. On touch there is no
+                     hover, so the whole cell is simply tappable. */
+                  className={cn(
+                    'group absolute inset-x-px flex items-center justify-center rounded-[6px]',
+                    'transition-colors duration-(--duration-tip) ease-(--ease-out-quiet)',
+                    'hover:bg-primary-50 focus-visible:bg-primary-50',
+                    'motion-reduce:transition-none',
+                  )}
                   style={{
                     top: `${((slot.from - startMinute) / span) * 100}%`,
                     height: `${((slot.to - slot.from) / span) * 100}%`,
                   }}
-                />
+                >
+                  <span
+                    aria-hidden
+                    className={cn(
+                      'flex size-5 items-center justify-center rounded-full bg-primary text-white',
+                      'opacity-0 transition-opacity duration-(--duration-tip) ease-(--ease-out-quiet)',
+                      'group-hover:opacity-100 group-focus-visible:opacity-100',
+                      'motion-reduce:transition-none',
+                    )}
+                  >
+                    <Plus className="size-3.5" strokeWidth={3} />
+                  </span>
+                </Link>
               );
             })
           : null}
@@ -311,7 +351,7 @@ function ClosureOverlay({
 
   return (
     <div
-      className="closure-hatch pointer-events-none absolute inset-x-0 z-[5] border-y border-signal-err/60"
+      className="closure-hatch pointer-events-none absolute inset-x-0 z-[5] border-y border-danger/40"
       style={{ top: `${((from - startMinute) / span) * 100}%`, height: `${((to - from) / span) * 100}%` }}
       title={closure.reason}
     >

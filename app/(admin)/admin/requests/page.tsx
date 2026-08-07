@@ -68,22 +68,22 @@ export default async function AdminRequestsPage({
       </nav>
 
       {requests.length === 0 ? (
-        <p className="rounded-[--radius-card] border border-dashed border-[--hairline] p-8 text-center text-[--ink-muted]">
+        <p className="empty-state">
           {t('admin.empty_generic')}
         </p>
       ) : (
-        <ul className="divide-y divide-[--hairline] rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised]">
+        <ul className="divide-y divide-(--hairline) card">
           {requests.map((request) => (
             <li key={request.id} className="p-3">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-semibold">{request.requester_name}</span>
                 <StatusPill status={request.status} className="text-xs" />
-                <span className="ms-auto text-xs text-[--ink-muted]">
+                <span className="ms-auto text-xs text-(--ink-muted)">
                   {formatRelative(request.created_at)}
                 </span>
               </div>
 
-              <p className="mt-1 text-xs text-[--ink-muted]">
+              <p className="mt-1 text-xs text-(--ink-muted)">
                 {formatDateShort(localDate(request.requested_start))} ·{' '}
                 <TimeRange range={formatTimeRange(request.requested_start, request.requested_end)} />{' '}
                 · {usageTypeLabel(request.usage_type)}
@@ -96,7 +96,7 @@ export default async function AdminRequestsPage({
               </p>
 
               {request.decision_note ? (
-                <p className="mt-1 text-xs text-[--ink-muted]">
+                <p className="mt-1 text-xs text-(--ink-muted)">
                   {t('status.admin_note')}: {request.decision_note}
                 </p>
               ) : null}
@@ -122,8 +122,8 @@ function FilterChip({
       href={href}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'tap-target flex items-center rounded-[--radius-chip] border px-3 text-sm font-semibold',
-        active ? 'border-floodlight bg-floodlight text-pitch-900' : 'border-[--hairline]',
+        'tap-target flex items-center rounded-(--radius-chip) border px-3 text-sm font-semibold',
+        active ? 'border-accent bg-accent text-primary-800' : 'border-(--hairline)',
       )}
     >
       {children}

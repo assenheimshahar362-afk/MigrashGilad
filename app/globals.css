@@ -1,87 +1,188 @@
 @import 'tailwindcss';
 
 /* ===========================================================================
-   Migrash Gilad — design system (§11)
+   Migrash Gilad — design system
 
-   The pitch supplies the visual language: mown grass, chalk line-markings,
-   floodlights at dusk. The memorial supplies the restraint. The result should
-   read as dignified civic infrastructure, not a startup booking app.
+   A calm, bright, product-grade surface for a community football pitch.
+   Green guides; it never dominates. Amber is reserved for "now" and "on duty"
+   — the two things that are time-critical — so it keeps its meaning.
+
+   Motion follows one rule throughout: enter/exit uses ease-out so the first
+   frame moves, movement uses ease-in-out, and nothing on a screen a visitor
+   sees dozens of times a day animates at all.
    =========================================================================== */
 
 @theme {
-  /* §11.1 colour tokens */
-  --color-pitch-900: #0e2a20; /* deep evening turf — the schedule grid surface */
-  --color-pitch-700: #174634; /* raised surfaces, header */
-  --color-chalk-050: #f2f5f0; /* line-marking white, primary text on dark */
-  --color-chalk-200: #d6ded3; /* muted text on dark */
-  --color-floodlight: #f2b441; /* the single warm accent */
-  --color-clay-500: #b5533c; /* association / secondary category */
-  --color-stone-500: #7a8a82; /* disabled, maintenance */
-  --color-signal-ok: #4e9a6b;
-  --color-signal-err: #c0453b;
-  --color-memorial: #8c97a8; /* ONLY on the memorial page and mark */
+  /* -------------------------------------------------------------------------
+     Brand ramp. #198754 is the primary; the steps around it exist so that
+     hover, press, tint and text-on-tint are all the same hue rather than four
+     unrelated greens.
+     ------------------------------------------------------------------------- */
+  --color-primary-50: #f0f9f4;
+  --color-primary-100: #dcf1e4;
+  --color-primary-200: #bbe3cc;
+  --color-primary-300: #8ccfab;
+  --color-primary-400: #4fb381;
+  --color-primary: #198754;
+  --color-primary-600: #146c43;
+  --color-primary-700: #105736;
+  --color-primary-800: #0d4429;
+  --color-primary-900: #0a3520;
 
-  /* §11.2 typography. The `*-loaded` variables are supplied by next/font in
-     app/fonts.ts; the literal families after them are the fallback chain that
-     renders before the swap and if the font request ever fails. */
-  --font-display: var(--font-display-loaded), 'Frank Ruhl Libre', 'Times New Roman', serif;
-  --font-sans: var(--font-sans-loaded), 'Assistant', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-data: var(--font-data-loaded), 'Heebo', 'Assistant', system-ui, sans-serif;
+  /* Amber. A signal colour, not a brand colour. */
+  --color-accent: #f5c542;
+  --color-accent-100: #fef6dd;
+  --color-accent-200: #fceab3;
+  --color-accent-600: #c9992a;
+  /* Amber as small TEXT on a light ground: #f5c542 is 1.8:1 on white, which is
+     unreadable. This is the same hue carried down past 4.5:1. */
+  --color-accent-ink: #8a6005;
 
-  /* §11.2 scale */
-  --text-display: 3rem;
-  --text-display--line-height: 1.15;
-  --text-h1: 2rem;
+  /* Neutrals. */
+  --color-ink: #202124;
+  --color-ink-2: #6b7280;
+  --color-line: #e5e7eb;
+  --color-canvas: #f7f8fa;
+
+  /* State. */
+  --color-success: #22c55e;
+  --color-success-ink: #15803d;
+  --color-warning: #f59e0b;
+  --color-warning-ink: #b25209;
+  --color-danger: #ef4444;
+  --color-danger-ink: #b91c1c;
+
+  /* The memorial tone stays apart from the brand on purpose. */
+  --color-memorial: #64748b;
+  --color-memorial-ink: #475569;
+  --color-memorial-chrome: #cbd5e1;
+
+  /* -------------------------------------------------------------------------
+     Typography. The `*-loaded` variables come from next/font in app/fonts.ts;
+     the literal families after them render before the swap.
+     ------------------------------------------------------------------------- */
+  --font-display: var(--font-display-loaded), 'Rubik', system-ui, sans-serif;
+  --font-sans: var(--font-sans-loaded), 'Heebo', system-ui, -apple-system, sans-serif;
+  --font-data: var(--font-sans-loaded), 'Heebo', system-ui, sans-serif;
+
+  /* A display step above h1, for the hero only. `clamp` rather than breakpoint
+     jumps so the headline is never briefly enormous on a 360px phone. */
+  --text-hero: clamp(2.25rem, 7vw, 4.25rem);
+  --text-hero--line-height: 1.05;
+  --text-hero--letter-spacing: -0.02em;
+  --text-display: clamp(1.875rem, 5vw, 3rem);
+  --text-display--line-height: 1.1;
+  --text-h1: clamp(1.625rem, 4vw, 2.25rem);
   --text-h1--line-height: 1.15;
   --text-h2: 1.5rem;
-  --text-h2--line-height: 1.25;
-  --text-h3: 1.25rem;
-  --text-h3--line-height: 1.35;
+  --text-h2--line-height: 1.3;
+  --text-h3: 1.1875rem;
+  --text-h3--line-height: 1.4;
   --text-base: 1rem;
-  --text-base--line-height: 1.65; /* Hebrew needs more leading than Latin */
+  --text-base--line-height: 1.7; /* Hebrew needs more leading than Latin */
   --text-sm: 0.875rem;
   --text-sm--line-height: 1.6;
   --text-xs: 0.75rem;
   --text-xs--line-height: 1.5;
 
-  /* §11.3 radii — 0 on the schedule grid itself */
-  --radius-input: 4px;
-  --radius-chip: 4px;
-  --radius-card: 12px;
+  /* -------------------------------------------------------------------------
+     Radii. Generous everywhere except the schedule grid, whose cells stay
+     square — rounding them would turn a calendar into a list of pills.
+     ------------------------------------------------------------------------- */
+  --radius-input: 12px;
+  --radius-chip: 999px;
+  --radius-card: 20px;
+  --radius-card-sm: 14px;
+  --radius-sheet: 28px;
 
-  /* §11.3 motion */
-  --ease-out-quiet: cubic-bezier(0.16, 1, 0.3, 1);
+  /* -------------------------------------------------------------------------
+     Motion. One easing vocabulary, used everywhere. The built-in CSS easings
+     are too weak to read as intentional.
+     ------------------------------------------------------------------------- */
+  --ease-out-quiet: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-move: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --duration-press: 160ms; /* button press feedback */
+  --duration-tip: 140ms; /* tooltips, small popovers */
+  --duration-pop: 220ms; /* dropdowns, hover lifts */
+  --duration-sheet: 420ms; /* a sheet travelling a full screen height */
 }
 
 /* ---------------------------------------------------------------------------
-   Semantic surface variables. Light mode is the default for content pages; the
-   schedule grid stays dark in both modes so it reads like a floodlit pitch at
-   night (§11.1).
+   Semantic surfaces.
+
+   Shadows are tinted with the ink hue rather than pure black, and each is two
+   layers — a tight contact shadow plus a wide ambient one — because a single
+   blur reads as a sticker rather than as height.
    --------------------------------------------------------------------------- */
 :root {
-  --surface: var(--color-chalk-050);
+  --surface: #f7f8fa;
   --surface-raised: #ffffff;
-  --surface-sunken: #e8ede6;
-  --ink: var(--color-pitch-900);
-  --ink-muted: #4a5a52;
-  --hairline: var(--color-chalk-200);
+  --surface-sunken: #f1f3f6;
+  --surface-hover: #f5f7f9;
+  --ink: #202124;
+  /* Both solved against --surface-sunken (#f1f3f6), the darkest ground body
+     text ever sits on: #6b7280 reached only 4.34:1 there and #767e8b 3.68:1,
+     which is what the month grid's out-of-month day numbers were set in. */
+  --ink-muted: #5f6673;
+  --ink-faint: #686f7a;
+  --hairline: #e5e7eb;
+  --hairline-strong: #d3d8e0;
 
-  /* The grid is dark regardless of scheme. */
-  --grid-surface: var(--color-pitch-900);
-  --grid-raised: var(--color-pitch-700);
-  --grid-ink: var(--color-chalk-050);
-  --grid-ink-muted: var(--color-chalk-200);
-  --grid-line: rgb(242 245 240 / 0.24); /* chalk hairline at 24% */
+  --shadow-xs: 0 1px 2px rgb(32 33 36 / 0.05);
+  --shadow-sm:
+    0 1px 2px rgb(32 33 36 / 0.05),
+    0 2px 8px -2px rgb(32 33 36 / 0.06);
+  --shadow-md:
+    0 1px 2px rgb(32 33 36 / 0.06),
+    0 8px 20px -6px rgb(32 33 36 / 0.1);
+  --shadow-lg:
+    0 2px 4px rgb(32 33 36 / 0.06),
+    0 16px 40px -12px rgb(32 33 36 / 0.16);
+  --shadow-sheet:
+    0 -1px 3px rgb(32 33 36 / 0.05),
+    0 -20px 56px -16px rgb(32 33 36 / 0.2);
+
+  /* A lit top edge is what gives a white card an apparent thickness. */
+  --edge-light: inset 0 1px 0 rgb(255 255 255 / 0.9);
+
+  /* The schedule surface. Bright, like Calendly or Notion Calendar: the ground
+     is white, and the only ink on it is a hairline ruling. */
+  --grid-surface: #ffffff;
+  --grid-canvas: var(--surface);
+  --grid-ink: var(--ink);
+  --grid-ink-muted: var(--ink-muted);
+  --grid-line: #eceef2; /* the hour ruling — quieter than a real border */
+  --grid-line-strong: var(--hairline);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --surface: #0b1a14;
-    --surface-raised: #12291f;
-    --surface-sunken: #071310;
-    --ink: var(--color-chalk-050);
-    --ink-muted: var(--color-chalk-200);
-    --hairline: rgb(242 245 240 / 0.16);
+    --surface: #0f1114;
+    --surface-raised: #17191d;
+    --surface-sunken: #101215;
+    --surface-hover: #1e2126;
+    --ink: #f2f3f5;
+    --ink-muted: #9ba1ac;
+    --ink-faint: #868d99;
+    --hairline: #292d34;
+    --hairline-strong: #3a3f48;
+
+    /* On a dark page a shadow cannot be seen; depth comes from the lit edge. */
+    --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.45);
+    --shadow-md: 0 8px 20px -8px rgb(0 0 0 / 0.6);
+    --shadow-lg: 0 16px 44px -12px rgb(0 0 0 / 0.7);
+    --shadow-sheet: 0 -18px 52px -16px rgb(0 0 0 / 0.7);
+    --edge-light: inset 0 1px 0 rgb(255 255 255 / 0.05);
+
+    --grid-surface: #17191d;
+    --grid-canvas: var(--surface);
+    --grid-ink: var(--ink);
+    --grid-ink-muted: var(--ink-muted);
+    --grid-line: #24272d;
+    --grid-line-strong: #313640;
   }
 }
 
@@ -92,6 +193,7 @@
   html {
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
+    background: var(--surface);
   }
 
   body {
@@ -99,13 +201,18 @@
     color: var(--ink);
     font-family: var(--font-sans);
     font-size: var(--text-base);
-    line-height: 1.65;
+    line-height: 1.7;
     /* One-handed use at the pitch gate: nothing may sit under the home bar. */
     padding-block-end: env(safe-area-inset-bottom);
     text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* No page may scroll sideways on a phone. */
+    overflow-x: hidden;
   }
 
-  /* §11.2: never letter-space Hebrew text — it breaks legibility. */
+  /* Hebrew must never be letter-spaced — it breaks legibility. Only the Latin
+     display sizes get the optical tightening, via --text-hero above. */
   h1, h2, h3, h4 {
     font-family: var(--font-display);
     font-weight: 700;
@@ -113,33 +220,218 @@
     text-wrap: balance;
   }
 
-  /* A11Y-1: visible focus rings, floodlight amber, 2px offset. */
+  p, li {
+    text-wrap: pretty;
+  }
+
+  /* A11Y-1: visible focus rings on the brand green, 2px offset. */
   :focus-visible {
-    outline: 2px solid var(--color-floodlight);
+    outline: 2px solid var(--color-primary);
     outline-offset: 2px;
-    border-radius: 2px;
+    border-radius: 4px;
   }
 
   /* Times, phone numbers and counts align in RTL only with tabular figures. */
   .tnum, time, [data-numeric] {
     font-family: var(--font-data);
     font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
   }
 
   ::selection {
-    background: var(--color-floodlight);
-    color: var(--color-pitch-900);
+    background: var(--color-primary-200);
+    color: var(--color-primary-900);
+  }
+
+  /* Content scrolls under a sticky header; without this the browser parks
+     anchors and focused cells beneath it. */
+  :target {
+    scroll-margin-block-start: 6rem;
+  }
+
+  /* Images never overflow their column, on any page. */
+  img, svg, video {
+    max-inline-size: 100%;
   }
 }
 
 /* ---------------------------------------------------------------------------
-   §11.3 signature: the schedule grid is drawn as pitch line-markings.
-   1px chalk hairlines at 24% opacity on the dark turf field, the hour axis
-   rendered like the touchline, the now-marker as a floodlight-amber line with
-   a small centre-spot dot. This is the one memorable element in the product;
-   everything else stays quiet.
+   The 8px spacing system.
+
+   Every vertical rhythm in the product comes from these four steps rather than
+   from ad-hoc margins. `.section` is the standard page band; `.shell` is the
+   standard content column.
+   --------------------------------------------------------------------------- */
+@layer components {
+  .shell {
+    margin-inline: auto;
+    inline-size: 100%;
+    max-inline-size: 72rem;
+    padding-inline: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .shell {
+      padding-inline: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .shell {
+      padding-inline: 2rem;
+    }
+  }
+
+  /* The reading column, for prose pages. */
+  .shell-narrow {
+    margin-inline: auto;
+    inline-size: 100%;
+    max-inline-size: 45rem;
+    padding-inline: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .shell-narrow {
+      padding-inline: 1.5rem;
+    }
+  }
+
+  .section {
+    padding-block: 3rem;
+  }
+
+  @media (min-width: 640px) {
+    .section {
+      padding-block: 4rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .section {
+      padding-block: 5.5rem;
+    }
+  }
+
+  /* -------------------------------------------------------------------------
+     Cards. 20px radius, one hairline, one soft shadow. Never heavy: the border
+     and the shadow are alternatives to each other, not a stack.
+     ------------------------------------------------------------------------- */
+  .card {
+    background: var(--surface-raised);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-sm), var(--edge-light);
+  }
+
+  /* Only a card that is itself a link or button lifts. Hover is gated to fine
+     pointers because a touch device fires it on tap, and the lift then reads as
+     a glitch on the way to the next screen. */
+  @media (hover: hover) and (pointer: fine) {
+    .card-interactive {
+      transition:
+        box-shadow var(--duration-pop) var(--ease-out-quiet),
+        border-color var(--duration-pop) var(--ease-out-quiet),
+        transform var(--duration-pop) var(--ease-out-quiet);
+    }
+
+    .card-interactive:hover {
+      box-shadow: var(--shadow-md), var(--edge-light);
+      border-color: var(--hairline-strong);
+      transform: translateY(-2px);
+    }
+  }
+
+  .card-interactive:active {
+    transform: scale(0.99);
+    transition-duration: var(--duration-press);
+  }
+
+  /* The empty state. A dashed outline containing nothing says "this is a place
+     where things go and there are none"; a solid card would say "here is a
+     thing", which is the opposite. */
+  .empty-state {
+    border: 1px dashed var(--hairline-strong);
+    border-radius: var(--radius-card);
+    background: var(--surface-raised);
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    color: var(--ink-muted);
+    text-wrap: balance;
+  }
+
+  /* -------------------------------------------------------------------------
+     Press feedback. `scale(0.97)` on :active is the cheapest possible signal
+     that the interface heard the tap, and on a phone at a pitch gate — where
+     the network round-trip is the slow part — it is the only feedback
+     available in the first 200ms.
+     ------------------------------------------------------------------------- */
+  .press {
+    transition: transform var(--duration-press) var(--ease-out-quiet);
+  }
+
+  .press:active {
+    transform: scale(0.97);
+  }
+
+  /* Larger surfaces need a smaller ratio; a full-width card at 0.97 looks like
+     it is collapsing rather than being pressed. */
+  .press-sm:active {
+    transform: scale(0.985);
+  }
+
+  /* The FAQ accordion.
+
+     `interpolate-size: allow-keywords` is what makes a height transition to
+     `auto` possible at all; without it there is nothing to interpolate towards
+     and the panel snaps. Browsers that support neither this nor
+     `::details-content` simply toggle instantly, which is the correct
+     degradation for a disclosure — the content is never unreachable. */
+  .faq-item {
+    interpolate-size: allow-keywords;
+  }
+
+  .faq-item::details-content {
+    block-size: 0;
+    overflow: clip;
+    opacity: 0;
+    transition:
+      block-size var(--duration-pop) var(--ease-out-quiet),
+      content-visibility var(--duration-pop) allow-discrete,
+      opacity var(--duration-pop) var(--ease-out-quiet);
+  }
+
+  .faq-item[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+
+  /* Frosted chrome. The @supports fallback matters: without backdrop-filter the
+     bar must be opaque, or scrolling content crosses the navigation text. */
+  .chrome-blur {
+    background: var(--surface-raised);
+  }
+
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    .chrome-blur {
+      /* 92%, not 80%: the bar floats over whatever the page happens to put
+         behind it, and at 80% the composite over a mid-tone dropped the
+         inactive tab labels to 3.44:1. The blur still reads. */
+      background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
+      -webkit-backdrop-filter: blur(20px) saturate(1.6);
+      backdrop-filter: blur(20px) saturate(1.6);
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   The schedule.
+
+   Bright and ruled, in the manner of Google Calendar and Notion Calendar: a
+   white ground, hour hairlines that are barely there, a stronger rule on the
+   hour axis, and colour reserved entirely for the events themselves.
    --------------------------------------------------------------------------- */
 .pitch-field {
+  position: relative;
   background-color: var(--grid-surface);
   color: var(--grid-ink);
 }
@@ -149,57 +441,73 @@
 }
 
 .pitch-halfhourline {
-  border-block-start: 1px dashed rgb(242 245 240 / 0.1);
+  border-block-start: 1px dashed var(--grid-line);
 }
 
+/* The hour axis. A slightly stronger rule than the hour lines, so the times
+   read as an axis rather than as a first column of data. */
 .pitch-touchline {
-  border-inline-end: 2px solid var(--grid-line);
+  border-inline-end: 1px solid var(--grid-line-strong);
 }
 
 .pitch-daydivider {
   border-inline-start: 1px solid var(--grid-line);
 }
 
+/* Today's column, tinted the faintest possible brand green. */
+.pitch-today {
+  background-color: color-mix(in srgb, var(--color-primary) 4%, transparent);
+}
+
+/* The current-time line. Red is the calendar convention for "now" and reads
+   instantly to anyone who has used one; amber here would be confused with the
+   accent used for "on duty". */
 .now-marker {
-  background: var(--color-floodlight);
-  box-shadow: 0 0 6px rgb(242 180 65 / 0.55);
+  background: var(--color-danger);
 }
 
 .now-marker::after {
   content: '';
   position: absolute;
-  inset-inline-end: -4px;
-  inset-block-start: -3px;
+  inset-inline-end: -3px;
+  inset-block-start: -3.5px;
   inline-size: 8px;
   block-size: 8px;
   border-radius: 9999px;
-  background: var(--color-floodlight);
-  box-shadow: 0 0 8px rgb(242 180 65 / 0.7);
+  background: var(--color-danger);
+  /* The pulse is once every four seconds — slow enough to read as a live
+     indicator rather than as an alert, and the only looping animation here. */
+  animation: now-pulse 4s var(--ease-out-quiet) infinite;
+}
+
+@keyframes now-pulse {
+  0%, 72%, 100% { opacity: 1; transform: scale(1); }
+  84%           { opacity: 0.7; transform: scale(1.45); }
 }
 
 /* ---------------------------------------------------------------------------
-   §11.1 / A11Y-3: usage type is never conveyed by colour alone. Each type
+   Usage type is never conveyed by colour alone (A11Y-3, FR-3). Each type
    carries a pattern as well as a label, which is also what keeps the grid
    readable in bright sunlight where the fills wash out.
    --------------------------------------------------------------------------- */
 .pattern-stripes {
   background-image: repeating-linear-gradient(
     45deg,
-    rgb(255 255 255 / 0.22) 0 1px,
+    rgb(0 0 0 / 0.07) 0 1px,
     transparent 1px 7px
   );
 }
 
 .pattern-crosshatch {
   background-image:
-    repeating-linear-gradient(45deg, rgb(255 255 255 / 0.2) 0 1px, transparent 1px 6px),
-    repeating-linear-gradient(-45deg, rgb(255 255 255 / 0.2) 0 1px, transparent 1px 6px);
+    repeating-linear-gradient(45deg, rgb(0 0 0 / 0.06) 0 1px, transparent 1px 6px),
+    repeating-linear-gradient(-45deg, rgb(0 0 0 / 0.06) 0 1px, transparent 1px 6px);
 }
 
 .pattern-hatch {
   background-image: repeating-linear-gradient(
     -45deg,
-    var(--color-signal-err) 0 1.5px,
+    rgb(239 68 68 / 0.5) 0 1.5px,
     transparent 1.5px 8px
   );
 }
@@ -208,8 +516,8 @@
 .closure-hatch {
   background-image: repeating-linear-gradient(
     -45deg,
-    rgb(192 69 59 / 0.4) 0 2px,
-    transparent 2px 10px
+    rgb(239 68 68 / 0.16) 0 3px,
+    transparent 3px 11px
   );
 }
 
@@ -220,21 +528,22 @@ html[data-memorial-day='true'] body {
   filter: grayscale(0.9);
 }
 
-/* The memorial page has a deliberately slower, quieter layout (§10.6). */
+/* The memorial page keeps a deliberately slower, quieter layout. It is the one
+   screen the "premium product" language is held back from. */
 .memorial-prose {
   font-size: 1.125rem;
-  line-height: 1.85;
+  line-height: 1.9;
   max-inline-size: 62ch;
 }
 
 .memorial-prose p {
-  margin-block: 1.4em;
+  margin-block: 1.5em;
 }
 
 .memorial-prose h2 {
   font-size: var(--text-h2);
   margin-block: 2em 0.6em;
-  color: var(--color-memorial);
+  color: var(--color-memorial-ink);
 }
 
 .memorial-prose img {
@@ -242,20 +551,20 @@ html[data-memorial-day='true'] body {
   block-size: auto;
   border-radius: var(--radius-card);
   margin-block: 2em;
+  box-shadow: var(--shadow-md);
 }
 
 /* ---------------------------------------------------------------------------
-   §11.3 motion. 150–200ms ease-out for state changes; the week transition
-   slides in the RTL direction of travel; nothing else animates.
+   Motion
    --------------------------------------------------------------------------- */
 @keyframes slide-from-start {
-  from { transform: translateX(-1.5rem); opacity: 0; }
-  to   { transform: translateX(0); opacity: 1; }
+  from { transform: translate3d(-1.25rem, 0, 0); opacity: 0; }
+  to   { transform: translate3d(0, 0, 0); opacity: 1; }
 }
 
 @keyframes slide-from-end {
-  from { transform: translateX(1.5rem); opacity: 0; }
-  to   { transform: translateX(0); opacity: 1; }
+  from { transform: translate3d(1.25rem, 0, 0); opacity: 0; }
+  to   { transform: translate3d(0, 0, 0); opacity: 1; }
 }
 
 @keyframes fade-in {
@@ -263,17 +572,78 @@ html[data-memorial-day='true'] body {
   to   { opacity: 1; }
 }
 
-@keyframes sheet-up {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
+/* The workhorse entrance: 8px of travel and a fade. Anything more is a stunt. */
+@keyframes rise-in {
+  from { transform: translate3d(0, 10px, 0); opacity: 0; }
+  to   { transform: translate3d(0, 0, 0); opacity: 1; }
 }
 
-.animate-week-forward { animation: slide-from-start 180ms var(--ease-out-quiet); }
-.animate-week-back    { animation: slide-from-end 180ms var(--ease-out-quiet); }
-.animate-fade-in      { animation: fade-in 150ms ease-out; }
-.animate-sheet-up     { animation: sheet-up 200ms var(--ease-out-quiet); }
+/* A percentage translate is relative to the element's own height, so this works
+   for a two-line confirmation and a full event detail alike, with no
+   measurement. */
+@keyframes sheet-up {
+  from { transform: translate3d(0, 100%, 0); }
+  to   { transform: translate3d(0, 0, 0); }
+}
 
-/* A11Y-8. `reduce` leaves opacity fades only — all transforms are dropped. */
+/* The desktop centred variant. From 0.96, never from 0: nothing in the real
+   world appears out of nothing, and `scale(0)` reads as a glitch. */
+@keyframes dialog-in {
+  from { transform: translate3d(-50%, -50%, 0) scale(0.96); opacity: 0; }
+  to   { transform: translate3d(-50%, -50%, 0) scale(1); opacity: 1; }
+}
+
+/* A toast enters from the edge it lives on, so a swipe back down is the gesture
+   its shape already suggests. */
+@keyframes toast-in {
+  from { transform: translate3d(0, 12px, 0) scale(0.97); opacity: 0; }
+  to   { transform: translate3d(0, 0, 0) scale(1); opacity: 1; }
+}
+
+.animate-week-forward { animation: slide-from-start 180ms var(--ease-out-quiet) both; }
+.animate-week-back    { animation: slide-from-end 180ms var(--ease-out-quiet) both; }
+.animate-fade-in      { animation: fade-in 150ms ease-out both; }
+.animate-rise-in      { animation: rise-in 280ms var(--ease-out-quiet) both; }
+
+/* Stagger. A list that appears all at once reads as a single flash; 40ms
+   between items reads as the page settling. The delay is decorative only — the
+   `both` fill means items are laid out and hit-testable the whole time, so
+   nothing is ever unclickable while the cascade plays. */
+.stagger > * {
+  animation: rise-in 300ms var(--ease-out-quiet) both;
+}
+
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 40ms; }
+.stagger > *:nth-child(3) { animation-delay: 80ms; }
+.stagger > *:nth-child(4) { animation-delay: 120ms; }
+.stagger > *:nth-child(5) { animation-delay: 160ms; }
+.stagger > *:nth-child(6) { animation-delay: 200ms; }
+.stagger > *:nth-child(n + 7) { animation-delay: 240ms; }
+
+/* Scroll-reveal. The element is visible by default and only hides itself once
+   JavaScript has confirmed it can reveal it again — otherwise a failed script
+   or a bot leaves the whole page blank. */
+[data-reveal] {
+  opacity: 1;
+}
+
+[data-reveal='pending'] {
+  opacity: 0;
+  transform: translate3d(0, 16px, 0);
+}
+
+[data-reveal='shown'] {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition:
+    opacity 600ms var(--ease-out-quiet),
+    transform 600ms var(--ease-out-quiet);
+}
+
+/* A11Y-8. Reduced motion means fewer and gentler animations, not zero: the fade
+   that explains that something arrived is kept, the travel that could induce
+   nausea is not. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -286,16 +656,32 @@ html[data-memorial-day='true'] body {
 
   .animate-week-forward,
   .animate-week-back,
-  .animate-sheet-up {
-    animation: fade-in 120ms ease-out !important;
+  .animate-rise-in,
+  .stagger > * {
+    animation: fade-in 120ms ease-out both !important;
+  }
+
+  [data-reveal='pending'] {
+    opacity: 1;
+    transform: none;
+  }
+
+  .press:active,
+  .press-sm:active,
+  .card-interactive:hover,
+  .card-interactive:active {
+    transform: none;
   }
 }
 
 @media (prefers-contrast: more) {
   :root {
     --hairline: currentColor;
-    --grid-line: rgb(242 245 240 / 0.6);
+    --hairline-strong: currentColor;
+    --grid-line: var(--ink-muted);
+    --grid-line-strong: var(--ink);
     --ink-muted: var(--ink);
+    --ink-faint: var(--ink);
   }
 }
 
@@ -328,8 +714,8 @@ html[data-memorial-day='true'] body {
   white-space: normal;
 }
 
-/* §11.4: LTR runs inside RTL text. Times and phone numbers must not have their
-   digits reordered by the bidi algorithm. */
+/* LTR runs inside RTL text. Times and phone numbers must not have their digits
+   reordered by the bidi algorithm. */
 .ltr-run {
   direction: ltr;
   unicode-bidi: isolate;
@@ -346,18 +732,32 @@ html[data-memorial-day='true'] body {
   padding-block-end: calc(env(safe-area-inset-bottom) + 0.5rem);
 }
 
-/* Loading is a skeleton grid, never a spinner (§10.1). */
-@keyframes skeleton-pulse {
-  0%, 100% { opacity: 0.55; }
-  50%      { opacity: 0.3; }
+/* Loading is a skeleton, never a spinner: the shape of what is coming is
+   already known. A sweep rather than a pulse — the direction of travel is what
+   makes it read as "working" instead of "broken". */
+@keyframes skeleton-sweep {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
 }
 
-.skeleton {
-  animation: skeleton-pulse 1.6s ease-in-out infinite;
-  background: var(--surface-sunken);
-}
-
+.skeleton,
 .skeleton-on-field {
-  animation: skeleton-pulse 1.6s ease-in-out infinite;
-  background: rgb(242 245 240 / 0.08);
+  background-color: var(--surface-sunken);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(32 33 36 / 0.045) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-sweep 1.4s linear infinite;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .skeleton-on-field {
+    animation: none;
+    background-image: none;
+  }
 }

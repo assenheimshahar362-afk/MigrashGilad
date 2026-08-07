@@ -49,7 +49,7 @@ export function ServiceWorkerBridge() {
   return (
     <div
       role="status"
-      className="fixed inset-x-0 bottom-20 z-50 mx-auto flex max-w-[720px] items-center gap-3 rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised] px-4 py-3 shadow-lg"
+      className="fixed inset-x-0 bottom-20 z-50 mx-auto flex max-w-[720px] items-center gap-3 card px-4 py-3 shadow-lg"
     >
       <span className="flex-1 text-sm font-semibold">{t('pwa.update_title')}</span>
       <Button

@@ -74,9 +74,12 @@ export function AvailabilityHint({
       aria-live="polite"
       className={cn(
         'flex min-h-6 items-center gap-2 text-sm font-semibold',
-        state.kind === 'available' && 'text-signal-ok',
-        state.kind === 'taken' && 'text-signal-err',
-        state.kind === 'checking' && 'text-[--ink-muted]',
+        // The `-ink` steps, not the raw signal colours: #22c55e as text on
+        // white is 2.27:1. The bright ones are fills — dots, bars, borders —
+        // and never carry a sentence.
+        state.kind === 'available' && 'text-success-ink',
+        state.kind === 'taken' && 'text-danger-ink',
+        state.kind === 'checking' && 'text-(--ink-muted)',
       )}
     >
       {state.kind === 'checking' ? (

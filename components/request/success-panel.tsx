@@ -44,13 +44,22 @@ export function SuccessPanel({
   return (
     <div className="space-y-6" aria-live="polite">
       <div className="text-center">
-        <PartyPopper className="mx-auto size-10 text-floodlight" aria-hidden />
-        <h2 className="mt-2 text-h1">{t('request.success.title')}</h2>
-        <p className="mt-2 text-[--ink-muted]">{t('request.success.body')}</p>
+        {/* A filled disc rather than a bare icon: the confirmation is the one
+            moment in the flow that is allowed to feel like an event. */}
+        <span
+          aria-hidden
+          className="animate-rise-in mx-auto flex size-16 items-center justify-center rounded-full bg-primary-50 text-primary-600 ring-8 ring-primary-50/50"
+        >
+          <PartyPopper className="size-8" />
+        </span>
+        <h2 className="mt-5 text-h1">{t('request.success.title')}</h2>
+        <p className="mx-auto mt-3 max-w-[42ch] text-(--ink-muted)">
+          {t('request.success.body')}
+        </p>
       </div>
 
-      <section className="rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised] p-4">
-        <h3 className="text-sm font-semibold text-[--ink-muted]">{t('request.success.slot')}</h3>
+      <section className="card p-5">
+        <h3 className="text-sm font-semibold text-(--ink-muted)">{t('request.success.slot')}</h3>
         <p className="mt-1 font-semibold">
           {formatWeekdayLong(date)}, {formatDateLong(date)}
         </p>
@@ -60,7 +69,7 @@ export function SuccessPanel({
         />
       </section>
 
-      <section className="rounded-[--radius-card] border-2 border-floodlight bg-floodlight/10 p-4">
+      <section className="rounded-(--radius-card) border border-accent/50 bg-accent-100 p-5 shadow-(--shadow-sm)">
         <h3 className="font-bold">{t('request.success.link_title')}</h3>
         <p className="mt-1 text-sm">{t('request.success.link_help')}</p>
 
@@ -70,7 +79,7 @@ export function SuccessPanel({
           dir="ltr"
           aria-label={t('request.success.link_title')}
           onFocus={(event) => event.currentTarget.select()}
-          className="mt-3 min-h-11 w-full rounded-[--radius-input] border border-[--hairline] bg-[--surface-raised] px-3 text-sm"
+          className="mt-3 min-h-12 w-full rounded-(--radius-input) border border-(--hairline) bg-(--surface-raised) px-4 text-sm focus:border-primary focus:ring-4 focus:ring-primary/12 focus:outline-none"
         />
 
         <div className="mt-3 flex flex-wrap gap-2">
@@ -90,7 +99,7 @@ export function SuccessPanel({
 
       <section>
         <h3 className="font-bold">{t('request.success.what_now')}</h3>
-        <p className="mt-1 text-sm text-[--ink-muted]">{t('request.success.body')}</p>
+        <p className="mt-1 text-sm text-(--ink-muted)">{t('request.success.body')}</p>
       </section>
 
       <div className="flex flex-wrap gap-2">

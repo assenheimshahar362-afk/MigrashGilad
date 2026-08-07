@@ -15,9 +15,9 @@ import { Button } from '@/components/ui/button';
 export function Forbidden() {
   return (
     <div className="mx-auto max-w-md py-12 text-center">
-      <ShieldAlert className="mx-auto size-10 text-stone-500" aria-hidden />
+      <ShieldAlert className="mx-auto size-10 text-ink-2" aria-hidden />
       <h1 className="mt-4 text-h2">{t('error.forbidden_title')}</h1>
-      <p className="mt-2 text-[--ink-muted]">{t('error.ERR_SUPER_ONLY')}</p>
+      <p className="mt-2 text-(--ink-muted)">{t('error.ERR_SUPER_ONLY')}</p>
       <Button asChild variant="secondary" className="mt-6">
         <Link href="/admin">{t('admin.nav.dashboard')}</Link>
       </Button>

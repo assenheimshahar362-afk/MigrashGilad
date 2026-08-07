@@ -91,7 +91,7 @@ export function RecurringManager({ rules }: { rules: RecurringRuleRow[] }) {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised] p-4">
+      <section className="card p-4">
         <h2 className="mb-4 text-h3">{t('recurring.add')}</h2>
 
         <form onSubmit={submit} className="space-y-4">
@@ -200,13 +200,13 @@ export function RecurringManager({ rules }: { rules: RecurringRuleRow[] }) {
           </Field>
 
           {error ? (
-            <p role="alert" className="text-sm font-semibold text-signal-err">
+            <p role="alert" className="text-sm font-semibold text-danger-ink">
               {error}
             </p>
           ) : null}
 
           {generated !== null ? (
-            <p role="status" className="text-sm font-semibold text-signal-ok">
+            <p role="status" className="text-sm font-semibold text-success-ink">
               {t('recurring.generated', { count: generated })}
             </p>
           ) : null}
@@ -221,16 +221,16 @@ export function RecurringManager({ rules }: { rules: RecurringRuleRow[] }) {
         <h2 className="mb-3 text-h3">{t('recurring.title')}</h2>
 
         {rules.length === 0 ? (
-          <p className="rounded-[--radius-card] border border-dashed border-[--hairline] p-8 text-center text-[--ink-muted]">
+          <p className="empty-state">
             {t('admin.empty_generic')}
           </p>
         ) : (
-          <ul className="divide-y divide-[--hairline] rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised]">
+          <ul className="divide-y divide-(--hairline) card">
             {rules.map((rule) => (
               <li key={rule.id} className="flex items-center gap-3 p-3">
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold">{rule.title}</p>
-                  <p className="text-xs text-[--ink-muted]">
+                  <p className="text-xs text-(--ink-muted)">
                     {WEEKDAY_NAMES[rule.weekday]} ·{' '}
                     <bdi dir="ltr" className="tnum">
                       {rule.start_time.slice(0, 5)}–{rule.end_time.slice(0, 5)}
@@ -244,7 +244,7 @@ export function RecurringManager({ rules }: { rules: RecurringRuleRow[] }) {
                   type="button"
                   onClick={() => setDeleting(rule)}
                   aria-label={`${t('admin.delete_event')} — ${rule.title}`}
-                  className="tap-target flex items-center justify-center rounded-[--radius-input] text-signal-err hover:bg-[--surface-sunken]"
+                  className="tap-target flex items-center justify-center rounded-(--radius-input) text-danger-ink hover:bg-(--surface-sunken)"
                 >
                   <Trash2 className="size-4" aria-hidden />
                 </button>

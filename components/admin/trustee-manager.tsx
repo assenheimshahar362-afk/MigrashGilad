@@ -102,7 +102,7 @@ export function TrusteeManager({ trustees }: { trustees: TrusteeRow[] }) {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised] p-4">
+      <section className="card p-4">
         <h2 className="mb-4 text-h3">{t('trustees.title')}</h2>
         <form onSubmit={create} className="space-y-4">
           <Field id="trustee-name" label={t('request.field.name')} required>
@@ -139,7 +139,7 @@ export function TrusteeManager({ trustees }: { trustees: TrusteeRow[] }) {
           </Field>
 
           {error ? (
-            <p role="alert" className="text-sm font-semibold text-signal-err">
+            <p role="alert" className="text-sm font-semibold text-danger-ink">
               {error}
             </p>
           ) : null}
@@ -157,23 +157,23 @@ export function TrusteeManager({ trustees }: { trustees: TrusteeRow[] }) {
         <h2 className="mb-3 text-h3">{t('managers.active')}</h2>
 
         {active.length === 0 ? (
-          <p className="rounded-[--radius-card] border border-dashed border-[--hairline] p-8 text-center text-[--ink-muted]">
+          <p className="empty-state">
             {t('trustees.empty')}
           </p>
         ) : (
-          <ul className="divide-y divide-[--hairline] rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised]">
+          <ul className="divide-y divide-(--hairline) card">
             {active.map((trustee, index) => (
               <li key={trustee.id} className="flex flex-wrap items-center gap-2 p-3">
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold">
                     {trustee.full_name}
                     {trustee.is_primary ? (
-                      <span className="ms-2 text-xs font-bold text-floodlight">
+                      <span className="ms-2 text-xs font-bold text-accent-ink">
                         {t('trustees.on_duty')}
                       </span>
                     ) : null}
                   </p>
-                  <p className="text-xs text-[--ink-muted]">
+                  <p className="text-xs text-(--ink-muted)">
                     {trustee.title ? `${trustee.title} · ` : ''}
                     <Ltr>{formatIsraeliPhone(trustee.phone_e164)}</Ltr>
                   </p>
@@ -183,7 +183,7 @@ export function TrusteeManager({ trustees }: { trustees: TrusteeRow[] }) {
                   label={t('trustees.on_duty')}
                   disabled={pending || trustee.is_primary}
                   onClick={() => patch(trustee.id, { isPrimary: true })}
-                  className={trustee.is_primary ? 'text-floodlight' : undefined}
+                  className={trustee.is_primary ? 'text-accent-ink' : undefined}
                 >
                   <Star className="size-4" aria-hidden />
                 </IconButton>
@@ -195,8 +195,8 @@ export function TrusteeManager({ trustees }: { trustees: TrusteeRow[] }) {
                   disabled={pending}
                   onClick={() => patch(trustee.id, { isAvailable: !trustee.is_available })}
                   className={cn(
-                    'tap-target rounded-[--radius-input] border border-[--hairline] px-3 text-xs font-semibold',
-                    !trustee.is_available && 'border-signal-err text-signal-err',
+                    'tap-target rounded-(--radius-input) border border-(--hairline) px-3 text-xs font-semibold',
+                    !trustee.is_available && 'border-danger text-danger-ink',
                   )}
                 >
                   {trustee.is_available ? t('managers.active') : t('trustees.unavailable')}
@@ -222,7 +222,7 @@ export function TrusteeManager({ trustees }: { trustees: TrusteeRow[] }) {
                   label={`${t('managers.revoke')} — ${trustee.full_name}`}
                   disabled={pending}
                   onClick={() => setArchiving(trustee)}
-                  className="text-signal-err"
+                  className="text-danger-ink"
                 >
                   <Archive className="size-4" aria-hidden />
                 </IconButton>
@@ -235,7 +235,7 @@ export function TrusteeManager({ trustees }: { trustees: TrusteeRow[] }) {
       {archived.length > 0 ? (
         <section>
           <h2 className="mb-3 text-h3">{t('managers.revoked')}</h2>
-          <ul className="divide-y divide-[--hairline] rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised] opacity-70">
+          <ul className="divide-y divide-(--hairline) card opacity-70">
             {archived.map((trustee) => (
               <li key={trustee.id} className="flex items-center gap-3 p-3">
                 <span className="min-w-0 flex-1 truncate">{trustee.full_name}</span>
@@ -286,7 +286,7 @@ function IconButton({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        'tap-target flex items-center justify-center rounded-[--radius-input] hover:bg-[--surface-sunken] disabled:opacity-40',
+        'tap-target flex items-center justify-center rounded-(--radius-input) hover:bg-(--surface-sunken) disabled:opacity-40',
         className,
       )}
     >

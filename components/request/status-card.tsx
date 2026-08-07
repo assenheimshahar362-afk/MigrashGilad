@@ -65,20 +65,20 @@ export function StatusCard({
         <StatusPill status={request.status} />
       </div>
 
-      <section className="rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised] p-4">
-        <h2 className="text-sm font-semibold text-[--ink-muted]">
+      <section className="card p-4">
+        <h2 className="text-sm font-semibold text-(--ink-muted)">
           {approved ? t('status.final_slot') : t('status.requested_slot')}
         </h2>
         <p className="mt-1 font-semibold">
           {formatWeekdayLong(localDate(start))}, {formatDateLong(localDate(start))}
         </p>
         <TimeRange range={formatTimeRange(start, end)} className="mt-1 block text-h3" />
-        <p className="mt-2 text-sm text-[--ink-muted]">{usageTypeLabel(request.usageType)}</p>
+        <p className="mt-2 text-sm text-(--ink-muted)">{usageTypeLabel(request.usageType)}</p>
 
         {/* FR-23: when the time was changed on approval, show both, so the
             requester is not left comparing against a half-remembered request. */}
         {request.status === 'approved_modified' ? (
-          <p className="mt-3 border-t border-[--hairline] pt-3 text-sm text-[--ink-muted]">
+          <p className="mt-3 border-t border-(--hairline) pt-3 text-sm text-(--ink-muted)">
             {t('status.requested_slot')}:{' '}
             <TimeRange range={formatTimeRange(request.requestedStart, request.requestedEnd)} />
           </p>
@@ -86,14 +86,14 @@ export function StatusCard({
       </section>
 
       {request.decisionNote ? (
-        <section className="rounded-[--radius-card] border border-[--hairline] p-4">
-          <h2 className="text-sm font-semibold text-[--ink-muted]">{t('status.admin_note')}</h2>
+        <section className="card p-4">
+          <h2 className="text-sm font-semibold text-(--ink-muted)">{t('status.admin_note')}</h2>
           <p className="mt-1">{request.decisionNote}</p>
         </section>
       ) : null}
 
       {error ? (
-        <p role="alert" className="text-sm font-semibold text-signal-err">
+        <p role="alert" className="text-sm font-semibold text-danger-ink">
           {error}
         </p>
       ) : null}

@@ -190,7 +190,7 @@ export function EventEditor({
       <label className="flex items-center gap-3 text-sm">
         <input
           type="checkbox"
-          className="size-5 accent-[--color-floodlight]"
+          className="size-5 accent-(--color-floodlight)"
           checked={form.showContact}
           onChange={(e) => set('showContact', e.target.checked)}
         />
@@ -198,7 +198,7 @@ export function EventEditor({
       </label>
 
       {error ? (
-        <p role="alert" className="text-sm font-semibold text-signal-err">
+        <p role="alert" className="text-sm font-semibold text-danger-ink">
           {error}
         </p>
       ) : null}

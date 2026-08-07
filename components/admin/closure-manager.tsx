@@ -118,7 +118,7 @@ export function ClosureManager({ closures }: { closures: ClosureRow[] }) {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised] p-4">
+      <section className="card p-4">
         <h2 className="mb-4 text-h3">{t('closures.add')}</h2>
 
         <form
@@ -142,7 +142,7 @@ export function ClosureManager({ closures }: { closures: ClosureRow[] }) {
           <label className="flex items-center gap-3 text-sm">
             <input
               type="checkbox"
-              className="size-5 accent-[--color-floodlight]"
+              className="size-5 accent-(--color-floodlight)"
               checked={form.allDay}
               onChange={(e) => set('allDay', e.target.checked)}
             />
@@ -209,7 +209,7 @@ export function ClosureManager({ closures }: { closures: ClosureRow[] }) {
           <label className="flex items-center gap-3 text-sm">
             <input
               type="checkbox"
-              className="size-5 accent-[--color-floodlight]"
+              className="size-5 accent-(--color-floodlight)"
               checked={form.cancelConflicts}
               onChange={(e) => set('cancelConflicts', e.target.checked)}
             />
@@ -217,13 +217,13 @@ export function ClosureManager({ closures }: { closures: ClosureRow[] }) {
           </label>
 
           {error ? (
-            <p role="alert" className="text-sm font-semibold text-signal-err">
+            <p role="alert" className="text-sm font-semibold text-danger-ink">
               {error}
             </p>
           ) : null}
 
           {result !== null ? (
-            <p role="status" className="text-sm font-semibold text-signal-ok">
+            <p role="status" className="text-sm font-semibold text-success-ink">
               {t('closures.cancelled_count', { count: result })}
             </p>
           ) : null}
@@ -238,16 +238,16 @@ export function ClosureManager({ closures }: { closures: ClosureRow[] }) {
         <h2 className="mb-3 text-h3">{t('closures.title')}</h2>
 
         {closures.length === 0 ? (
-          <p className="rounded-[--radius-card] border border-dashed border-[--hairline] p-8 text-center text-[--ink-muted]">
+          <p className="empty-state">
             {t('admin.empty_generic')}
           </p>
         ) : (
-          <ul className="divide-y divide-[--hairline] rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised]">
+          <ul className="divide-y divide-(--hairline) card">
             {closures.map((closure) => (
               <li key={closure.id} className="flex items-center gap-3 p-3">
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold">{closure.reason}</p>
-                  <p className="text-xs text-[--ink-muted]">
+                  <p className="text-xs text-(--ink-muted)">
                     {formatDateLong(localDate(closure.starts_at))}
                     {closure.all_day ? (
                       ` · ${t('closures.field.all_day')}`
@@ -264,7 +264,7 @@ export function ClosureManager({ closures }: { closures: ClosureRow[] }) {
                   type="button"
                   onClick={() => setDeleting(closure)}
                   aria-label={`${t('admin.delete_event')} — ${closure.reason}`}
-                  className="tap-target flex items-center justify-center rounded-[--radius-input] text-signal-err hover:bg-[--surface-sunken]"
+                  className="tap-target flex items-center justify-center rounded-(--radius-input) text-danger-ink hover:bg-(--surface-sunken)"
                 >
                   <Trash2 className="size-4" aria-hidden />
                 </button>
@@ -301,7 +301,7 @@ export function ClosureManager({ closures }: { closures: ClosureRow[] }) {
             </ul>
           </>
         ) : (
-          <p className="text-sm text-[--ink-muted]">{t('schedule.empty')}</p>
+          <p className="text-sm text-(--ink-muted)">{t('schedule.empty')}</p>
         )}
       </ConfirmDialog>
 

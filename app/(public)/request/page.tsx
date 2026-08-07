@@ -25,30 +25,43 @@ export default async function RequestPage({
 
   if (!settings.requestsOpen) {
     return (
-      <div className="mx-auto max-w-[720px] px-4 py-8">
-        <h1 className="text-h1">{t('request.closed_title')}</h1>
-        <p className="mt-3 text-[--ink-muted]">
-          {settings.requestsClosedMsg ?? t('error.ERR_REQUESTS_CLOSED')}
-        </p>
-        <Button asChild variant="secondary" className="mt-6">
-          <Link href="/">{t('common.back_home')}</Link>
-        </Button>
-      </div>
+      <section className="section">
+        <div className="shell-narrow">
+          <div className="card p-8 text-center">
+            <h1 className="text-h1">{t('request.closed_title')}</h1>
+            <p className="mt-3 text-(--ink-muted)">
+              {settings.requestsClosedMsg ?? t('error.ERR_REQUESTS_CLOSED')}
+            </p>
+            <Button asChild variant="secondary" className="mt-7">
+              <Link href="/">{t('common.back_home')}</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
     );
   }
 
   return (
-    <div className="mx-auto max-w-[720px] px-4 py-6 pb-28">
-      <h1 className="mb-6 text-h1">{t('request.title')}</h1>
-      <RequestForm
-        settings={settings}
-        prefill={{
-          date: sanitiseDate(params.date),
-          start: sanitiseTime(params.start),
-          end: sanitiseTime(params.end),
-        }}
-      />
-    </div>
+    <section className="section pb-28 lg:pb-24">
+      <div className="shell-narrow">
+        <p className="text-sm font-semibold text-primary-600">{t('app.tagline')}</p>
+        <h1 className="mt-3 text-display">{t('request.title')}</h1>
+
+        {/* The form sits on a card. On a three-step flow the card edge is what
+            tells you the steps belong to one thing rather than being three
+            successive pages. */}
+        <div className="card mt-8 p-6 sm:p-8">
+          <RequestForm
+            settings={settings}
+            prefill={{
+              date: sanitiseDate(params.date),
+              start: sanitiseTime(params.start),
+              end: sanitiseTime(params.end),
+            }}
+          />
+        </div>
+      </div>
+    </section>
   );
 }
 

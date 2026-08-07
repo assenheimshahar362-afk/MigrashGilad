@@ -30,7 +30,7 @@ export function OfflineBanner() {
   return (
     <p
       role="status"
-      className="flex items-center gap-2 bg-stone-500 px-4 py-2 text-sm font-semibold text-chalk-050"
+      className="flex items-center gap-2 bg-ink-2 px-4 py-2 text-sm font-semibold text-white"
     >
       <WifiOff className="size-4 shrink-0" aria-hidden />
       {t('schedule.offline')}

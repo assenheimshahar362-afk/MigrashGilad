@@ -15,7 +15,7 @@ export default async function AdminSettingsPage() {
   const settings = await getSettingsRow();
   if (!settings) {
     return (
-      <p role="alert" className="text-sm font-semibold text-signal-err">
+      <p role="alert" className="text-sm font-semibold text-danger-ink">
         {t('error.generic')}
       </p>
     );

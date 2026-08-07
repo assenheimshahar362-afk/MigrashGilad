@@ -18,8 +18,9 @@ export default async function RulesPage() {
   const settings = await getSettings();
 
   return (
-    <div className="mx-auto max-w-[720px] px-4 py-6 pb-24">
-      <h1 className="text-h1">{t('rules.title')}</h1>
+    <section className="section">
+      <div className="shell-narrow">
+      <h1 className="text-display">{t('rules.title')}</h1>
 
       <section className="mt-8">
         <h2 className="text-h2">{t('settings.opening_hours')}</h2>
@@ -29,7 +30,7 @@ export default async function RulesPage() {
             {WEEKDAY_NAMES.map((name, day) => {
               const hours = settings.openingHours[String(day)] ?? null;
               return (
-                <tr key={name} className="border-b border-[--hairline]">
+                <tr key={name} className="border-b border-(--hairline)">
                   <th scope="row" className="py-2 text-start font-semibold">
                     {name}
                   </th>
@@ -75,6 +76,7 @@ export default async function RulesPage() {
           .
         </p>
       </section>
-    </div>
+      </div>
+    </section>
   );
 }

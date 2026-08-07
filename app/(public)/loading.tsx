@@ -8,7 +8,7 @@ export default function Loading() {
     <div className="pitch-field" aria-busy="true" aria-live="polite">
       <span className="sr-only">טוען…</span>
 
-      <div className="flex border-b border-[--grid-line]">
+      <div className="flex border-b border-(--grid-line)">
         <div className="w-11 shrink-0 pitch-touchline" />
         {Array.from({ length: 7 }, (_, i) => (
           <div key={i} className="flex-1 py-2 text-center">

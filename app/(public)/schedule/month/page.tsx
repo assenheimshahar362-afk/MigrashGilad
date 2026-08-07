@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import { getSchedule, getSettings } from '@/lib/data';
 import {
@@ -45,29 +45,30 @@ export default async function MonthSchedulePage({
   const next = addLocalMonths(monthStart, 1);
 
   return (
-    <div className="pb-24">
-      <div className="flex items-center gap-1 bg-pitch-700 px-2 py-2 text-chalk-050">
+    <section className="section pb-28 lg:pb-16">
+      <div className="shell">
+      <div className="flex items-center gap-2 pb-4">
         {/* §11.4: chevrons mirror. In RTL the previous month is to the right. */}
         <Link
           href={`/schedule/month?month=${prev.slice(0, 7)}`}
           aria-label={t('schedule.prev_month')}
-          className="tap-target flex items-center justify-center rounded-[--radius-input] hover:bg-chalk-050/10"
+          className="press tap-target flex items-center justify-center rounded-(--radius-input) border border-(--hairline) bg-(--surface-raised) transition-[background-color,border-color,transform] duration-(--duration-press) ease-(--ease-out-quiet) hover:border-(--hairline-strong) hover:bg-(--surface-hover)"
         >
           <ChevronRight className="size-5" aria-hidden />
         </Link>
 
-        <h1 className="flex-1 text-center text-h3 font-bold">{formatMonthYear(monthStart)}</h1>
+        <h1 className="flex-1 text-h1">{formatMonthYear(monthStart)}</h1>
 
         <Link
           href={`/schedule/month?month=${next.slice(0, 7)}`}
           aria-label={t('schedule.next_month')}
-          className="tap-target flex items-center justify-center rounded-[--radius-input] hover:bg-chalk-050/10"
+          className="press tap-target flex items-center justify-center rounded-(--radius-input) border border-(--hairline) bg-(--surface-raised) transition-[background-color,border-color,transform] duration-(--duration-press) ease-(--ease-out-quiet) hover:border-(--hairline-strong) hover:bg-(--surface-hover)"
         >
           <ChevronLeft className="size-5" aria-hidden />
         </Link>
       </div>
 
-      <div className="bg-pitch-700 pb-2">
+      <div className="pb-3">
         <Legend />
       </div>
 
@@ -75,8 +76,12 @@ export default async function MonthSchedulePage({
         <MonthGrid monthStart={monthStart} events={events} closures={closures} />
       </div>
 
-      <div className="px-4">
-        <Link href="/" className="text-sm underline underline-offset-4">
+      <div className="pt-2">
+        <Link
+          href="/"
+          className="press-sm inline-flex items-center gap-1.5 rounded-(--radius-input) border border-(--hairline) bg-(--surface-raised) px-4 py-2 text-sm font-semibold text-(--ink-muted) transition-[background-color,border-color,color] duration-(--duration-tip) ease-(--ease-out-quiet) hover:border-(--hairline-strong) hover:text-(--ink)"
+        >
+          <CalendarDays className="size-4" aria-hidden />
           {t('nav.week')}
         </Link>
       </div>
@@ -85,6 +90,7 @@ export default async function MonthSchedulePage({
       <DayList dates={grid} events={events} headingId="month-sr-list" />
 
       <p className="sr-only">{settings.pitchName}</p>
-    </div>
+      </div>
+    </section>
   );
 }

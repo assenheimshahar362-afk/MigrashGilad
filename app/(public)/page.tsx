@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { CalendarRange } from 'lucide-react';
 import { t } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 import { getSchedule, getSettings } from '@/lib/data';
 import {
   addLocalDays,
@@ -17,6 +19,7 @@ import { DayList } from '@/components/schedule/day-list';
 import { Legend } from '@/components/schedule/legend';
 import { OfflineBanner } from '@/components/pwa/offline-banner';
 import { Button } from '@/components/ui/button';
+import { Hero } from '@/components/marketing/hero';
 
 export const metadata: Metadata = {
   title: t('schedule.title'),
@@ -61,57 +64,76 @@ export default async function WeeklySchedulePage({
   const bannerClosure = activeClosures[0];
 
   return (
-    <div className="pb-24">
-      <h1 className="sr-only">
-        {t('schedule.title')} — {t('schedule.week_of', { range: formatWeekRange(weekStart) })}
-      </h1>
+    <>
+      <Hero />
 
-      <OfflineBanner />
+      <section id="schedule" className="scroll-mt-24 pb-28 lg:pb-16">
+        <div className="shell pt-8 sm:pt-10 lg:pt-14">
+          {/* The hero carries this page's <h1>; the schedule is a section
+              within it. Visually the week range in <WeekNav> is the heading, so
+              this one is for the accessibility tree only. */}
+          <h2 className="sr-only">
+            {t('schedule.title')} — {t('schedule.week_of', { range: formatWeekRange(weekStart) })}
+          </h2>
 
-      <WeekNav weekStart={weekStart} />
+          <OfflineBanner />
 
-      {bannerClosure ? (
-        <p
-          role="status"
-          className="closure-hatch border-y border-signal-err/50 bg-signal-err/10 px-4 py-2 text-sm font-semibold"
-        >
-          {t('schedule.closed_banner', { reason: bannerClosure.reason })}
-        </p>
-      ) : null}
+          <WeekNav weekStart={weekStart} />
 
-      <WeekGrid
-        weekStart={weekStart}
-        events={events}
-        closures={closures}
-        settings={settings}
-      />
+          {bannerClosure ? (
+            <p
+              role="status"
+              className="closure-hatch animate-fade-in mb-3 rounded-(--radius-card-sm) border border-danger/30 bg-danger/8 px-4 py-3 text-sm font-semibold text-danger-ink"
+            >
+              {t('schedule.closed_banner', { reason: bannerClosure.reason })}
+            </p>
+          ) : null}
 
-      <Legend className="bg-pitch-700 pb-1 pt-1" />
+          <WeekGrid weekStart={weekStart} events={events} closures={closures} settings={settings} />
 
-      {isEmpty ? (
-        <p className="px-4 py-6 text-center text-[--ink-muted]">{t('schedule.empty')}</p>
-      ) : null}
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <Legend />
 
-      {/* A11Y-5: the screen-reader alternative to the grid. */}
-      <DayList dates={days} events={events} headingId="week-sr-list" />
+            <Link
+              href="/schedule/month"
+              className={cn(
+                'press-sm inline-flex items-center gap-1.5 rounded-(--radius-input) px-4 py-2',
+                'text-sm font-semibold text-(--ink-muted)',
+                'border border-(--hairline) bg-(--surface-raised)',
+                'transition-[background-color,border-color,color] duration-(--duration-tip)',
+                'ease-(--ease-out-quiet) hover:border-(--hairline-strong) hover:text-(--ink)',
+              )}
+            >
+              <CalendarRange className="size-4" aria-hidden />
+              {t('nav.month')}
+            </Link>
+          </div>
 
-      <div className="px-4 pt-4">
-        <Link href="/schedule/month" className="text-sm underline underline-offset-4">
-          {t('nav.month')}
-        </Link>
-      </div>
+          {isEmpty ? (
+            <p className="empty-state mt-4">{t('schedule.empty')}</p>
+          ) : null}
+
+          {/* A11Y-5: the screen-reader alternative to the grid. */}
+          <DayList dates={days} events={events} headingId="week-sr-list" />
+        </div>
+      </section>
 
       <ScheduleCta
         requestsOpen={settings.requestsOpen}
         closedMessage={settings.requestsClosedMsg}
       />
-    </div>
+    </>
   );
 }
 
 /**
  * §10.1 CTA: a persistent bottom button, hidden when requests are paused and
  * replaced by the closed-reason banner (FR-37).
+ *
+ * It is docked above the tab bar on a phone, where the schedule fills the
+ * screen and the button is the only way forward. From `lg` — where the hero
+ * already carries the same call to action and the tab bar is gone — it is not
+ * rendered at all, because a floating button over a desktop layout is clutter.
  */
 function ScheduleCta({
   requestsOpen,
@@ -122,18 +144,20 @@ function ScheduleCta({
 }) {
   if (!requestsOpen) {
     return (
-      <p
-        role="status"
-        className="fixed inset-x-0 bottom-16 z-20 mx-auto max-w-[720px] border-t border-[--hairline] bg-[--surface-raised] px-4 py-3 text-center text-sm font-semibold safe-bottom"
-      >
-        {closedMessage ?? t('error.ERR_REQUESTS_CLOSED')}
-      </p>
+      <div className="fixed inset-x-0 bottom-[4.5rem] z-20 mx-auto max-w-[560px] px-4 lg:hidden">
+        <p
+          role="status"
+          className="card animate-rise-in px-4 py-3 text-center text-sm font-semibold text-(--ink-muted)"
+        >
+          {closedMessage ?? t('error.ERR_REQUESTS_CLOSED')}
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-16 z-20 mx-auto max-w-[720px] px-4 pb-2">
-      <Button asChild size="lg" className="w-full shadow-lg">
+    <div className="fixed inset-x-0 bottom-[4.5rem] z-20 mx-auto max-w-[560px] px-4 lg:hidden">
+      <Button asChild size="lg" className="animate-rise-in w-full shadow-(--shadow-lg)">
         <Link href="/request">{t('schedule.cta')}</Link>
       </Button>
     </div>

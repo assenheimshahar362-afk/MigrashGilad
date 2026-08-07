@@ -94,9 +94,9 @@ export function SettingsForm({ settings }: { settings: SiteSettingsRow }) {
 
   return (
     <form onSubmit={submit} className="space-y-8">
-      <section className="rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised] p-4">
+      <section className="card p-4">
         <h2 className="mb-2 text-h3">{t('settings.opening_hours')}</h2>
-        <p className="mb-4 text-sm text-[--ink-muted]">{t('settings.opening_hours_help')}</p>
+        <p className="mb-4 text-sm text-(--ink-muted)">{t('settings.opening_hours_help')}</p>
 
         <ul className="space-y-3">
           {DAYS.map((day) => {
@@ -110,7 +110,7 @@ export function SettingsForm({ settings }: { settings: SiteSettingsRow }) {
                 <label className="flex items-center gap-2 text-sm">
                   <input
                     type="checkbox"
-                    className="size-5 accent-[--color-floodlight]"
+                    className="size-5 accent-(--color-floodlight)"
                     checked={closed}
                     onChange={(e) => setDay(day, e.target.checked ? null : ['06:00', '23:00'])}
                   />
@@ -125,7 +125,7 @@ export function SettingsForm({ settings }: { settings: SiteSettingsRow }) {
                       aria-label={`${WEEKDAY_NAMES[day]} — ${t('request.field.start')}`}
                       value={value[0]}
                       onChange={(e) => setDay(day, [e.target.value, value[1]])}
-                      className="min-h-11 rounded-[--radius-input] border border-[--hairline] bg-[--surface-raised] px-2"
+                      className="min-h-11 rounded-(--radius-input) border border-(--hairline) bg-(--surface-raised) px-2"
                     />
                     <span aria-hidden>–</span>
                     <input
@@ -134,7 +134,7 @@ export function SettingsForm({ settings }: { settings: SiteSettingsRow }) {
                       aria-label={`${WEEKDAY_NAMES[day]} — ${t('request.field.end')}`}
                       value={value[1]}
                       onChange={(e) => setDay(day, [value[0], e.target.value])}
-                      className="min-h-11 rounded-[--radius-input] border border-[--hairline] bg-[--surface-raised] px-2"
+                      className="min-h-11 rounded-(--radius-input) border border-(--hairline) bg-(--surface-raised) px-2"
                     />
                   </span>
                 ) : null}
@@ -144,7 +144,7 @@ export function SettingsForm({ settings }: { settings: SiteSettingsRow }) {
         </ul>
       </section>
 
-      <section className="grid gap-4 rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised] p-4 sm:grid-cols-3">
+      <section className="grid gap-4 card p-4 sm:grid-cols-3">
         <Field id="min-lead" label={t('settings.min_lead_hours')} required>
           {(props) => (
             <Input
@@ -189,11 +189,11 @@ export function SettingsForm({ settings }: { settings: SiteSettingsRow }) {
         </Field>
       </section>
 
-      <section className="space-y-4 rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised] p-4">
+      <section className="space-y-4 card p-4">
         <label className="flex items-center gap-3 font-semibold">
           <input
             type="checkbox"
-            className="size-5 accent-[--color-floodlight]"
+            className="size-5 accent-(--color-floodlight)"
             checked={form.requestsOpen}
             onChange={(e) => setForm((c) => ({ ...c, requestsOpen: e.target.checked }))}
           />
@@ -226,7 +226,7 @@ export function SettingsForm({ settings }: { settings: SiteSettingsRow }) {
         </Field>
       </section>
 
-      <section className="space-y-4 rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised] p-4">
+      <section className="space-y-4 card p-4">
         <h2 className="text-h3">{t('memorial.title')}</h2>
 
         {/* §7: this HTML is sanitised on the server before storage and again at
@@ -260,7 +260,7 @@ export function SettingsForm({ settings }: { settings: SiteSettingsRow }) {
         </Field>
       </section>
 
-      <section className="space-y-3 rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised] p-4">
+      <section className="space-y-3 card p-4">
         <h2 className="text-h3">{t('settings.maintenance')}</h2>
 
         {maintenance ? (
@@ -305,14 +305,14 @@ export function SettingsForm({ settings }: { settings: SiteSettingsRow }) {
       {error ? (
         <p
           role="alert"
-          className="rounded-[--radius-input] border-2 border-signal-err bg-signal-err/10 px-3 py-2 text-sm font-semibold"
+          className="rounded-(--radius-input) border-2 border-danger bg-danger/10 px-3 py-2 text-sm font-semibold"
         >
           {error}
         </p>
       ) : null}
 
       {saved ? (
-        <p role="status" className="text-sm font-semibold text-signal-ok">
+        <p role="status" className="text-sm font-semibold text-success-ink">
           {t('admin.saved')}
         </p>
       ) : null}

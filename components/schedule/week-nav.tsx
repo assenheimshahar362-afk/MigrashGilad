@@ -50,7 +50,9 @@ export function WeekNav({ weekStart }: { weekStart: LocalDate }) {
 
   return (
     <div
-      className="flex items-center gap-1 bg-pitch-700 px-2 py-2 text-chalk-050"
+      className={cn(
+        'flex items-center gap-1.5 px-1 pb-3',
+      )}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
@@ -58,18 +60,26 @@ export function WeekNav({ weekStart }: { weekStart: LocalDate }) {
         <ChevronRight className="size-5" aria-hidden />
       </NavLink>
 
-      <div className="flex-1 text-center">
-        <span className="tnum text-sm font-semibold" dir="ltr">
+      <div className="flex-1 px-1 text-center sm:text-start">
+        <span className="tnum text-h3 font-bold text-(--ink)" dir="ltr">
           {formatWeekRange(weekStart)}
         </span>
       </div>
 
+      {/* When you are already on this week the control is a filled amber chip;
+          otherwise it is an outline you can see but that does not compete with
+          the week you are actually looking at. */}
       <Link
         href="/"
         aria-current={isCurrentWeek ? 'page' : undefined}
         className={cn(
-          'tap-target flex items-center justify-center rounded-[--radius-input] px-3 text-sm font-semibold',
-          isCurrentWeek ? 'bg-floodlight text-pitch-900' : 'hover:bg-chalk-050/10',
+          'press tap-target flex items-center justify-center rounded-(--radius-input) px-4',
+          'text-sm font-semibold',
+          'transition-[background-color,border-color,color,transform]',
+          'duration-(--duration-press) ease-(--ease-out-quiet)',
+          isCurrentWeek
+            ? 'bg-primary-50 text-primary-700'
+            : 'border border-(--hairline) bg-(--surface-raised) text-(--ink) hover:border-(--hairline-strong) hover:bg-(--surface-hover)',
         )}
       >
         {t('schedule.today')}
@@ -97,7 +107,12 @@ function NavLink({
     <Link
       href={href}
       aria-label={label}
-      className="tap-target flex items-center justify-center rounded-[--radius-input] hover:bg-chalk-050/10"
+      className={cn(
+        'press tap-target flex items-center justify-center rounded-(--radius-input)',
+        'border border-(--hairline) bg-(--surface-raised) text-(--ink)',
+        'transition-[background-color,border-color,transform] duration-(--duration-press)',
+        'ease-(--ease-out-quiet) hover:border-(--hairline-strong) hover:bg-(--surface-hover)',
+      )}
     >
       {children}
     </Link>
@@ -113,7 +128,14 @@ function DatePicker({ weekStart }: { weekStart: LocalDate }) {
   const router = useRouter();
 
   return (
-    <label className="tap-target relative flex items-center justify-center rounded-[--radius-input] hover:bg-chalk-050/10">
+    <label
+      className={cn(
+        'press tap-target relative flex items-center justify-center rounded-(--radius-input)',
+        'border border-(--hairline) bg-(--surface-raised) text-(--ink)',
+        'transition-[background-color,border-color,transform] duration-(--duration-press)',
+        'ease-(--ease-out-quiet) hover:border-(--hairline-strong) hover:bg-(--surface-hover)',
+      )}
+    >
       <span className="sr-only">{t('schedule.pick_date')}</span>
       <CalendarRange className="size-5" aria-hidden />
       <input

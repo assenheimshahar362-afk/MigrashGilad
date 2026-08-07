@@ -61,33 +61,33 @@ export default async function AdminAuditPage({
       </nav>
 
       {entries.length === 0 ? (
-        <p className="rounded-[--radius-card] border border-dashed border-[--hairline] p-8 text-center text-[--ink-muted]">
+        <p className="empty-state">
           {t('admin.empty_generic')}
         </p>
       ) : (
-        <ul className="divide-y divide-[--hairline] rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised]">
+        <ul className="divide-y divide-(--hairline) card">
           {entries.map((entry) => (
             <li key={entry.id as number} className="p-3">
               <div className="flex flex-wrap items-baseline gap-2 text-sm">
                 <span className="font-semibold">{entry.action as string}</span>
-                <span className="text-[--ink-muted]">{entry.entity as string}</span>
-                <span className="ms-auto text-xs text-[--ink-muted]">
+                <span className="text-(--ink-muted)">{entry.entity as string}</span>
+                <span className="ms-auto text-xs text-(--ink-muted)">
                   {formatRelative(entry.created_at as string)}
                 </span>
               </div>
 
-              <p className="mt-0.5 text-xs text-[--ink-muted]">
+              <p className="mt-0.5 text-xs text-(--ink-muted)">
                 {(entry.actor_label as string | null) ?? (entry.actor_id as string | null) ?? '—'}
               </p>
 
               {entry.before || entry.after ? (
                 <details className="mt-2">
-                  <summary className="cursor-pointer text-xs font-semibold text-[--ink-muted]">
+                  <summary className="cursor-pointer text-xs font-semibold text-(--ink-muted)">
                     {t('audit.column.entity')}
                   </summary>
                   <pre
                     dir="ltr"
-                    className="mt-2 max-h-64 overflow-auto rounded-[--radius-input] bg-[--surface-sunken] p-2 text-[0.7rem]"
+                    className="mt-2 max-h-64 overflow-auto rounded-(--radius-input) bg-(--surface-sunken) p-2 text-[0.7rem]"
                   >
                     {JSON.stringify({ before: entry.before, after: entry.after }, null, 2)}
                   </pre>
@@ -115,8 +115,8 @@ function Chip({
       href={href}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'tap-target flex items-center rounded-[--radius-chip] border px-3 text-xs font-semibold',
-        active ? 'border-floodlight bg-floodlight text-pitch-900' : 'border-[--hairline]',
+        'tap-target flex items-center rounded-(--radius-chip) border px-3 text-xs font-semibold',
+        active ? 'border-accent bg-accent text-primary-800' : 'border-(--hairline)',
       )}
     >
       {children}

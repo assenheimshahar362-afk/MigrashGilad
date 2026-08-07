@@ -32,7 +32,7 @@ export default async function RequestStatusPage({
     return (
       <div className="mx-auto max-w-[720px] px-4 py-10 pb-28">
         <h1 className="text-h1">{t('status.not_found')}</h1>
-        <p className="mt-3 text-[--ink-muted]">{t('status.not_found_help')}</p>
+        <p className="mt-3 text-(--ink-muted)">{t('status.not_found_help')}</p>
         <div className="mt-6 flex flex-wrap gap-2">
           <Button asChild variant="secondary">
             <Link href="/trustees">{t('nav.trustees')}</Link>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { TriangleAlert } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 
@@ -25,16 +26,26 @@ export default function GlobalError({
       id="main"
       className="mx-auto flex min-h-dvh max-w-[720px] flex-col items-center justify-center px-6 text-center"
     >
-      <h1 className="text-h1">{t('error.title')}</h1>
-      <p className="mt-3 text-[--ink-muted]">{t('error.generic')}</p>
+      <span
+        aria-hidden
+        className="flex size-16 items-center justify-center rounded-full bg-danger/10 text-danger-ink"
+      >
+        <TriangleAlert className="size-8" />
+      </span>
 
+      <h1 className="mt-5 text-h1">{t('error.title')}</h1>
+      <p className="mt-3 max-w-[38ch] text-(--ink-muted)">{t('error.generic')}</p>
+
+      {/* The digest is the only thing here that ties a visitor's report to a
+          server log line, so it is selectable and monospaced-by-figures rather
+          than hidden away. */}
       {error.digest ? (
-        <p className="mt-2 text-xs text-[--ink-muted]">
+        <p className="tnum mt-3 rounded-(--radius-chip) bg-(--surface-sunken) px-2.5 py-1 text-xs text-(--ink-faint) select-all">
           <bdi dir="ltr">{error.digest}</bdi>
         </p>
       ) : null}
 
-      <Button className="mt-6" onClick={reset}>
+      <Button className="mt-7" onClick={reset}>
         {t('common.retry')}
       </Button>
     </main>

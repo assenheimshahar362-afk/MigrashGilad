@@ -15,11 +15,17 @@ export const metadata: Metadata = { title: t('offline.title') };
 export default function OfflinePage() {
   return (
     <div className="mx-auto flex min-h-dvh max-w-[720px] flex-col items-center justify-center px-6 text-center">
-      <WifiOff className="size-12 text-stone-500" aria-hidden />
-      <h1 className="mt-4 text-h1">{t('offline.title')}</h1>
-      <p className="mt-3 text-[--ink-muted]">{t('offline.body')}</p>
+      <span
+        aria-hidden
+        className="flex size-16 items-center justify-center rounded-full bg-(--surface-sunken) text-ink-2"
+      >
+        <WifiOff className="size-8" />
+      </span>
 
-      <div className="mt-8 flex flex-wrap justify-center gap-2">
+      <h1 className="mt-5 text-h1">{t('offline.title')}</h1>
+      <p className="mt-3 max-w-[38ch] text-(--ink-muted)">{t('offline.body')}</p>
+
+      <div className="mt-7 flex flex-wrap justify-center gap-2">
         <Button asChild>
           <Link href="/">{t('common.back_home')}</Link>
         </Button>

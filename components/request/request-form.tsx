@@ -8,6 +8,7 @@ import { requestFormSchema, type RequestFormValues } from '@/lib/validation/requ
 import { REQUESTABLE_USAGE_TYPES, type PublicSettings } from '@/lib/types';
 import { usageTypeLabel } from '@/lib/usage-type';
 import { addLocalDays, minutesFromTime, timeFromMinutes, toInstant, todayLocal } from '@/lib/time';
+import { ArrowLeft, CircleAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
 import { Button } from '@/components/ui/button';
@@ -195,7 +196,7 @@ export function RequestForm({
           </div>
 
           <fieldset>
-            <legend className="mb-2 text-sm font-semibold">{t('request.field.duration')}</legend>
+            <legend className="mb-2.5 text-sm font-semibold">{t('request.field.duration')}</legend>
             <div className="flex flex-wrap gap-2">
               {DURATION_CHIPS.filter((minutes) => minutes <= settings.maxDurationMin).map(
                 (minutes) => {
@@ -214,10 +215,12 @@ export function RequestForm({
                         )
                       }
                       className={cn(
-                        'tap-target rounded-[--radius-chip] border px-4 text-sm font-semibold',
+                        'press tap-target rounded-(--radius-chip) border px-5 text-sm font-semibold',
+                        'transition-[background-color,border-color,color,box-shadow,transform]',
+                        'duration-(--duration-press) ease-(--ease-out-quiet)',
                         active
-                          ? 'border-floodlight bg-floodlight text-pitch-900'
-                          : 'border-[--hairline] bg-[--surface-raised]',
+                          ? 'border-primary bg-primary text-white shadow-(--shadow-xs)'
+                          : 'border-(--hairline) bg-(--surface-raised) text-(--ink) hover:border-(--hairline-strong) hover:bg-(--surface-hover)',
                       )}
                     >
                       {durationLabel(minutes)}
@@ -310,16 +313,24 @@ export function RequestForm({
             )}
           </Field>
 
-          <label className="flex items-start gap-3 text-sm">
+          <label
+            className={cn(
+              'flex cursor-pointer items-start gap-3 rounded-(--radius-input) p-3 text-sm',
+              'border border-(--hairline) bg-(--surface-raised)',
+              'transition-colors duration-(--duration-tip) ease-(--ease-out-quiet)',
+              'hover:border-(--hairline-strong) hover:bg-(--surface-hover)',
+              'has-checked:border-primary/40 has-checked:bg-primary-50',
+            )}
+          >
             <input
               type="checkbox"
-              className="mt-1 size-5 shrink-0 accent-[--color-floodlight]"
+              className="mt-0.5 size-5 shrink-0 accent-primary"
               {...register('consent')}
             />
             <span>{t('request.field.consent')}</span>
           </label>
           {errors.consent ? (
-            <p role="alert" className="text-sm font-semibold text-signal-err">
+            <p role="alert" className="text-sm font-semibold text-danger-ink">
               {t('error.ERR_VALIDATION')}
             </p>
           ) : null}
@@ -333,32 +344,37 @@ export function RequestForm({
         <p
           role="alert"
           aria-live="assertive"
-          className="rounded-[--radius-input] border-2 border-signal-err bg-signal-err/10 px-3 py-2 text-sm font-semibold"
+          className="animate-rise-in flex items-start gap-2 rounded-(--radius-input) border border-danger/40 bg-danger/8 px-4 py-3 text-sm font-semibold text-danger-ink"
         >
+          <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
           {serverError}
         </p>
       ) : null}
 
       {queuedOffline ? (
-        <p role="status" className="rounded-[--radius-input] bg-[--surface-sunken] px-3 py-2 text-sm font-semibold">
+        <p
+          role="status"
+          className="animate-rise-in rounded-(--radius-input) border border-(--hairline) bg-(--surface-sunken) px-4 py-3 text-sm font-semibold"
+        >
           {t('request.queued_offline')}
         </p>
       ) : null}
 
-      <div className="flex gap-2">
+      <div className="flex gap-3 pt-2">
         {stepIndex > 0 ? (
-          <Button type="button" variant="secondary" onClick={goBack}>
+          <Button type="button" variant="secondary" size="lg" onClick={goBack}>
             {t('request.back')}
           </Button>
         ) : null}
 
         {step === 'who' ? (
-          <Button type="submit" size="lg" className="flex-1" disabled={isSubmitting}>
+          <Button type="submit" size="lg" className="flex-1" loading={isSubmitting}>
             {isSubmitting ? t('request.submitting') : t('request.submit')}
           </Button>
         ) : (
           <Button type="button" size="lg" className="flex-1" onClick={goNext}>
             {t('request.next')}
+            <ArrowLeft className="size-5" aria-hidden />
           </Button>
         )}
       </div>
@@ -370,16 +386,31 @@ function StepIndicator({ step }: { step: Step }) {
   const index = STEPS.indexOf(step);
   return (
     <div>
-      <p className="text-sm text-[--ink-muted]">
-        {t('request.step_of', { current: index + 1, total: STEPS.length })}
-      </p>
-      <h2 className="text-h2">{t(`request.step.${step}` as const)}</h2>
-      <ol className="mt-3 flex gap-1.5" aria-hidden>
+      <div className="flex items-baseline gap-3">
+        <h2 className="text-h2">{t(`request.step.${step}` as const)}</h2>
+        <p className="tnum ms-auto shrink-0 text-sm text-(--ink-faint)">
+          {t('request.step_of', { current: index + 1, total: STEPS.length })}
+        </p>
+      </div>
+
+      {/* The rail fills rather than jumping between discrete blocks: a width
+          transition on the completed portion reads as progress, three swapping
+          background colours read as a flicker. */}
+      <ol className="mt-4 flex gap-2" aria-hidden>
         {STEPS.map((name, i) => (
           <li
             key={name}
-            className={cn('h-1 flex-1 rounded-full', i <= index ? 'bg-floodlight' : 'bg-[--hairline]')}
-          />
+            className="h-1.5 flex-1 overflow-hidden rounded-full bg-(--hairline)"
+          >
+            <span
+              className={cn(
+                'block h-full rounded-full bg-primary',
+                'transition-[width] duration-500 ease-(--ease-out-quiet)',
+                'motion-reduce:transition-none',
+                i <= index ? 'w-full' : 'w-0',
+              )}
+            />
+          </li>
         ))}
       </ol>
     </div>

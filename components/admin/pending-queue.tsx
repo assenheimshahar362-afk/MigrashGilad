@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { t } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import type { BookingRequestRow } from '@/lib/types';
 import { RequestCard } from '@/components/admin/request-card';
@@ -76,16 +77,19 @@ export function PendingQueue({ initial }: { initial: BookingRequestRow[] }) {
 
   if (requests.length === 0) {
     return (
-      <div className="rounded-[--radius-card] border border-dashed border-[--hairline] p-8 text-center">
+      <div className="empty-state">
         <p className="font-semibold">{t('admin.pending_empty')}</p>
-        <p className="mt-1 text-sm text-[--ink-muted]">{t('admin.pending_empty_help')}</p>
+        <p className="mt-1 text-sm text-(--ink-muted)">{t('admin.pending_empty_help')}</p>
       </div>
     );
   }
 
   return (
     <>
-      <ul className="space-y-3">
+      {/* The queue is the first thing an admin sees on opening the dashboard, so
+          the cards cascade in. It happens once per session, which is the only
+          frequency at which a stagger is worth its 240ms. */}
+      <ul className="stagger space-y-3">
         {requests.map((request) => (
           <RequestCard
             key={request.id}
@@ -103,7 +107,16 @@ export function PendingQueue({ initial }: { initial: BookingRequestRow[] }) {
         <p
           role="status"
           aria-live="polite"
-          className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-[420px] rounded-[--radius-card] bg-pitch-700 px-4 py-3 text-center text-sm font-semibold text-chalk-050 shadow-lg"
+          /* The toast rises from below and keeps its exit in the same
+             direction, which is what makes a swipe-down feel like the obvious
+             way to dismiss it even though it is only ever timed out. */
+          className={cn(
+            'fixed inset-x-4 bottom-4 z-50 mx-auto max-w-[420px]',
+            'rounded-(--radius-card) border border-white/10 bg-primary-600',
+            'px-4 py-3 text-center text-sm font-semibold text-white',
+            'shadow-[0_4px_10px_rgb(7_24_17/0.25),0_16px_40px_-12px_rgb(7_24_17/0.55)]',
+            'animate-[toast-in_320ms_var(--ease-out-quiet)_both]',
+          )}
         >
           {toast}
         </p>

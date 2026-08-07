@@ -41,7 +41,7 @@ export default async function AdminDashboardPage() {
         <div className="mb-4 flex items-center gap-2">
           <h1 className="text-h2">{t('admin.pending')}</h1>
           {pending.length > 0 ? (
-            <span className="tnum rounded-full bg-floodlight px-2 py-0.5 text-sm font-bold text-pitch-900">
+            <span className="tnum rounded-full bg-accent px-2 py-0.5 text-sm font-bold text-primary-800">
               {pending.length}
             </span>
           ) : null}
@@ -62,7 +62,7 @@ export default async function AdminDashboardPage() {
           </Button>
         </div>
 
-        <div className="rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised] px-4">
+        <div className="card px-4">
           <DayList dates={localWeekDays(weekStart)} events={events} visuallyHidden={false} />
         </div>
       </section>

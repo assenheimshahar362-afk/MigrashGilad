@@ -88,15 +88,15 @@ export function ManagerTable({ managers }: { managers: Manager[] }) {
       {error ? (
         <p
           role="alert"
-          className="rounded-[--radius-input] border-2 border-signal-err bg-signal-err/10 px-3 py-2 text-sm font-semibold"
+          className="rounded-(--radius-input) border-2 border-danger bg-danger/10 px-3 py-2 text-sm font-semibold"
         >
           {error}
         </p>
       ) : null}
 
-      <section className="rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised] p-4">
+      <section className="card p-4">
         <h2 className="mb-4 text-h3">{t('managers.add')}</h2>
-        <p className="mb-4 text-sm text-[--ink-muted]">
+        <p className="mb-4 text-sm text-(--ink-muted)">
           {/* FR-36: an email only; the account materialises on first sign-in. */}
           {t('login.help')}
         </p>
@@ -150,11 +150,11 @@ export function ManagerTable({ managers }: { managers: Manager[] }) {
       <section>
         <h2 className="mb-3 text-h3">{t('managers.title')}</h2>
 
-        <div className="overflow-x-auto rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised]">
+        <div className="overflow-x-auto card">
           <table className="w-full border-collapse text-sm">
             <caption className="sr-only">{t('managers.title')}</caption>
             <thead>
-              <tr className="border-b border-[--hairline] text-start">
+              <tr className="border-b border-(--hairline) text-start">
                 <th scope="col" className="p-3 text-start">
                   {t('managers.column.name')}
                 </th>
@@ -178,21 +178,21 @@ export function ManagerTable({ managers }: { managers: Manager[] }) {
                 <tr
                   key={manager.id}
                   className={cn(
-                    'border-b border-[--hairline] last:border-0',
+                    'border-b border-(--hairline) last:border-0',
                     manager.revokedAt && 'opacity-60',
-                    manager.isSelf && 'bg-floodlight/10',
+                    manager.isSelf && 'bg-accent/10',
                   )}
                 >
                   <td className="p-3">
                     <div className="font-semibold">
                       {manager.fullName ?? manager.email.split('@')[0]}
                       {manager.isSelf ? (
-                        <span className="ms-2 rounded-full border border-floodlight px-2 py-0.5 text-xs font-bold text-floodlight">
+                        <span className="ms-2 rounded-full border border-accent-ink px-2 py-0.5 text-xs font-bold text-accent-ink">
                           {t('managers.self')}
                         </span>
                       ) : null}
                     </div>
-                    <bdi dir="ltr" className="text-xs text-[--ink-muted]">
+                    <bdi dir="ltr" className="text-xs text-(--ink-muted)">
                       {manager.email}
                     </bdi>
                   </td>
@@ -202,8 +202,8 @@ export function ManagerTable({ managers }: { managers: Manager[] }) {
                       className={cn(
                         'inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold',
                         manager.role === 'super_admin'
-                          ? 'border-floodlight text-[--ink]'
-                          : 'border-[--hairline] text-[--ink-muted]',
+                          ? 'border-accent text-(--ink)'
+                          : 'border-(--hairline) text-(--ink-muted)',
                       )}
                     >
                       {t(`managers.role.${manager.role}` as const)}
@@ -218,7 +218,7 @@ export function ManagerTable({ managers }: { managers: Manager[] }) {
                         : t('managers.never_signed_in')}
                   </td>
 
-                  <td className="p-3 text-xs text-[--ink-muted]">
+                  <td className="p-3 text-xs text-(--ink-muted)">
                     {manager.lastSeen ? formatRelative(manager.lastSeen) : '—'}
                   </td>
 
@@ -305,8 +305,8 @@ function RowButton({
       disabled={disabled}
       title={title}
       className={cn(
-        'min-h-11 rounded-[--radius-input] border px-3 text-xs font-semibold',
-        danger ? 'border-signal-err text-signal-err' : 'border-[--hairline]',
+        'min-h-11 rounded-(--radius-input) border px-3 text-xs font-semibold',
+        danger ? 'border-danger text-danger-ink' : 'border-(--hairline)',
         disabled && 'cursor-not-allowed opacity-40',
       )}
     >

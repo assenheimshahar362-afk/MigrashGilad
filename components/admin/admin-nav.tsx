@@ -29,8 +29,8 @@ export function AdminNav({ role }: { role: AdminRole }) {
   const links = LINKS.filter((link) => !link.super || role === 'super_admin');
 
   return (
-    <nav aria-label={t('admin.title')} className="border-t border-chalk-050/15">
-      <ul className="mx-auto flex max-w-[860px] gap-1 overflow-x-auto px-2 py-1.5">
+    <nav aria-label={t('admin.title')} className="border-t border-white/12">
+      <ul className="mx-auto flex max-w-[960px] gap-1 overflow-x-auto px-2 py-2">
         {links.map((link) => {
           const active =
             'exact' in link && link.exact ? pathname === link.href : pathname.startsWith(link.href);
@@ -39,9 +39,17 @@ export function AdminNav({ role }: { role: AdminRole }) {
               <Link
                 href={link.href}
                 aria-current={active ? 'page' : undefined}
+                /* The tab strip is navigated many times per admin session, so
+                   the active state does not transition between tabs — only the
+                   press scales. */
                 className={cn(
-                  'flex h-11 items-center whitespace-nowrap rounded-[--radius-input] px-3 text-sm font-semibold',
-                  active ? 'bg-floodlight text-pitch-900' : 'text-chalk-200 hover:bg-chalk-050/10',
+                  'press flex h-11 items-center whitespace-nowrap rounded-(--radius-input) px-3',
+                  'text-sm font-semibold',
+                  'transition-[background-color,color,transform] duration-(--duration-press)',
+                  'ease-(--ease-out-quiet)',
+                  active
+                    ? 'bg-white text-primary-800 shadow-(--shadow-xs)'
+                    : 'text-white/70 hover:bg-white/12 hover:text-white',
                 )}
               >
                 {link.label}

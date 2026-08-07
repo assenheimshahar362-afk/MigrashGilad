@@ -113,48 +113,48 @@ export function RequestCard({
   };
 
   return (
-    <li className="rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised] p-4">
+    <li className="card p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="text-h3 font-bold">{request.requester_name}</h3>
-        <span className="text-xs text-[--ink-muted]">
+        <span className="text-xs text-(--ink-muted)">
           {t('admin.submitted', { relative: formatRelative(request.created_at) })}
         </span>
       </div>
 
       <dl className="mt-3 space-y-1 text-sm">
         <div className="flex gap-2">
-          <dt className="text-[--ink-muted]">{t('event.time')}</dt>
+          <dt className="text-(--ink-muted)">{t('event.time')}</dt>
           <dd className="font-semibold">
             {formatWeekdayLong(date)}, {formatDateLong(date)},{' '}
             <TimeRange range={formatTimeRange(request.requested_start, request.requested_end)} />
           </dd>
         </div>
         <div className="flex gap-2">
-          <dt className="text-[--ink-muted]">{t('event.type')}</dt>
+          <dt className="text-(--ink-muted)">{t('event.type')}</dt>
           <dd className="font-semibold">{usageTypeLabel(request.usage_type)}</dd>
         </div>
         {request.participants ? (
           <div className="flex gap-2">
-            <dt className="text-[--ink-muted]">{t('request.field.participants')}</dt>
+            <dt className="text-(--ink-muted)">{t('request.field.participants')}</dt>
             <dd className="font-semibold">{request.participants}</dd>
           </div>
         ) : null}
         {request.note ? (
           <div className="flex gap-2">
-            <dt className="text-[--ink-muted]">{t('request.field.note')}</dt>
+            <dt className="text-(--ink-muted)">{t('request.field.note')}</dt>
             <dd>{request.note}</dd>
           </div>
         ) : null}
       </dl>
 
       {error ? (
-        <p role="alert" className="mt-3 text-sm font-semibold text-signal-err">
+        <p role="alert" className="mt-3 text-sm font-semibold text-danger-ink">
           {error}
         </p>
       ) : null}
 
       {conflict ? (
-        <p className="mt-2 rounded-[--radius-input] bg-signal-err/10 px-3 py-2 text-sm">
+        <p className="mt-2 rounded-(--radius-input) bg-danger/10 px-3 py-2 text-sm">
           {t('admin.conflict_with', { title: conflict.title })}{' '}
           <TimeRange range={formatTimeRange(conflict.starts_at, conflict.ends_at)} />
         </p>
@@ -177,7 +177,7 @@ export function RequestCard({
             area, never on the public schedule. */}
         <a
           href={telLink(request.requester_phone)}
-          className="tap-target flex items-center gap-2 rounded-[--radius-input] border border-[--hairline] px-3 text-sm font-semibold"
+          className="press tap-target flex items-center gap-2 rounded-(--radius-input) border border-(--hairline) px-3 text-sm font-semibold transition-[background-color,border-color,transform] duration-(--duration-press) ease-(--ease-out-quiet) hover:border-(--hairline-strong) hover:bg-(--surface-hover)"
           aria-label={`${t('trustees.call')} — ${request.requester_name}`}
         >
           <Phone className="size-4" aria-hidden />
@@ -188,7 +188,7 @@ export function RequestCard({
           href={whatsappLink(request.requester_phone, t('trustees.whatsapp_prefill'))}
           target="_blank"
           rel="noopener noreferrer"
-          className="tap-target flex items-center justify-center rounded-[--radius-input] border border-[--hairline] px-3"
+          className="press tap-target flex items-center justify-center rounded-(--radius-input) border border-(--hairline) px-3 transition-[background-color,border-color,transform] duration-(--duration-press) ease-(--ease-out-quiet) hover:border-(--hairline-strong) hover:bg-(--surface-hover)"
           aria-label={`${t('trustees.whatsapp')} — ${request.requester_name}`}
         >
           <MessageCircle className="size-4" aria-hidden />
@@ -241,10 +241,12 @@ function RejectSheet({
               type="button"
               onClick={() => setNote(reason)}
               className={cn(
-                'tap-target rounded-[--radius-chip] border px-3 text-sm font-semibold',
+                'press tap-target rounded-(--radius-chip) border px-3 text-sm font-semibold',
+                'transition-[background-color,border-color,color,transform]',
+                'duration-(--duration-press) ease-(--ease-out-quiet)',
                 note === reason
-                  ? 'border-floodlight bg-floodlight text-pitch-900'
-                  : 'border-[--hairline]',
+                  ? 'border-accent bg-accent text-primary-800 shadow-(--shadow-xs)'
+                  : 'border-(--hairline) hover:border-(--hairline-strong) hover:bg-(--surface-hover)',
               )}
             >
               {reason}

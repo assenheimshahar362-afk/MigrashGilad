@@ -24,9 +24,9 @@ export default async function MemorialPage() {
   const html = settings?.memorial_html ? sanitizeMemorialHtml(settings.memorial_html) : null;
 
   return (
-    <article className="mx-auto max-w-[720px] px-6 py-12 pb-24">
+    <article className="shell-narrow py-16 sm:py-24">
       <header className="border-b border-memorial/40 pb-8">
-        <p className="text-sm tracking-normal text-memorial">{t('memorial.title')}</p>
+        <p className="text-sm tracking-normal text-memorial-ink">{t('memorial.title')}</p>
         <h1 className="mt-2 font-display text-display leading-tight">גלעד</h1>
       </header>
 
@@ -38,7 +38,7 @@ export default async function MemorialPage() {
           dangerouslySetInnerHTML={{ __html: html }}
         />
       ) : (
-        <p className="memorial-prose mt-10 text-[--ink-muted]">{t('memorial.pending')}</p>
+        <p className="memorial-prose mt-10 text-(--ink-muted)">{t('memorial.pending')}</p>
       )}
     </article>
   );

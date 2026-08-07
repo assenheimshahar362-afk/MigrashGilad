@@ -40,10 +40,10 @@ export function DayList({
       )}
 
       {grouped.map(({ date, events: dayEvents }) => (
-        <div key={date} className={visuallyHidden ? undefined : 'border-b border-[--hairline] py-3 last:border-0'}>
+        <div key={date} className={visuallyHidden ? undefined : 'border-b border-(--hairline) py-3 last:border-0'}>
           <h3
             className={
-              visuallyHidden ? undefined : 'mb-2 text-sm font-bold text-[--ink-muted]'
+              visuallyHidden ? undefined : 'mb-2 text-sm font-bold text-(--ink-muted)'
             }
           >
             {dayEvents.length > 0
@@ -64,7 +64,7 @@ export function DayList({
                   <span className="font-semibold">
                     {event.source === 'request' ? firstNameOnly(event.title) : event.title}
                   </span>
-                  <span className="text-[--ink-muted]">{usageTypeLabel(event.usageType)}</span>
+                  <span className="text-(--ink-muted)">{usageTypeLabel(event.usageType)}</span>
                 </li>
               ))}
             </ul>

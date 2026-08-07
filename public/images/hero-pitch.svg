@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000" role="img">
+  <defs>
+    <linearGradient id="g0" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#146c43"/>
+      <stop offset="100%" stop-color="#0a3520"/>
+    </linearGradient>
+    <radialGradient id="f0" cx="50%" cy="0%" r="80%">
+      <stop offset="0%" stop-color="#f5c542" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#f5c542" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#g0)"/>
+  <rect x="0" y="0" width="133" height="1000" fill="#ffffff" opacity="0.035"/><rect x="266" y="0" width="133" height="1000" fill="#ffffff" opacity="0.035"/><rect x="532" y="0" width="133" height="1000" fill="#ffffff" opacity="0.035"/><rect x="798" y="0" width="133" height="1000" fill="#ffffff" opacity="0.035"/><rect x="1064" y="0" width="133" height="1000" fill="#ffffff" opacity="0.035"/><rect x="1330" y="0" width="133" height="1000" fill="#ffffff" opacity="0.035"/><rect x="1596" y="0" width="133" height="1000" fill="#ffffff" opacity="0.035"/>
+  <rect width="1600" height="1000" fill="url(#f0)"/>
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.30" stroke-width="4">
+    <rect x="64" y="60" width="1472" height="880" rx="2"/>
+    <line x1="800" y1="60" x2="800" y2="940"/>
+    <circle cx="800" cy="500" r="160"/>
+    <rect x="64" y="280" width="416" height="440"/>
+    <rect x="1120" y="280" width="416" height="440"/>
+  </g>
+  <circle cx="800" cy="500" r="6.153846153846154" fill="#ffffff" fill-opacity="0.45"/>
+</svg>

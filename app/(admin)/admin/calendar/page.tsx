@@ -30,7 +30,7 @@ export default async function AdminCalendarPage() {
     <div className="space-y-8">
       <section>
         <h1 className="mb-4 text-h2">{t('admin.create_event')}</h1>
-        <div className="rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised] p-4">
+        <div className="card p-4">
           <EventEditor />
         </div>
       </section>

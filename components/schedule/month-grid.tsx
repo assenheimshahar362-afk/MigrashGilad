@@ -37,16 +37,16 @@ export function MonthGrid({
   const today = todayLocal();
 
   return (
-    <div className="px-2">
-      <div className="grid grid-cols-7 gap-px pb-1" aria-hidden>
+    <div>
+      <div className="grid grid-cols-7 pb-2" aria-hidden>
         {WEEKDAY_LETTERS.map((letter) => (
-          <div key={letter} className="py-1 text-center text-xs font-semibold text-[--ink-muted]">
+          <div key={letter} className="py-1 text-center text-xs font-semibold text-(--ink-muted)">
             {letter}
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-px bg-[--hairline]">
+      <div className="grid grid-cols-7 gap-px overflow-hidden rounded-(--radius-card) border border-(--hairline) bg-(--hairline) shadow-(--shadow-sm)">
         {days.map((date) => (
           <DayCell
             key={date}
@@ -94,17 +94,27 @@ function DayCell({
       href={`/?week=${date}#day-${date}`}
       aria-label={label}
       className={cn(
-        'flex min-h-[4.5rem] flex-col gap-1 p-1.5',
-        'bg-[--surface-raised] hover:bg-[--surface-sunken]',
-        !inMonth && 'opacity-45',
-        isToday && 'ring-2 ring-inset ring-floodlight',
+        'press-sm flex min-h-[5.5rem] flex-col gap-1 p-2',
+        'bg-(--surface-raised)',
+        'transition-[background-color,transform] duration-(--duration-tip) ease-(--ease-out-quiet)',
+        'hover:bg-primary-50 motion-reduce:transition-none',
+        // A day outside the month recedes by SURFACE, not by opacity. Fading the
+        // whole cell to 45% dragged its date down to 2.18:1 — the day numbers
+        // are the one thing on this screen that must stay readable, even on the
+        // days you are not looking at (A11Y-2).
+        !inMonth && 'bg-(--surface-sunken)',
+        isToday && 'ring-2 ring-inset ring-primary',
         closed && 'closure-hatch',
       )}
     >
       <span
         className={cn(
-          'tnum text-sm',
-          isToday ? 'font-bold text-[--ink]' : 'text-[--ink-muted]',
+          'tnum flex size-6 items-center justify-center rounded-full text-sm',
+          isToday
+            ? 'bg-primary font-bold text-white'
+            : inMonth
+              ? 'font-medium text-(--ink)'
+              : 'text-(--ink-faint)',
         )}
       >
         {dayOfMonth(date)}
@@ -117,12 +127,17 @@ function DayCell({
             <span
               key={event.id}
               aria-hidden
-              className={cn('block h-1.5 rounded-full', style.bar, style.patternClass)}
+              className={cn(
+                'block h-1.5 rounded-full',
+                style.bar,
+                style.patternClass,
+                !inMonth && 'opacity-50',
+              )}
             />
           );
         })}
         {overflow > 0 ? (
-          <span className="tnum text-[0.65rem] text-[--ink-muted]" aria-hidden>
+          <span className="tnum text-[0.65rem] text-(--ink-muted)" aria-hidden>
             {t('schedule.more_count', { count: overflow })}
           </span>
         ) : null}

@@ -8,6 +8,10 @@ import { InstallPrompt } from '@/components/pwa/install-prompt';
  * §3 global chrome for the public site. The header, tab bar and footer are the
  * same on every public screen; only /memorial suppresses the booking CTA, which
  * it does by not rendering one (§10.6).
+ *
+ * The header decides for itself whether to start transparent — it already reads
+ * the pathname for its active-link state, and a function cannot be handed from
+ * a server layout into a client component anyway.
  */
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const [settings, onDuty] = await Promise.all([getSettings(), getOnDutyTrustee()]);
@@ -20,7 +24,7 @@ export default async function PublicLayout({ children }: { children: React.React
         {children}
       </main>
 
-      <SiteFooter />
+      <SiteFooter pitchName={settings.pitchName} />
       <BottomNav />
       <InstallPrompt />
     </div>

@@ -27,7 +27,7 @@ export function EventList({ events }: { events: EventRow[] }) {
 
   if (events.length === 0) {
     return (
-      <p className="rounded-[--radius-card] border border-dashed border-[--hairline] p-8 text-center text-[--ink-muted]">
+      <p className="empty-state">
         {t('schedule.empty')}
       </p>
     );
@@ -51,12 +51,12 @@ export function EventList({ events }: { events: EventRow[] }) {
   return (
     <>
       {error ? (
-        <p role="alert" className="mb-3 text-sm font-semibold text-signal-err">
+        <p role="alert" className="mb-3 text-sm font-semibold text-danger-ink">
           {error}
         </p>
       ) : null}
 
-      <ul className="divide-y divide-[--hairline] rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised]">
+      <ul className="divide-y divide-(--hairline) card">
         {events.map((event) => {
           const style = usageTypeStyle(event.usage_type);
           const date = localDate(event.starts_at);
@@ -70,7 +70,7 @@ export function EventList({ events }: { events: EventRow[] }) {
 
               <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold">{event.title}</p>
-                <p className="text-xs text-[--ink-muted]">
+                <p className="text-xs text-(--ink-muted)">
                   {formatWeekdayLong(date)} {formatDateShort(date)} ·{' '}
                   <TimeRange range={formatTimeRange(event.starts_at, event.ends_at)} /> ·{' '}
                   {style.label}
@@ -81,7 +81,7 @@ export function EventList({ events }: { events: EventRow[] }) {
                 type="button"
                 onClick={() => setEditing(event)}
                 aria-label={`${t('admin.edit_event')} — ${event.title}`}
-                className="tap-target flex items-center justify-center rounded-[--radius-input] hover:bg-[--surface-sunken]"
+                className="tap-target flex items-center justify-center rounded-(--radius-input) hover:bg-(--surface-sunken)"
               >
                 <Pencil className="size-4" aria-hidden />
               </button>
@@ -90,7 +90,7 @@ export function EventList({ events }: { events: EventRow[] }) {
                 type="button"
                 onClick={() => setDeleting(event)}
                 aria-label={`${t('admin.delete_event')} — ${event.title}`}
-                className="tap-target flex items-center justify-center rounded-[--radius-input] text-signal-err hover:bg-[--surface-sunken]"
+                className="tap-target flex items-center justify-center rounded-(--radius-input) text-danger-ink hover:bg-(--surface-sunken)"
               >
                 <Trash2 className="size-4" aria-hidden />
               </button>

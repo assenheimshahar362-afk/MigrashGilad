@@ -54,17 +54,34 @@ export function EventBlock({
         data-grid-cell
         data-grid-row={gridRow}
         aria-label={label}
+        /* A tinted card with a solid rule on its leading edge, in the manner
+           of Google Calendar. The rule is `border-inline-start`, so it lands on
+           the correct side under dir="rtl" without a second declaration. The
+           shadow appears only on hover: at rest a week of events should read as
+           a flat, calm plan. */
         className={cn(
-          'absolute inset-x-0.5 z-10 overflow-hidden px-1.5 py-1 text-start',
+          'absolute inset-x-px z-10 overflow-hidden rounded-[6px] px-2 py-1 text-start',
           'text-xs font-semibold leading-tight',
+          'transition-[box-shadow,transform,filter] duration-(--duration-press)',
+          'ease-(--ease-out-quiet) hover:shadow-(--shadow-sm) hover:brightness-[0.98]',
+          'active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100',
           style.block,
           style.patternClass,
         )}
         style={{ top: `${top}%`, height: `${height}%` }}
       >
-        <span className="block truncate">{title}</span>
-        <TimeRange range={range} className="block text-[0.65rem] font-normal opacity-90" />
-        <span className="block truncate text-[0.65rem] font-normal opacity-90">{style.label}</span>
+        {/* Seven columns on a phone leaves roughly 6 characters per line, so the
+            three lines are set tight and the type label — which is also carried
+            by the fill, the pattern and the accessible name — is the one that
+            gives up its space first when the block is short. */}
+        <span className="block truncate leading-[1.25]">{title}</span>
+        <TimeRange
+          range={range}
+          className="tnum block text-[0.6875rem] font-medium leading-[1.3]"
+        />
+        <span className="block truncate text-[0.625rem] font-normal leading-[1.25]">
+          {style.label}
+        </span>
       </button>
 
       <Sheet open={open} onOpenChange={setOpen}>
@@ -129,9 +146,9 @@ export function EventDetail({ event }: { event: PublicEvent }) {
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex gap-3">
-      <dt className="w-24 shrink-0 text-[--ink-muted]">{label}</dt>
-      <dd className="font-semibold">{children}</dd>
+    <div className="flex gap-3 border-b border-(--hairline) pb-3 last:border-0 last:pb-0">
+      <dt className="w-24 shrink-0 text-(--ink-faint)">{label}</dt>
+      <dd className="min-w-0 font-semibold">{children}</dd>
     </div>
   );
 }

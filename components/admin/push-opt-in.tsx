@@ -44,7 +44,7 @@ export function PushOptIn() {
 
   if (state === 'enabled') {
     return (
-      <p className="flex items-center gap-2 rounded-[--radius-card] bg-signal-ok/10 px-4 py-2 text-sm font-semibold">
+      <p className="flex items-center gap-2 rounded-(--radius-card) bg-success/10 px-4 py-2 text-sm font-semibold">
         <BellRing className="size-4" aria-hidden />
         {t('pwa.push_enabled')}
       </p>
@@ -52,16 +52,16 @@ export function PushOptIn() {
   }
 
   return (
-    <div className="rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised] p-4">
+    <div className="card p-4">
       <p className="flex items-center gap-2 font-bold">
-        <Bell className="size-5 text-floodlight" aria-hidden />
+        <Bell className="size-5 text-accent-ink" aria-hidden />
         {t('pwa.push_title')}
       </p>
 
       {state === 'needs-install' ? (
         <>
-          <p className="mt-1 text-sm text-[--ink-muted]">{t('pwa.push_body')}</p>
-          <p className="mt-1 text-sm text-[--ink-muted]">{t('pwa.install_ios')}</p>
+          <p className="mt-1 text-sm text-(--ink-muted)">{t('pwa.push_body')}</p>
+          <p className="mt-1 text-sm text-(--ink-muted)">{t('pwa.install_ios')}</p>
         </>
       ) : (
         <Button

@@ -65,12 +65,12 @@ export function InstallPrompt() {
       aria-label={t('pwa.install_title')}
       className="fixed inset-x-0 bottom-16 z-40 mx-auto max-w-[720px] px-3 pb-2"
     >
-      <div className="flex items-start gap-3 rounded-[--radius-card] border border-[--hairline] bg-[--surface-raised] p-4 shadow-lg">
-        <Download className="mt-0.5 size-5 shrink-0 text-floodlight" aria-hidden />
+      <div className="flex items-start gap-3 card p-4 shadow-lg">
+        <Download className="mt-0.5 size-5 shrink-0 text-accent-ink" aria-hidden />
 
         <div className="min-w-0 flex-1">
           <p className="font-bold">{t('pwa.install_title')}</p>
-          <p className="mt-0.5 text-sm text-[--ink-muted]">
+          <p className="mt-0.5 text-sm text-(--ink-muted)">
             {deferred ? t('pwa.install_body') : t('pwa.install_ios')}
           </p>
 
@@ -93,7 +93,7 @@ export function InstallPrompt() {
           type="button"
           onClick={dismiss}
           aria-label={t('pwa.install_dismiss')}
-          className="tap-target -me-2 -mt-2 flex items-center justify-center rounded-[--radius-input] text-[--ink-muted] hover:bg-[--surface-sunken]"
+          className="tap-target -me-2 -mt-2 flex items-center justify-center rounded-(--radius-input) text-(--ink-muted) hover:bg-(--surface-sunken)"
         >
           <X className="size-5" aria-hidden />
         </button>

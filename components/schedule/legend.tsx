@@ -18,17 +18,26 @@ export function Legend({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className={cn('text-chalk-050', className)}>
+    <div className={cn('text-(--ink)', className)}>
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-controls="schedule-legend"
-        className="tap-target flex w-full items-center justify-between gap-2 px-4 text-sm font-semibold"
+        className={cn(
+          'tap-target flex w-full items-center justify-between gap-2 rounded-(--radius-input) px-4',
+          'text-sm font-semibold text-(--ink-muted)',
+          'transition-colors duration-(--duration-tip) ease-(--ease-out-quiet)',
+          'hover:text-(--ink)',
+        )}
       >
         {open ? t('schedule.legend_hide') : t('schedule.legend')}
         <ChevronDown
-          className={cn('size-5 transition-transform duration-150', open && 'rotate-180')}
+          className={cn(
+            'size-5 transition-transform duration-(--duration-pop) ease-(--ease-out-quiet)',
+            'motion-reduce:transition-none',
+            open && 'rotate-180',
+          )}
           aria-hidden
         />
       </button>
@@ -36,15 +45,21 @@ export function Legend({ className }: { className?: string }) {
       <ul
         id="schedule-legend"
         hidden={!open}
-        className="flex flex-wrap gap-x-4 gap-y-2 px-4 pb-3 pt-1"
+        className="flex flex-wrap gap-2 px-4 pt-1 pb-3"
       >
         {USAGE_TYPES.map((type) => {
           const style = usageTypeStyle(type);
           return (
-            <li key={type} className="flex items-center gap-2 text-sm">
+            <li
+              key={type}
+              className={cn(
+                'inline-flex items-center gap-2 rounded-(--radius-chip) px-2.5 py-1 text-xs font-medium',
+                style.chip,
+              )}
+            >
               <span
                 aria-hidden
-                className={cn('inline-block size-4 shrink-0 rounded-sm', style.block, style.patternClass)}
+                className={cn('inline-block size-2.5 shrink-0 rounded-full', style.bar)}
               />
               {style.label}
             </li>

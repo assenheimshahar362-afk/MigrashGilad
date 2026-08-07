@@ -17,7 +17,7 @@ export function SignOutButton() {
         router.push('/');
         router.refresh();
       }}
-      className="tap-target flex shrink-0 items-center justify-center rounded-[--radius-input] text-chalk-200 hover:bg-chalk-050/10"
+      className="tap-target flex shrink-0 items-center justify-center rounded-(--radius-input) text-primary-100 hover:bg-white/10"
     >
       <LogOut className="size-5" aria-hidden />
     </button>
