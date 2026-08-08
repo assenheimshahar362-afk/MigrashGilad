@@ -3,8 +3,11 @@
 import { useCallback, useRef } from 'react';
 
 /**
- * A11Y-4: the schedule grid is keyboard operable — arrow keys move between
- * days and hours, Enter opens an event.
+ * A11Y-4: the schedule grid is keyboard operable — arrow keys move between the
+ * free, requestable slots. Existing bookings are not part of this scope at
+ * all (they carry no `data-grid-cell`): the public calendar is view-only, so
+ * there is nothing for Enter to do on one and nothing for a keyboard user to
+ * tab into.
  *
  * Implemented as a scope around the grid rather than per-cell state: cells mark
  * themselves with `data-grid-cell`, `data-grid-col` (the day, 0..6) and

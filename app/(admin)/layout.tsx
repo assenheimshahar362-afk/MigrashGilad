@@ -30,7 +30,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </Link>
 
           {identity.role === 'super_admin' ? (
-            <span className="shrink-0 rounded-full border border-accent px-2 py-0.5 text-xs font-semibold text-accent">
+            <span className="shrink-0 rounded-full border border-accent px-2 py-0.5 text-xs font-semibold text-accent-ink">
               {t('managers.role.super_admin')}
             </span>
           ) : null}

@@ -47,7 +47,10 @@ begin
       (0, '08:00'::time, '10:00'::time, 'כדורגל נוער',        'community'::usage_type),
       (1, '19:00',       '21:00',       'ליגת עובדי הקיבוץ',  'community'::usage_type),
       (3, '16:30',       '18:30',       'אימון עמותה',        'association'::usage_type),
-      (4, '20:00',       '22:00',       'משחק ידידות',        'special_event'::usage_type),
+      -- Demonstrates the two categories sharing one slot (association +
+      -- community both booked 20:00–22:00 on the same evening).
+      (4, '20:00',       '22:00',       'משחק ידידות — עמותה', 'association'::usage_type),
+      (4, '20:00',       '22:00',       'משחק ידידות — קהילה', 'community'::usage_type),
       (5, '09:00',       '11:00',       'אימון בוקר',         'community'::usage_type),
       (6, '18:00',       '20:00',       'משחק שכונתי',        'community'::usage_type)
     ) as t(day_offset, t_start, t_end, title, usage)

@@ -245,7 +245,7 @@ function RejectSheet({
                 'transition-[background-color,border-color,color,transform]',
                 'duration-(--duration-press) ease-(--ease-out-quiet)',
                 note === reason
-                  ? 'border-accent bg-accent text-primary-800 shadow-(--shadow-xs)'
+                  ? 'border-accent bg-accent text-white shadow-(--shadow-xs)'
                   : 'border-(--hairline) hover:border-(--hairline-strong) hover:bg-(--surface-hover)',
               )}
             >

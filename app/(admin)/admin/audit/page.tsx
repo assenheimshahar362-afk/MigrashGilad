@@ -116,7 +116,9 @@ function Chip({
       aria-current={active ? 'page' : undefined}
       className={cn(
         'tap-target flex items-center rounded-(--radius-chip) border px-3 text-xs font-semibold',
-        active ? 'border-accent bg-accent text-primary-800' : 'border-(--hairline)',
+        // A solid accent fill carries white text — accent is a saturated red
+        // now, and dark text on it fails contrast.
+        active ? 'border-accent bg-accent text-white' : 'border-(--hairline)',
       )}
     >
       {children}

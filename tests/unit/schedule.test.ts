@@ -7,6 +7,7 @@ import {
   hoursForDate,
   isDayClosed,
   isSlotClosed,
+  layoutDayEvents,
 } from '@/lib/schedule';
 import { toInstant } from '@/lib/time';
 import { AppError } from '@/lib/errors';
@@ -187,6 +188,43 @@ describe('conflicts and closures', () => {
     expect(
       isSlotClosed(closures, toInstant('2026-08-08', '15:00'), toInstant('2026-08-08', '16:00')),
     ).toBe(false);
+  });
+});
+
+describe('layoutDayEvents — association and community sharing a slot', () => {
+  it('gives a lone event the full width', () => {
+    const layout = layoutDayEvents([event('17:00', '18:00')]);
+    expect(layout).toEqual([{ event: layout[0]!.event, col: 0, cols: 1 }]);
+  });
+
+  it('splits two overlapping events into separate columns', () => {
+    const a = event('17:00', '19:00');
+    const b = { ...event('18:00', '20:00'), id: 'b', usageType: 'association' as const };
+    const layout = layoutDayEvents([a, b]);
+
+    expect(layout).toHaveLength(2);
+    expect(layout.every((l) => l.cols === 2)).toBe(true);
+    expect(new Set(layout.map((l) => l.col))).toEqual(new Set([0, 1]));
+  });
+
+  it('gives back-to-back events full width, not a shared column', () => {
+    const a = event('17:00', '18:00');
+    const b = { ...event('18:00', '19:00'), id: 'b' };
+    const layout = layoutDayEvents([a, b]);
+
+    expect(layout.every((l) => l.cols === 1)).toBe(true);
+  });
+
+  it('reuses a freed column for a third, later event', () => {
+    const a = event('17:00', '18:00');
+    const b = { ...event('17:00', '18:00'), id: 'b', usageType: 'association' as const };
+    const c = { ...event('17:30', '19:00'), id: 'c' };
+    const layout = layoutDayEvents([a, b, c]);
+    const byId = new Map(layout.map((l) => [(l.event as { id: string }).id, l]));
+
+    // a and b overlap fully (cols: 2); c overlaps both but a ends before c
+    // does not free a's column until 18:00, so all three share one cluster.
+    expect(byId.get(a.id)!.cols).toBe(3);
   });
 });
 

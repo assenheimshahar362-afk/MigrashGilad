@@ -41,7 +41,7 @@ export default async function AdminDashboardPage() {
         <div className="mb-4 flex items-center gap-2">
           <h1 className="text-h2">{t('admin.pending')}</h1>
           {pending.length > 0 ? (
-            <span className="tnum rounded-full bg-accent px-2 py-0.5 text-sm font-bold text-primary-800">
+            <span className="tnum rounded-full bg-accent px-2 py-0.5 text-sm font-bold text-white">
               {pending.length}
             </span>
           ) : null}

@@ -9,9 +9,11 @@
 /* ===========================================================================
    Migrash Gilad — design system
 
-   A calm, bright, product-grade surface for a community football pitch.
-   Green guides; it never dominates. Amber is reserved for "now" and "on duty"
-   — the two things that are time-critical — so it keeps its meaning.
+   A calm, bright, product-grade surface for a community football pitch,
+   carrying the club badge's own navy and red rather than an invented palette.
+   Navy guides; it never dominates. Red is reserved for "now", "on duty" and a
+   handful of brand flourishes — never for large fills, or it would compete
+   with itself.
 
    Motion follows one rule throughout: enter/exit uses ease-out so the first
    frame moves, movement uses ease-in-out, and nothing on a screen a visitor
@@ -20,29 +22,36 @@
 
 @theme {
   /* -------------------------------------------------------------------------
-     Brand ramp. #198754 is the primary; the steps around it exist so that
-     hover, press, tint and text-on-tint are all the same hue rather than four
-     unrelated greens.
+     Brand ramp. Navy and red, lifted directly from the club badge — #1E3A5F
+     is sampled from the crest's ring, #D63B2B from the boy's shirt and the two
+     dots beside the wordmark. The steps around each exist so that hover,
+     press, tint and text-on-tint are all the same hue rather than unrelated
+     colours picked per component.
      ------------------------------------------------------------------------- */
-  --color-primary-50: #f0f9f4;
-  --color-primary-100: #dcf1e4;
-  --color-primary-200: #bbe3cc;
-  --color-primary-300: #8ccfab;
-  --color-primary-400: #4fb381;
-  --color-primary: #198754;
-  --color-primary-600: #146c43;
-  --color-primary-700: #105736;
-  --color-primary-800: #0d4429;
-  --color-primary-900: #0a3520;
+  --color-primary-50: #eef3f8;
+  --color-primary-100: #d6e4f0;
+  --color-primary-200: #aec9e3;
+  --color-primary-300: #7fa9ce;
+  --color-primary-400: #4c80ac;
+  --color-primary: #1e3a5f;
+  --color-primary-600: #17304e;
+  --color-primary-700: #122540;
+  --color-primary-800: #0c1a2e;
+  --color-primary-900: #071120;
 
-  /* Amber. A signal colour, not a brand colour. */
-  --color-accent: #f5c542;
-  --color-accent-100: #fef6dd;
-  --color-accent-200: #fceab3;
-  --color-accent-600: #c9992a;
-  /* Amber as small TEXT on a light ground: #f5c542 is 1.8:1 on white, which is
-     unreadable. This is the same hue carried down past 4.5:1. */
-  --color-accent-ink: #8a6005;
+  /* Red. The badge's second colour — used at full saturation for solid fills
+     (a filled chip, the skip link) and as a wash or ink everywhere else. A
+     fill this saturated is darker than the amber it replaces, so every
+     `bg-accent` solid fill carries WHITE text, never `text-primary-800` —
+     check `--color-accent-ink` before reaching for dark text on a fill. */
+  --color-accent: #d63b2b;
+  --color-accent-100: #fbe4e0;
+  --color-accent-200: #f5c2ba;
+  --color-accent-600: #b32a1e;
+  /* Red as small TEXT or an OUTLINE on a light ground — solved past 4.5:1,
+     the same way the amber ink it replaces was. Never pair this with a solid
+     `bg-accent` fill; on that background it is close to 2:1. */
+  --color-accent-ink: #8a2015;
 
   /* Neutrals. */
   --color-ink: #202124;

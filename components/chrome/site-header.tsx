@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import logoMark from '@/public/images/logo-mark.webp';
+import { PitchWordmark } from '@/components/chrome/pitch-wordmark';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { AuthIcons } from '@/components/chrome/auth-icons';
@@ -20,8 +21,12 @@ import { AuthIcons } from '@/components/chrome/auth-icons';
  * FR-39: the memorial mark is no longer carried in the header. It lives in the
  * footer, which links to the memorial section of /about.
  */
+/**
+ * The schedule is deliberately absent: it IS the landing page, and the badge to
+ * its start already goes there. A nav item pointing at the page you are almost
+ * always on is a slot spent saying nothing.
+ */
 const LINKS = [
-  { href: '/', label: t('nav.schedule'), exact: true },
   { href: '/request', label: t('nav.request'), exact: false },
   { href: '/about', label: t('nav.about'), exact: false },
   { href: '/trustees', label: t('nav.trustees'), exact: false },
@@ -67,7 +72,12 @@ export function SiteHeader({ pitchName }: { pitchName: string }) {
           : 'border-b border-transparent bg-transparent',
       )}
     >
-      <div className="shell flex items-center gap-4 py-3 sm:py-4">
+      {/* Three columns from `lg`, with the outer two at `1fr`: that is what
+          centres the navigation against the BAR rather than against the space
+          left over by the badge, which is much wider than the icons opposite
+          it. Below `lg` there is no navigation to centre, so it stays a flex
+          row. */}
+      <div className="shell flex items-center gap-4 py-3 sm:py-4 lg:grid lg:grid-cols-[1fr_auto_1fr]">
         <Link
           href="/"
           className="press-sm flex min-w-0 shrink-0 items-center gap-2.5 rounded-(--radius-input) py-0.5"
@@ -91,30 +101,33 @@ export function SiteHeader({ pitchName }: { pitchName: string }) {
           />
 
           <span className="min-w-0">
-            <span
+            <PitchWordmark
+              name={pitchName}
               className={cn(
-                'block truncate font-display text-h3 leading-tight font-bold transition-colors duration-300',
+                'font-display text-h3 leading-tight font-bold transition-colors duration-300',
                 solid ? 'text-(--ink)' : 'text-white drop-shadow-sm',
               )}
-            >
-              {pitchName}
-            </span>
-            <span
-              className={cn(
-                'mt-0.5 flex items-center gap-1.5 text-xs transition-colors duration-300',
-                solid ? 'text-(--ink-faint)' : 'text-white/75',
-              )}
-            >
-              <span aria-hidden className="inline-block h-px w-3.5 bg-current" />
-              {t('app.tagline')}
-            </span>
+            />
           </span>
         </Link>
 
         {/* Desktop navigation. The bottom tab bar covers mobile, so this is
-            simply hidden below lg rather than duplicated into a hamburger. */}
-        <nav aria-label={t('nav.primary')} className="ms-auto hidden lg:block">
-          <ul className="flex items-center gap-1">
+            simply hidden below lg rather than duplicated into a hamburger.
+
+            The links sit inside one tinted track rather than floating as four
+            separate words. That gives the centre column an edge of its own, so
+            it reads as a single control between the badge and the account
+            icons instead of as text that happens to be in the middle. */}
+        <nav aria-label={t('nav.primary')} className="hidden lg:block lg:justify-self-center">
+          <ul
+            className={cn(
+              'flex items-center gap-0.5 rounded-full p-1',
+              'transition-[background-color,border-color] duration-300',
+              solid
+                ? 'border border-(--hairline) bg-(--surface-sunken)'
+                : 'border border-white/15 bg-white/10 backdrop-blur-sm',
+            )}
+          >
             {LINKS.map((link) => {
               const active = link.exact ? pathname === link.href : pathname.startsWith(link.href);
               return (
@@ -123,15 +136,16 @@ export function SiteHeader({ pitchName }: { pitchName: string }) {
                     href={link.href}
                     aria-current={active ? 'page' : undefined}
                     className={cn(
-                      'press flex h-10 items-center rounded-(--radius-input) px-3 text-sm font-medium',
-                      'transition-[background-color,color] duration-(--duration-tip) ease-(--ease-out-quiet)',
+                      'press flex h-9 items-center rounded-full px-4 text-sm font-medium whitespace-nowrap',
+                      'transition-[background-color,color,box-shadow] duration-(--duration-tip)',
+                      'ease-(--ease-out-quiet)',
                       solid
                         ? active
-                          ? 'bg-primary-50 text-primary-700'
-                          : 'text-(--ink-muted) hover:bg-(--surface-sunken) hover:text-(--ink)'
+                          ? 'bg-(--surface-raised) font-semibold text-primary-700 shadow-(--shadow-xs)'
+                          : 'text-(--ink-muted) hover:text-(--ink)'
                         : active
-                          ? 'bg-white/20 text-white'
-                          : 'text-white/85 hover:bg-white/12 hover:text-white',
+                          ? 'bg-white font-semibold text-primary-800 shadow-(--shadow-xs)'
+                          : 'text-white/85 hover:text-white',
                     )}
                   >
                     {link.label}
@@ -142,9 +156,10 @@ export function SiteHeader({ pitchName }: { pitchName: string }) {
           </ul>
         </nav>
 
-        {/* `ms-auto` lives here on a phone, where the navigation above is
-            hidden and this is the only thing left to push to the end. */}
-        <div className="ms-auto flex shrink-0 items-center lg:ms-2">
+        {/* `ms-auto` is what pushes this to the end on a phone, where the
+            navigation above is hidden and the row is still a flex line. From
+            `lg` the row is a three-column grid and the grid places it instead. */}
+        <div className="ms-auto flex shrink-0 items-center lg:ms-0 lg:justify-self-end">
           <AuthIcons onDark={!solid} />
         </div>
       </div>

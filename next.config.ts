@@ -33,7 +33,7 @@ const csp = [
   `img-src 'self' data: blob: ${supabaseOrigin}`,
   `font-src 'self' data:`,
   `connect-src 'self' ${supabaseOrigin} ${supabaseWs}${devConnectSrc}`,
-  `frame-src https://challenges.cloudflare.com`,
+  `frame-src https://challenges.cloudflare.com https://www.google.com`,
   `worker-src 'self'`,
   `manifest-src 'self'`,
   `object-src 'none'`,

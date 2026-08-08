@@ -148,12 +148,6 @@ export async function getTrustees(): Promise<TrusteeRow[]> {
   }
 }
 
-/** FR-29: the primary, available trustee is the "on duty" contact. */
-export async function getOnDutyTrustee(): Promise<TrusteeRow | null> {
-  const trustees = await getTrustees();
-  return trustees.find((trustee) => trustee.is_primary && trustee.is_available) ?? null;
-}
-
 /**
  * Public status page lookup. Goes through the service role because
  * `booking_requests` has no anon policy at all (§6.4) — the token, not the

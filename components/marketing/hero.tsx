@@ -104,12 +104,7 @@ export function Hero({
       />
 
       <div className="shell relative">
-        <p className="animate-rise-in inline-flex items-center gap-2 rounded-(--radius-chip) border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
-          <span aria-hidden className="size-1.5 rounded-full bg-accent" />
-          {t('hero.eyebrow')}
-        </p>
-
-        <h1 className="animate-rise-in mt-4 max-w-[16ch] font-display text-hero font-bold text-white [animation-delay:60ms]">
+        <h1 className="animate-rise-in max-w-[16ch] font-sans text-hero font-bold text-white">
           {t('hero.title')}
         </h1>
 
@@ -146,15 +141,6 @@ export function Hero({
           </Button>
         </div>
 
-        {/* Three facts, not a marketing grid. Each answers a question someone
-            actually arrives with. */}
-        {/* On a landscape phone the three facts are the first thing to go —
-            the headline and the two actions are what the screen is for. */}
-        <dl className="animate-rise-in mt-8 grid max-w-lg grid-cols-3 gap-4 border-t border-white/15 pt-5 [animation-delay:240ms] short:hidden">
-          <Stat value={t('hero.stat_days_value')} label={t('hero.stat_days')} />
-          <Stat value={t('hero.stat_free_value')} label={t('hero.stat_free')} />
-          <Stat value={t('hero.stat_response_value')} label={t('hero.stat_response')} />
-        </dl>
       </div>
 
       <a
@@ -170,17 +156,5 @@ export function Hero({
         <ChevronDown className="size-4" aria-hidden />
       </a>
     </section>
-  );
-}
-
-function Stat({ value, label }: { value: string; label: string }) {
-  return (
-    <div>
-      <dt className="sr-only">{label}</dt>
-      <dd>
-        <span className="tnum block font-display text-h1 font-bold text-white">{value}</span>
-        <span className="mt-0.5 block text-xs text-white/70">{label}</span>
-      </dd>
-    </div>
   );
 }

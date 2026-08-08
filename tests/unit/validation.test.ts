@@ -60,8 +60,7 @@ describe('createRequestInput (§8)', () => {
     expect(createRequestInput.safeParse({ ...valid, consent: false }).success).toBe(false);
   });
 
-  it('rejects a usage type a visitor may not request', () => {
-    // `maintenance` and `closed` are admin-only categories (FR-11).
+  it('rejects a usage type outside the two recognised categories', () => {
     expect(createRequestInput.safeParse({ ...valid, usageType: 'maintenance' }).success).toBe(false);
   });
 

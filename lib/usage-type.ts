@@ -41,27 +41,6 @@ const STYLES: Record<UsageType, Omit<UsageTypeStyle, 'label'>> = {
     pattern: 'stripes',
     patternClass: 'pattern-stripes',
   },
-  special_event: {
-    block: 'bg-accent-100 border-s-[3px] border-s-accent text-accent-ink',
-    chip: 'bg-accent-100 text-accent-ink border border-accent',
-    bar: 'bg-accent',
-    pattern: 'dotted',
-    patternClass: '',
-  },
-  maintenance: {
-    block: 'bg-ink-2/10 border-s-[3px] border-s-ink-2 text-ink',
-    chip: 'bg-ink-2/10 text-ink border border-ink-2/30',
-    bar: 'bg-ink-2',
-    pattern: 'crosshatch',
-    patternClass: 'pattern-crosshatch',
-  },
-  closed: {
-    block: 'bg-danger/8 border-s-[3px] border-s-danger text-danger-ink',
-    chip: 'bg-danger/8 text-danger-ink border border-danger/40',
-    bar: 'bg-danger',
-    pattern: 'hatch',
-    patternClass: 'pattern-hatch',
-  },
 };
 
 export function usageTypeStyle(type: UsageType): UsageTypeStyle {

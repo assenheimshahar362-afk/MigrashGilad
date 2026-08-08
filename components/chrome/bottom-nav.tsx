@@ -21,7 +21,9 @@ import { t } from '@/lib/i18n';
  */
 const TABS = [
   { href: '/', label: t('nav.schedule'), Icon: CalendarDays, exact: true },
-  { href: '/request', label: t('nav.request'), Icon: FilePlus2, exact: false },
+  // The short label, not `nav.request`: five tabs on a 360px screen leave 72px
+  // each, and "הזמנת מגרש" wraps or truncates in every one of them.
+  { href: '/request', label: t('nav.request_short'), Icon: FilePlus2, exact: false },
   { href: '/about', label: t('nav.about'), Icon: Info, exact: false },
   { href: '/trustees', label: t('nav.trustees'), Icon: Users, exact: false },
   { href: '/contact', label: t('nav.contact'), Icon: Phone, exact: false },

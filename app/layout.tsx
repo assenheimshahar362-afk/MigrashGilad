@@ -33,7 +33,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0E2A20',
+  themeColor: '#071120',
   width: 'device-width',
   initialScale: 1,
   // §12 iOS: the bottom tab bar sits in the safe area, so the viewport has to

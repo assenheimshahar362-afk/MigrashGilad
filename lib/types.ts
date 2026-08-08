@@ -7,17 +7,11 @@
  *   supabase gen types typescript --local > lib/database.types.ts
  */
 
-export const USAGE_TYPES = [
-  'community',
-  'association',
-  'special_event',
-  'maintenance',
-  'closed',
-] as const;
+export const USAGE_TYPES = ['community', 'association'] as const;
 export type UsageType = (typeof USAGE_TYPES)[number];
 
-/** The subset a visitor may ask for (FR-11). */
-export const REQUESTABLE_USAGE_TYPES = ['community', 'association', 'special_event'] as const;
+/** Both categories are requestable — there is nothing left to exclude. */
+export const REQUESTABLE_USAGE_TYPES = USAGE_TYPES;
 export type RequestableUsageType = (typeof REQUESTABLE_USAGE_TYPES)[number];
 
 export const REQUEST_STATUSES = [

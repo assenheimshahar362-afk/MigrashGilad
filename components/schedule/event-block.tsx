@@ -1,36 +1,33 @@
-'use client';
-
-import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { t } from '@/lib/i18n';
-import { formatTimeRange, formatWeekdayLong, localDate, minutesSinceMidnight } from '@/lib/time';
+import { formatTimeRange, minutesSinceMidnight } from '@/lib/time';
 import { usageTypeStyle } from '@/lib/usage-type';
 import { firstNameOnly, type PublicEvent } from '@/lib/types';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
-import { TimeRange, Ltr } from '@/components/ui/ltr';
-import { formatIsraeliPhone, telLink } from '@/lib/utils';
+import { TimeRange } from '@/components/ui/ltr';
 
 /**
  * FR-3: an event block shows title, start–end time, and a usage-type colour AND
  * label AND pattern — never colour alone (A11Y-3).
- * FR-4: tapping opens a bottom sheet with the full detail.
  *
- * The block is server-rendered even though this is a client component, so the
- * schedule is readable with JavaScript disabled (FR-7). Only the sheet needs JS.
+ * The public calendar is view-only: an existing booking is information, not a
+ * control, so this renders as a plain `<div>` rather than a button and opens
+ * nothing on tap. Only the admin panel's own event editor (a separate,
+ * authenticated surface) can act on a booking.
  */
 export function EventBlock({
   event,
   startMinute,
   endMinute,
-  gridRow,
+  col = 0,
+  cols = 1,
 }: {
   event: PublicEvent;
   startMinute: number;
   endMinute: number;
-  /** Column index, used only for the keyboard grid's coordinates. */
-  gridRow?: number;
+  /** Side-by-side position within a cluster of overlapping events (association
+   *  and community time may now share a slot — see `layoutDayEvents`). */
+  col?: number;
+  cols?: number;
 }) {
-  const [open, setOpen] = useState(false);
   const style = usageTypeStyle(event.usageType);
 
   const span = endMinute - startMinute;
@@ -42,106 +39,44 @@ export function EventBlock({
   const top = ((from - startMinute) / span) * 100;
   const height = (Math.max(to - from, 15) / span) * 100;
 
+  // Full width when nothing else shares this slot; split evenly, with a
+  // hairline gap between them, when `layoutDayEvents` placed more than one
+  // event in this cluster.
+  const width = `calc(${100 / cols}% - ${cols > 1 ? '3px' : '2px'})`;
+  const insetInlineStart = `calc(${(col / cols) * 100}% + 1px)`;
+
   const range = formatTimeRange(event.startsAt, event.endsAt);
   const title = displayTitle(event);
   const label = `${title}, ${range}, ${style.label}`;
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        data-grid-cell
-        data-grid-row={gridRow}
-        aria-label={label}
-        /* A tinted card with a solid rule on its leading edge, in the manner
-           of Google Calendar. The rule is `border-inline-start`, so it lands on
-           the correct side under dir="rtl" without a second declaration. The
-           shadow appears only on hover: at rest a week of events should read as
-           a flat, calm plan. */
-        className={cn(
-          'absolute inset-x-px z-10 overflow-hidden rounded-[6px] px-2 py-1 text-start',
-          'text-xs font-semibold leading-tight',
-          'transition-[box-shadow,transform,filter] duration-(--duration-press)',
-          'ease-(--ease-out-quiet) hover:shadow-(--shadow-sm) hover:brightness-[0.98]',
-          'active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100',
-          style.block,
-          style.patternClass,
-        )}
-        style={{ top: `${top}%`, height: `${height}%` }}
-      >
-        {/* Seven columns on a phone leaves roughly 6 characters per line, so the
-            three lines are set tight and the type label — which is also carried
-            by the fill, the pattern and the accessible name — is the one that
-            gives up its space first when the block is short. */}
-        <span className="block truncate leading-[1.25]">{title}</span>
-        <TimeRange
-          range={range}
-          className="tnum block text-[0.6875rem] font-medium leading-[1.3]"
-        />
-        <span className="block truncate text-[0.625rem] font-normal leading-[1.25]">
-          {style.label}
-        </span>
-      </button>
-
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent title={title} description={style.label}>
-          <EventDetail event={event} />
-        </SheetContent>
-      </Sheet>
-    </>
-  );
-}
-
-/**
- * The phone-width form of an event (§10.1). Below `sm` the seven-column grid
- * gives each day about 39px, which is not enough for a time range, so the week
- * is rendered as a day agenda instead and this is one of its rows.
- *
- * It is the same tinted card as <EventBlock> — same fill, same leading rule,
- * same pattern (A11Y-3) — laid out horizontally and sized as a real tap target,
- * so nothing has to truncate. It opens the same sheet.
- */
-export function EventRow({ event }: { event: PublicEvent }) {
-  const [open, setOpen] = useState(false);
-  const style = usageTypeStyle(event.usageType);
-
-  const range = formatTimeRange(event.startsAt, event.endsAt);
-  const title = displayTitle(event);
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label={`${title}, ${range}, ${style.label}`}
-        className={cn(
-          'press flex min-h-14 w-full items-center gap-3 rounded-(--radius-card-sm) px-3 py-2.5 text-start',
-          'transition-[box-shadow,transform] duration-(--duration-press) ease-(--ease-out-quiet)',
-          'motion-reduce:transition-none',
-          style.block,
-          style.patternClass,
-        )}
-      >
-        <TimeRange
-          range={range}
-          className="tnum shrink-0 text-sm font-semibold tabular-nums"
-        />
-        <span className="min-w-0 flex-1">
-          <span className="block truncate font-semibold">{title}</span>
-          {/* No opacity on this line: the block colours are already the light
-              end of their hue, and dimming the label further drops it under
-              4.5:1 (A11Y-10 catches it on the amber fill at 3.5:1). */}
-          <span className="block truncate text-xs font-normal">{style.label}</span>
-        </span>
-      </button>
-
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent title={title} description={style.label}>
-          <EventDetail event={event} />
-        </SheetContent>
-      </Sheet>
-    </>
+    <div
+      role="img"
+      aria-label={label}
+      /* A tinted card with a solid rule on its leading edge, in the manner
+         of Google Calendar. The rule is `border-inline-start`, so it lands on
+         the correct side under dir="rtl" without a second declaration. */
+      className={cn(
+        'absolute z-10 overflow-hidden rounded-[6px] px-2 py-1 text-start',
+        'text-xs font-semibold leading-tight',
+        style.block,
+        style.patternClass,
+      )}
+      style={{ top: `${top}%`, height: `${height}%`, insetInlineStart, width }}
+    >
+      {/* Seven columns on a phone leaves roughly 6 characters per line, so the
+          three lines are set tight and the type label — which is also carried
+          by the fill, the pattern and the accessible name — is the one that
+          gives up its space first when the block is short. */}
+      <span className="block truncate leading-[1.25]">{title}</span>
+      <TimeRange
+        range={range}
+        className="tnum block text-[0.6875rem] font-medium leading-[1.3]"
+      />
+      <span className="block truncate text-[0.625rem] font-normal leading-[1.25]">
+        {style.label}
+      </span>
+    </div>
   );
 }
 
@@ -152,55 +87,4 @@ export function EventRow({ event }: { event: PublicEvent }) {
  */
 function displayTitle(event: PublicEvent): string {
   return event.source === 'request' ? firstNameOnly(event.title) : event.title;
-}
-
-export function EventDetail({ event }: { event: PublicEvent }) {
-  const style = usageTypeStyle(event.usageType);
-  const date = localDate(event.startsAt);
-
-  return (
-    <dl className="space-y-3 text-sm">
-      <Row label={t('event.time')}>
-        <span className="block">{`${formatWeekdayLong(date)}`}</span>
-        <TimeRange range={formatTimeRange(event.startsAt, event.endsAt)} />
-      </Row>
-
-      <Row label={t('event.type')}>
-        <span className="inline-flex items-center gap-2">
-          <span
-            aria-hidden
-            className={cn('inline-block size-3.5 rounded-sm', style.block, style.patternClass)}
-          />
-          {style.label}
-        </span>
-      </Row>
-
-      {event.description ? <Row label={t('event.description')}>{event.description}</Row> : null}
-
-      {event.contactName ? (
-        <Row label={t('event.responsible')}>
-          {event.source === 'request' ? firstNameOnly(event.contactName) : event.contactName}
-          {/* §7 PII: the phone is present here only when show_contact = true,
-              and the server has already stripped it otherwise. */}
-          {event.contactPhone ? (
-            <a
-              href={telLink(event.contactPhone)}
-              className="ms-2 underline underline-offset-4"
-            >
-              <Ltr>{formatIsraeliPhone(event.contactPhone)}</Ltr>
-            </a>
-          ) : null}
-        </Row>
-      ) : null}
-    </dl>
-  );
-}
-
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex gap-3 border-b border-(--hairline) pb-3 last:border-0 last:pb-0">
-      <dt className="w-24 shrink-0 text-(--ink-faint)">{label}</dt>
-      <dd className="min-w-0 font-semibold">{children}</dd>
-    </div>
-  );
 }

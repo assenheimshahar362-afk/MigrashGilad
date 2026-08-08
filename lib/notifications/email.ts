@@ -36,9 +36,9 @@ function renderNewRequestEmail(request: BookingRequestRow): { subject: string; h
   const html = `<!doctype html>
 <html lang="he" dir="rtl">
   <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width" /></head>
-  <body style="margin:0;padding:24px;background:#F2F5F0;font-family:Assistant,Arial,sans-serif;color:#0E2A20;" dir="rtl">
+  <body style="margin:0;padding:24px;background:#F2F5F0;font-family:Assistant,Arial,sans-serif;color:#12253C;" dir="rtl">
     <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #D6DED3;">
-      <div style="background:#174634;color:#F2F5F0;padding:20px 24px;">
+      <div style="background:#122540;color:#F2F5F0;padding:20px 24px;">
         <div style="font-size:18px;font-weight:700;">${escapeHtml(t('app.name'))}</div>
         <div style="font-size:14px;opacity:.85;margin-top:4px;">בקשה חדשה במגרש</div>
       </div>
@@ -54,10 +54,10 @@ function renderNewRequestEmail(request: BookingRequestRow): { subject: string; h
           ${row('טלפון', `<span dir="ltr">${escapeHtml(formatIsraeliPhone(request.requester_phone))}</span>`)}
           ${request.note ? row('הערה', escapeHtml(request.note)) : ''}
         </dl>
-        <a href="${dashboardUrl}" style="display:inline-block;background:#F2B441;color:#0E2A20;text-decoration:none;font-weight:700;padding:14px 22px;border-radius:8px;font-size:16px;">
+        <a href="${dashboardUrl}" style="display:inline-block;background:#D63B2B;color:#ffffff;text-decoration:none;font-weight:700;padding:14px 22px;border-radius:8px;font-size:16px;">
           פתיחת הבקשה בלוח הבקרה
         </a>
-        <a href="tel:${escapeHtml(request.requester_phone)}" style="display:inline-block;margin-inline-start:8px;background:#F2F5F0;color:#0E2A20;text-decoration:none;font-weight:600;padding:14px 22px;border-radius:8px;font-size:16px;border:1px solid #D6DED3;">
+        <a href="tel:${escapeHtml(request.requester_phone)}" style="display:inline-block;margin-inline-start:8px;background:#F2F5F0;color:#12253C;text-decoration:none;font-weight:600;padding:14px 22px;border-radius:8px;font-size:16px;border:1px solid #D6DED3;">
           ${escapeHtml(t('trustees.call'))}
         </a>
       </div>
@@ -81,9 +81,9 @@ function renderAccessRequestEmail(request: AccessRequestRow): { subject: string;
   const html = `<!doctype html>
 <html lang="he" dir="rtl">
   <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width" /></head>
-  <body style="margin:0;padding:24px;background:#F2F5F0;font-family:Assistant,Arial,sans-serif;color:#0E2A20;" dir="rtl">
+  <body style="margin:0;padding:24px;background:#F2F5F0;font-family:Assistant,Arial,sans-serif;color:#12253C;" dir="rtl">
     <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #D6DED3;">
-      <div style="background:#174634;color:#F2F5F0;padding:20px 24px;">
+      <div style="background:#122540;color:#F2F5F0;padding:20px 24px;">
         <div style="font-size:18px;font-weight:700;">${escapeHtml(t('app.name'))}</div>
         <div style="font-size:14px;opacity:.85;margin-top:4px;">${escapeHtml(t('access.email_title'))}</div>
       </div>
@@ -96,7 +96,7 @@ function renderAccessRequestEmail(request: AccessRequestRow): { subject: string;
           ${row('דוא״ל', `<span dir="ltr">${escapeHtml(request.email)}</span>`)}
           ${row('אמצעי כניסה', escapeHtml(request.provider === 'google' ? 'Google' : 'דוא״ל וסיסמה'))}
         </dl>
-        <a href="${queueUrl}" style="display:inline-block;background:#F2B441;color:#0E2A20;text-decoration:none;font-weight:700;padding:14px 22px;border-radius:8px;font-size:16px;">
+        <a href="${queueUrl}" style="display:inline-block;background:#D63B2B;color:#ffffff;text-decoration:none;font-weight:700;padding:14px 22px;border-radius:8px;font-size:16px;">
           ${escapeHtml(t('access.email_cta'))}
         </a>
         <p style="margin:20px 0 0;font-size:13px;line-height:1.6;color:#7A8A82;">

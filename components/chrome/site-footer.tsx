@@ -1,40 +1,31 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Facebook, Instagram, MessageCircle, Phone, MapPin, Clock } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import logoMark from '@/public/images/logo-mark.webp';
+import { PitchWordmark } from '@/components/chrome/pitch-wordmark';
 
 /**
  * The dark footer. It is the only large dark surface left in the product, which
  * is what makes it read as the end of the page rather than as another band.
  *
+ * It used to be three headed columns of three links each. Once the gallery and
+ * the FAQ went, the headings were carrying more weight than the links under
+ * them — a column titled "מידע" holding two entries is furniture. So the links
+ * are now one wrapped row: nothing to scan past, nothing to name.
+ *
  * A11Y-9 requires the accessibility statement to be reachable from every page,
- * which is why the legal column is never collapsed behind a disclosure.
+ * which is why it is in that row and never behind a disclosure.
  */
-const NAV_COLUMNS = [
-  {
-    heading: t('footer.explore'),
-    links: [
-      { href: '/', label: t('nav.schedule') },
-      { href: '/schedule/month', label: t('nav.month') },
-      { href: '/request', label: t('nav.request') },
-    ],
-  },
-  {
-    heading: t('footer.community'),
-    links: [
-      { href: '/about', label: t('nav.about') },
-      { href: '/trustees', label: t('nav.trustees') },
-      { href: '/about#memorial', label: t('nav.memorial') },
-    ],
-  },
-  {
-    heading: t('footer.legal'),
-    links: [
-      { href: '/rules', label: t('nav.rules') },
-      { href: '/accessibility', label: t('nav.accessibility') },
-      { href: '/contact', label: t('nav.contact') },
-    ],
-  },
+const LINKS = [
+  { href: '/request', label: t('nav.request') },
+  { href: '/schedule/month', label: t('nav.month') },
+  { href: '/about', label: t('nav.about') },
+  { href: '/trustees', label: t('nav.trustees') },
+  { href: '/contact', label: t('nav.contact') },
+  { href: '/rules', label: t('nav.rules') },
+  { href: '/accessibility', label: t('nav.accessibility') },
 ] as const;
 
 /* Placeholder handles — swap for the real accounts. A social icon that leads
@@ -51,87 +42,86 @@ export function SiteFooter({ pitchName }: { pitchName: string }) {
 
   return (
     <footer className="mt-auto bg-primary-900 text-white/70">
-      <div className="shell py-14 sm:py-16">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)] lg:gap-8">
-          {/* The identity column. */}
-          <div>
-            <p className="font-display text-h2 font-bold text-white">{pitchName}</p>
-            <p className="mt-2 max-w-[36ch] text-sm">{t('footer.blurb')}</p>
+      <div className="shell py-12 sm:py-14">
+        {/* The identity block is centred, because the two facts beneath it —
+            where the pitch is and when it is open — are the reason most people
+            reach the bottom of the page at all. */}
+        <div className="flex flex-col items-center text-center">
+          <Image
+            src={logoMark}
+            alt=""
+            width={56}
+            height={56}
+            className="size-14 rounded-full shadow-[0_0_0_1px_rgb(255_255_255/0.15)]"
+          />
+          <PitchWordmark
+            name={pitchName}
+            className="mt-4 font-display text-h2 font-bold text-white"
+          />
+          <p className="mt-2 max-w-[42ch] text-sm">{t('footer.blurb')}</p>
 
-            <ul className="mt-6 space-y-3 text-sm">
-              <li className="flex items-start gap-2.5">
-                <MapPin className="mt-0.5 size-4 shrink-0 text-primary-300" aria-hidden />
-                {t('contact.address_value')}
-              </li>
-              <li className="flex items-start gap-2.5">
-                <Clock className="mt-0.5 size-4 shrink-0 text-primary-300" aria-hidden />
-                {t('contact.hours_value')}
-              </li>
+          <ul className="mt-6 flex flex-col items-center gap-3 text-sm sm:flex-row sm:gap-6">
+            <li className="flex items-center gap-2">
+              <MapPin className="size-4 shrink-0 text-primary-300" aria-hidden />
+              {t('contact.address_value')}
+            </li>
+            <li className="flex items-center gap-2">
+              <Clock className="size-4 shrink-0 text-primary-300" aria-hidden />
+              {t('contact.hours_value')}
+            </li>
+          </ul>
+
+          {socials.length > 0 ? (
+            <ul className="mt-6 flex items-center gap-2">
+              {socials.map(({ href, label, Icon }) => (
+                <li key={label}>
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    className={cn(
+                      'press tap-target flex items-center justify-center rounded-(--radius-input)',
+                      'border border-white/12 bg-white/6 text-white/80',
+                      'transition-[background-color,border-color,color,transform]',
+                      'duration-(--duration-press) ease-(--ease-out-quiet)',
+                      'hover:border-white/30 hover:bg-white/14 hover:text-white',
+                    )}
+                  >
+                    <Icon className="size-5" aria-hidden />
+                  </a>
+                </li>
+              ))}
             </ul>
-
-            {socials.length > 0 ? (
-              <ul className="mt-6 flex items-center gap-2">
-                {socials.map(({ href, label, Icon }) => (
-                  <li key={label}>
-                    <a
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={label}
-                      className={cn(
-                        'press tap-target flex items-center justify-center rounded-(--radius-input)',
-                        'border border-white/12 bg-white/6 text-white/80',
-                        'transition-[background-color,border-color,color,transform]',
-                        'duration-(--duration-press) ease-(--ease-out-quiet)',
-                        'hover:border-white/30 hover:bg-white/14 hover:text-white',
-                      )}
-                    >
-                      <Icon className="size-5" aria-hidden />
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
-
-          {NAV_COLUMNS.map((column) => (
-            <nav key={column.heading} aria-label={column.heading}>
-              <p className="font-display text-sm font-semibold tracking-normal text-white">
-                {column.heading}
-              </p>
-              <ul className="mt-3 space-y-1 text-sm">
-                {column.links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      /* 36px: comfortably past WCAG 2.2's 24px minimum and
-                         close to a thumb-friendly target, without the 44px that
-                         would stretch a four-link column by an extra 60px. */
-                      className={cn(
-                        'inline-flex min-h-9 items-center rounded-sm',
-                        'transition-colors duration-(--duration-tip) ease-(--ease-out-quiet)',
-                        'hover:text-white focus-visible:outline-white',
-                      )}
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          ))}
+          ) : null}
         </div>
 
-        <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs sm:flex-row sm:items-center">
-          <p>
-            © {year} {pitchName}. {t('footer.rights')}
-          </p>
-          <Link
-            href="/about#memorial"
-            className="inline-flex min-h-7 items-center text-memorial-chrome transition-colors duration-(--duration-tip) hover:text-white sm:ms-auto"
-          >
-            {t('memorial.title')}
-          </Link>
+        {/* One rule above the links and one below, so the row reads as a band
+            rather than as a paragraph that happens to be underlined. */}
+        <nav
+          aria-label={t('nav.primary')}
+          className="mt-10 border-y border-white/10 py-2"
+        >
+          <ul className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1">
+            {LINKS.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  className={cn(
+                    'flex min-h-11 items-center rounded-(--radius-input) px-3 text-sm',
+                    'transition-colors duration-(--duration-tip) ease-(--ease-out-quiet)',
+                    'hover:bg-white/8 hover:text-white focus-visible:outline-white',
+                  )}
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div className="mt-6 flex flex-col items-center gap-3 text-xs sm:flex-row sm:justify-center">
+          <p dir="ltr">© {year} {pitchName}. Powered by Shahar Assenheim</p>
         </div>
       </div>
     </footer>

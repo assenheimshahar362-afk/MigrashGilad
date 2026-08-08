@@ -17,6 +17,7 @@ import {
   gridHourRange,
   hoursForDate,
   isSlotClosed,
+  layoutDayEvents,
 } from '@/lib/schedule';
 import { toInstant } from '@/lib/time';
 import type { PublicClosure, PublicEvent, PublicSettings } from '@/lib/types';
@@ -59,7 +60,31 @@ export function WeekGrid({
 
   return (
     <GridKeyboardScope>
-      <div className="pitch-field overflow-clip rounded-(--radius-card) border border-(--hairline) shadow-(--shadow-sm)">
+      {/* The same seven-day grid at every width — a phone gets this exact
+          layout, not a simplified stand-in. Below `lg`, where seven 104px
+          columns plus the axis (≈49rem) no longer fit the shell, the card
+          scrolls horizontally instead of squeezing them illegible; the hour
+          axis and day-name row stay pinned to their edges while it does, via
+          `sticky` on both axes, so there is always a frame of reference for
+          what is currently in view. `max-h` + `overflow-auto` turn the
+          vertical scroll from page-level to internal, which `position:
+          sticky` needs in order to pin horizontally too — a sticky element's
+          containing block has to actually be a scroll container on the axis
+          it needs to pin against.
+
+          From `lg` up, all seven columns already fit at their natural
+          `flex-1` width with room to spare, so there is nothing to scroll —
+          the card reverts to `overflow-visible`, unbounded height, and the
+          page-level scroll (with the day row sticking under the site header
+          instead of the card's own top) that this had before. Without this
+          the `lg:` split, `overflow-auto`+`max-h` would still show a
+          scrollbar's reserved gutter on a screen that never needs one. */}
+      <div
+        className={cn(
+          'pitch-field overflow-auto rounded-(--radius-card) border border-(--hairline)',
+          'shadow-(--shadow-sm) max-h-[75vh] lg:max-h-none lg:overflow-visible',
+        )}
+      >
         <DayHeader days={days} today={today} />
 
         {/* No `role="grid"` here. The layout is seven day-COLUMNS with no
@@ -97,18 +122,24 @@ export function WeekGrid({
 /** §10.1 week strip: Hebrew day letters plus day-of-month, today highlighted. */
 function DayHeader({ days, today }: { days: LocalDate[]; today: LocalDate }) {
   return (
-    // The strip sticks under the week navigation so the day you are looking at
-    // is still named once you have scrolled down to the evening hours.
-    <div className="sticky top-(--header-h) z-20 flex border-b border-(--grid-line-strong) bg-(--surface-raised)">
-      {/* Spacer matching the hour axis width. */}
-      <div className="w-14 shrink-0 pitch-touchline" aria-hidden />
+    // Below `lg` this sticks to the top of the card's own scroll area — see
+    // the `max-h` note above. From `lg`, the card no longer scrolls itself
+    // and this reverts to sticking under the site header as the PAGE
+    // scrolls, exactly as it did before the card became scrollable.
+    <div className="sticky top-0 z-20 flex border-b border-(--grid-line-strong) bg-(--surface-raised) lg:top-(--header-h)">
+      {/* Spacer matching the hour axis width. Pinned to the same edge as
+          <HourAxis>, so the corner cell stays put through both scroll axes. */}
+      <div className="sticky start-0 z-10 w-14 shrink-0 bg-(--surface-raised) pitch-touchline" aria-hidden />
 
       {days.map((date, index) => {
         const isToday = date === today;
         return (
           <div
             key={date}
-            className={cn('relative flex-1 py-2.5 text-center', index > 0 && 'pitch-daydivider')}
+            className={cn(
+              'relative min-w-[6.5rem] flex-1 py-2.5 text-center',
+              index > 0 && 'pitch-daydivider',
+            )}
           >
             <div
               className={cn(
@@ -162,7 +193,10 @@ function HourAxis({
   const span = endMinute - startMinute;
 
   return (
-    <div className="relative w-14 shrink-0 pitch-touchline" aria-hidden>
+    <div
+      className="sticky start-0 z-10 w-14 shrink-0 bg-(--grid-surface) pitch-touchline"
+      aria-hidden
+    >
       <div className="relative h-[68vh]" style={bodyStyle(startMinute, endMinute)}>
         {hourMarks.map((minute) => (
           <div
@@ -207,7 +241,11 @@ function DayColumn({
 
   return (
     <div
-      className={cn('relative flex-1', dayIndex > 0 && 'pitch-daydivider', isToday && 'pitch-today')}
+      className={cn(
+        'relative min-w-[6.5rem] flex-1',
+        dayIndex > 0 && 'pitch-daydivider',
+        isToday && 'pitch-today',
+      )}
     >
       <div className="relative h-[68vh]" style={bodyStyle(startMinute, endMinute)}>
         {/* Hour hairlines. */}
@@ -300,12 +338,14 @@ function DayColumn({
             })
           : null}
 
-        {events.map((event) => (
+        {layoutDayEvents(events).map(({ event, col, cols }) => (
           <EventBlock
             key={event.id}
             event={event}
             startMinute={startMinute}
             endMinute={endMinute}
+            col={col}
+            cols={cols}
           />
         ))}
 

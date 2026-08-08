@@ -75,6 +75,60 @@ export function conflictingEvents(events: PublicEvent[], start: Date, end: Date)
 }
 
 /**
+ * Association and community time may now share a slot (the events table only
+ * forbids two events of the SAME category overlapping), so the grid can no
+ * longer assume one event ever fully owns its time range. This assigns each
+ * event a column and a column count within its overlap cluster, the classic
+ * calendar side-by-side layout: events that never overlap anything else get
+ * the full width (`cols: 1`), and events sharing a slot split it evenly.
+ *
+ * Generic rather than hardcoded to two columns — nothing here assumes the
+ * cluster size, so it keeps working if a third category is ever added.
+ */
+export function layoutDayEvents<T extends { startsAt: string; endsAt: string }>(
+  events: T[],
+): Array<{ event: T; col: number; cols: number }> {
+  const sorted = [...events].sort(
+    (a, b) => a.startsAt.localeCompare(b.startsAt) || a.endsAt.localeCompare(b.endsAt),
+  );
+
+  const layout: Array<{ event: T; col: number; cols: number }> = [];
+  let cluster: T[] = [];
+  let clusterEnd = '';
+
+  const flush = () => {
+    if (cluster.length === 0) return;
+    // Greedy column assignment: each event takes the first column whose
+    // previous occupant has already ended by the time it starts.
+    const columnEnds: string[] = [];
+    const placed: Array<{ event: T; col: number }> = [];
+    for (const event of cluster) {
+      const col = columnEnds.findIndex((end) => end <= event.startsAt);
+      if (col === -1) {
+        columnEnds.push(event.endsAt);
+        placed.push({ event, col: columnEnds.length - 1 });
+      } else {
+        columnEnds[col] = event.endsAt;
+        placed.push({ event, col });
+      }
+    }
+    const cols = columnEnds.length;
+    for (const p of placed) layout.push({ ...p, cols });
+    cluster = [];
+    clusterEnd = '';
+  };
+
+  for (const event of sorted) {
+    if (cluster.length > 0 && event.startsAt >= clusterEnd) flush();
+    cluster.push(event);
+    if (cluster.length === 1 || event.endsAt > clusterEnd) clusterEnd = event.endsAt;
+  }
+  flush();
+
+  return layout;
+}
+
+/**
  * FR-17, FR-18: lead time, horizon and duration, all configurable. Validated
  * here so the client-side form and the route handler give identical answers —
  * the form is a courtesy, the route handler is the rule.

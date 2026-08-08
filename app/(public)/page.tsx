@@ -14,7 +14,6 @@ import {
 } from '@/lib/time';
 import { closuresForDate } from '@/lib/schedule';
 import { WeekGrid } from '@/components/schedule/week-grid';
-import { WeekAgenda } from '@/components/schedule/week-agenda';
 import { WeekNav } from '@/components/schedule/week-nav';
 import { DayList } from '@/components/schedule/day-list';
 import { Legend } from '@/components/schedule/legend';
@@ -92,25 +91,16 @@ export default async function WeeklySchedulePage({
             </p>
           ) : null}
 
-          {/* Two forms of the same week. Below `sm` a phone column is 39px
-              wide, which cannot hold a time range, so the grid is replaced by
-              the day agenda rather than shrunk into illegibility. Only one is
-              in the DOM's accessibility tree at a time, because `hidden`
-              removes the other from it entirely. */}
-          <WeekAgenda
-            weekStart={weekStart}
-            events={events}
-            closures={closures}
-            settings={settings}
-            className="sm:hidden"
-          />
-
-          <div className="hidden sm:block">
+          {/* The same grid at every width — a phone gets the identical seven-
+              day layout as a desktop, just horizontally scrollable, rather
+              than a different, simplified view. `WeekGrid` handles its own
+              min-width and sticky hour axis for that. */}
+          <div>
             <WeekGrid weekStart={weekStart} events={events} closures={closures} settings={settings} />
 
-            {/* A11Y-5: the screen-reader alternative to the grid. The agenda is
-                already a semantic list, so this belongs to the grid and is
-                hidden with it. */}
+            {/* A11Y-5: the screen-reader alternative to the grid — the grid
+                conveys time by position and horizontal scroll, neither of
+                which a screen reader narrates. */}
             <DayList dates={days} events={events} headingId="week-sr-list" />
           </div>
 

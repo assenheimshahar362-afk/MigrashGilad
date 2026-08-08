@@ -1,21 +1,14 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { MapPin, Clock, Phone, Map as MapIcon, ArrowLeft } from 'lucide-react';
+import { MapPin, Clock, Map as MapIcon } from 'lucide-react';
 import { t } from '@/lib/i18n';
-import { getOnDutyTrustee } from '@/lib/data';
-import { formatIsraeliPhone, telLink, initials } from '@/lib/utils';
-import { Ltr } from '@/components/ui/ltr';
+import { getTrustees } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { WhatsAppButton, PhoneButton } from '@/components/chrome/site-footer';
+import { TrusteeContactGrid } from '@/components/trustees/trustee-contact-grid';
 
 export const metadata: Metadata = { title: t('contact.title') };
 
 /**
  * The contact page.
- *
- * §7 PII: the only phone number shown publicly is the on-duty trustee's, which
- * is already public on the header of every page. No other contact details are
- * read from the database here.
  *
  * The map is a static placeholder rather than a live Google Maps iframe. An
  * embed would be a third-party frame on every visit and would need a CSP
@@ -25,7 +18,7 @@ export const metadata: Metadata = { title: t('contact.title') };
 export const revalidate = 300;
 
 export default async function ContactPage() {
-  const onDuty = await getOnDutyTrustee();
+  const trustees = await getTrustees();
 
   return (
     <section className="section">
@@ -36,55 +29,19 @@ export default async function ContactPage() {
 
         <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_1.1fr] lg:gap-8">
           <div className="space-y-6">
-            {/* The primary action. The brief asks for a large WhatsApp button,
-                and it is the affordance that actually gets used at a pitch. */}
+            {/* The primary action. One circle per trustee, so a tap reaches a
+                person rather than a page — the choice of call or WhatsApp
+                happens in the sheet, once a name is picked. */}
             <div className="card p-6 sm:p-7">
-              <h2 className="text-h3">{t('contact.on_duty_title')}</h2>
+              <h2 className="text-h3">{t('contact.trustees_title')}</h2>
 
-              {onDuty ? (
-                <>
-                  <div className="mt-4 flex items-center gap-4">
-                    <span
-                      aria-hidden
-                      className="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary-50 font-display text-h3 font-bold text-primary-700"
-                    >
-                      {initials(onDuty.full_name)}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-h3 font-bold">{onDuty.full_name}</p>
-                      {onDuty.title ? (
-                        <p className="truncate text-sm text-(--ink-muted)">{onDuty.title}</p>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                    {onDuty.whatsapp_ok ? (
-                      <WhatsAppButton phone={onDuty.phone_e164} className="w-full sm:w-auto" />
-                    ) : null}
-                    <PhoneButton phone={onDuty.phone_e164} className="w-full sm:w-auto" />
-                  </div>
-
-                  <p className="mt-4 flex items-center gap-2 text-sm text-(--ink-muted)">
-                    <Phone className="size-4 shrink-0" aria-hidden />
-                    <a
-                      href={telLink(onDuty.phone_e164)}
-                      className="inline-flex min-h-7 items-center underline decoration-(--hairline-strong) underline-offset-4 transition-colors hover:text-(--ink) hover:decoration-current"
-                    >
-                      <Ltr>{formatIsraeliPhone(onDuty.phone_e164)}</Ltr>
-                    </a>
-                  </p>
-                </>
+              {trustees.length > 0 ? (
+                <div className="mt-4">
+                  <TrusteeContactGrid trustees={trustees} />
+                </div>
               ) : (
                 <p className="mt-3 text-(--ink-muted)">{t('contact.no_trustee')}</p>
               )}
-
-              <Button asChild variant="quiet" className="mt-5 px-0">
-                <Link href="/trustees">
-                  {t('contact.all_trustees')}
-                  <ArrowLeft className="size-4" aria-hidden />
-                </Link>
-              </Button>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -97,43 +54,31 @@ export default async function ContactPage() {
             </div>
           </div>
 
-          {/* The map panel. */}
-          <div className="card overflow-hidden">
-            <div className="relative flex min-h-[22rem] flex-col items-center justify-center gap-4 bg-(--surface-sunken) p-8 text-center lg:min-h-full">
-              {/* A faint street-grid so the panel reads as a map slot rather
-                  than as an empty box. */}
-              <div
-                aria-hidden
-                className="absolute inset-0 opacity-[0.07]"
-                style={{
-                  backgroundImage:
-                    'linear-gradient(var(--ink) 1px, transparent 1px), linear-gradient(90deg, var(--ink) 1px, transparent 1px)',
-                  backgroundSize: '48px 48px',
-                }}
-              />
-              <span
-                aria-hidden
-                className="relative flex size-14 items-center justify-center rounded-full bg-primary text-white shadow-(--shadow-md)"
+          {/* The map panel. A live embed, not a placeholder — it needs no API
+              key since it goes through the plain `output=embed` endpoint, and
+              `frame-src` in next.config.ts allows exactly this one origin. */}
+          <div className="card relative overflow-hidden">
+            <iframe
+              title={t('contact.map_title')}
+              src="https://www.google.com/maps?q=%D7%A7%D7%99%D7%91%D7%95%D7%A5+%D7%92%D7%A0%D7%99%D7%92%D7%A8&output=embed"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="min-h-[22rem] w-full border-0 lg:min-h-full"
+            />
+            <Button
+              asChild
+              variant="secondary"
+              className="absolute bottom-4 start-1/2 -translate-x-1/2 shadow-(--shadow-md)"
+            >
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=%D7%A7%D7%99%D7%91%D7%95%D7%A5+%D7%92%D7%A0%D7%99%D7%92%D7%A8"
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                <MapIcon className="size-6" />
-              </span>
-              <div className="relative">
-                <h2 className="text-h3">{t('contact.map_title')}</h2>
-                <p className="mx-auto mt-2 max-w-[34ch] text-sm text-(--ink-muted)">
-                  {t('contact.map_placeholder')}
-                </p>
-              </div>
-              <Button asChild variant="secondary" className="relative">
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(t('contact.address_value'))}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <MapIcon className="size-5" aria-hidden />
-                  {t('contact.map_open')}
-                </a>
-              </Button>
-            </div>
+                <MapIcon className="size-5" aria-hidden />
+                {t('contact.map_open')}
+              </a>
+            </Button>
           </div>
         </div>
       </div>

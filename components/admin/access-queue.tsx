@@ -64,7 +64,7 @@ export function AccessQueue({ requests }: { requests: AccessRequest[] }) {
         <h2 className="mb-3 text-h3">
           {t('access.pending_title')}
           {waiting.length > 0 ? (
-            <span className="ms-2 rounded-full bg-accent px-2 py-0.5 text-sm font-bold text-accent-ink">
+            <span className="ms-2 rounded-full bg-accent px-2 py-0.5 text-sm font-bold text-white">
               {waiting.length}
             </span>
           ) : null}

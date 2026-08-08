@@ -13,27 +13,18 @@ import type { TrusteeRow } from '@/lib/types';
  * rather than being removed. Someone looking for a specific person should find
  * out that they are away, not that they have vanished.
  */
-export function TrusteeCard({ trustee, isOnDuty }: { trustee: TrusteeRow; isOnDuty: boolean }) {
+export function TrusteeCard({ trustee }: { trustee: TrusteeRow }) {
   const muted = !trustee.is_available;
 
   return (
     <li
       className={cn(
         'card relative flex flex-col p-6 text-center',
-        // The on-duty card is the one you are meant to find, so it gets a ring
-        // rather than just a label — a shape reads before a word does.
-        isOnDuty && 'ring-2 ring-primary/25',
         // Muted, not removed. The saturation drop does more of the work than
         // opacity alone, which on a white card just looks like a render glitch.
         muted && 'opacity-75 saturate-50',
       )}
     >
-      {isOnDuty ? (
-        <p className="absolute -top-3 inset-x-0 mx-auto w-fit rounded-(--radius-chip) bg-primary px-3 py-1 text-xs font-semibold text-white shadow-(--shadow-sm)">
-          {t('trustees.on_duty')}
-        </p>
-      ) : null}
-
       {trustee.photo_url ? (
         <Image
           src={trustee.photo_url}
@@ -53,12 +44,6 @@ export function TrusteeCard({ trustee, isOnDuty }: { trustee: TrusteeRow; isOnDu
 
       <p className="mt-4 text-h3 font-bold">{trustee.full_name}</p>
 
-      {trustee.title ? (
-        <p className="mt-1.5 inline-flex w-fit self-center rounded-(--radius-chip) bg-(--surface-sunken) px-3 py-0.5 text-xs font-medium text-(--ink-muted)">
-          {trustee.title}
-        </p>
-      ) : null}
-
       {muted ? (
         <p className="mt-2 text-sm font-semibold text-danger-ink">{t('trustees.unavailable')}</p>
       ) : null}
@@ -70,7 +55,7 @@ export function TrusteeCard({ trustee, isOnDuty }: { trustee: TrusteeRow; isOnDu
           label={t('trustees.call')}
           name={trustee.full_name}
         >
-          <Phone className="size-5" aria-hidden />
+          <Phone className="size-5 text-[#2563eb]" aria-hidden />
         </Action>
 
         {trustee.whatsapp_ok ? (
@@ -81,7 +66,7 @@ export function TrusteeCard({ trustee, isOnDuty }: { trustee: TrusteeRow; isOnDu
             name={trustee.full_name}
             external
           >
-            <MessageCircle className="size-5" aria-hidden />
+            <MessageCircle className="size-5 text-[#25D366]" aria-hidden />
           </Action>
         ) : null}
       </div>

@@ -3,7 +3,9 @@ import { Heebo, Rubik } from 'next/font/google';
 /**
  * §11.2. Two families, each with one job:
  *   - Rubik: headings. A geometric Hebrew sans with weight and confidence at
- *     large sizes, which is what carries the "premium product" read.
+ *     large sizes, which is what carries the "premium product" read. 800 is
+ *     loaded alongside 700 for the hero and the club badge's wordmark, which
+ *     both want the poster-weight boldness the crest itself uses.
  *   - Heebo: all body text, forms, buttons — and, at `tabular-nums`, the time
  *     column, so the schedule's figures align in RTL. One family for body and
  *     data means the grid's times sit in the same voice as everything around
@@ -21,7 +23,7 @@ import { Heebo, Rubik } from 'next/font/google';
  */
 export const fontDisplay = Rubik({
   subsets: ['hebrew'],
-  weight: ['500', '600', '700'],
+  weight: ['500', '600', '700', '800', '900'],
   display: 'swap',
   variable: '--font-display-loaded',
   fallback: ['system-ui', 'sans-serif'],
