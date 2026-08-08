@@ -15,6 +15,9 @@ const PUBLIC_PAGES = [
   '/trustees',
   '/rules',
   '/accessibility',
+  // Since §2 was amended, /login wears the public chrome like any other page,
+  // so it is held to the same axe budget.
+  '/login',
 ];
 
 /**

@@ -47,11 +47,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const settings = await getSettings();
   const memorialDay = isMemorialDay(settings, todayLocal());
 
+  // The favicon and the apple-touch icon are `app/icon.png` and
+  // `app/apple-icon.png`; Next emits both <link> tags from those filenames,
+  // with a content hash, so there is nothing to declare here. Both are written
+  // by `npm run icons` from the club badge.
   return (
     <html lang="he" dir="rtl" data-memorial-day={memorialDay ? 'true' : 'false'}>
-      <head>
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
-      </head>
       <body className={fontVariables}>
         <SkipLink />
         {children}

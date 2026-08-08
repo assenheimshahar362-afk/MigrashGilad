@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import logoMark from '@/public/images/logo-mark.webp';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { AuthIcons } from '@/components/chrome/auth-icons';
@@ -68,25 +70,44 @@ export function SiteHeader({ pitchName }: { pitchName: string }) {
       <div className="shell flex items-center gap-4 py-3 sm:py-4">
         <Link
           href="/"
-          className="press-sm min-w-0 shrink-0 rounded-(--radius-input) py-0.5"
+          className="press-sm flex min-w-0 shrink-0 items-center gap-2.5 rounded-(--radius-input) py-0.5"
           aria-label={pitchName}
         >
-          <span
+          {/* The badge is decorative here: the name it carries is set beside it
+              in real text, which is what the accessible name comes from. Over
+              the hero it gets a soft ring, because the artwork's own cream disc
+              would otherwise float on a dark photograph with no edge. */}
+          <Image
+            src={logoMark}
+            alt=""
+            width={40}
+            height={40}
+            priority
             className={cn(
-              'block truncate font-display text-h3 leading-tight font-bold transition-colors duration-300',
-              solid ? 'text-(--ink)' : 'text-white drop-shadow-sm',
+              'size-9 shrink-0 rounded-full sm:size-10',
+              'transition-[box-shadow] duration-300',
+              solid ? 'shadow-none' : 'shadow-[0_0_0_1px_rgb(255_255_255/0.25)]',
             )}
-          >
-            {pitchName}
-          </span>
-          <span
-            className={cn(
-              'mt-0.5 flex items-center gap-1.5 text-xs transition-colors duration-300',
-              solid ? 'text-(--ink-faint)' : 'text-white/75',
-            )}
-          >
-            <span aria-hidden className="inline-block h-px w-3.5 bg-current" />
-            {t('app.tagline')}
+          />
+
+          <span className="min-w-0">
+            <span
+              className={cn(
+                'block truncate font-display text-h3 leading-tight font-bold transition-colors duration-300',
+                solid ? 'text-(--ink)' : 'text-white drop-shadow-sm',
+              )}
+            >
+              {pitchName}
+            </span>
+            <span
+              className={cn(
+                'mt-0.5 flex items-center gap-1.5 text-xs transition-colors duration-300',
+                solid ? 'text-(--ink-faint)' : 'text-white/75',
+              )}
+            >
+              <span aria-hidden className="inline-block h-px w-3.5 bg-current" />
+              {t('app.tagline')}
+            </span>
           </span>
         </Link>
 

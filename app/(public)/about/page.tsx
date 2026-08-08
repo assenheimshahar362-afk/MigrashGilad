@@ -9,6 +9,7 @@ import { sanitizeMemorialHtml } from '@/lib/sanitize';
 import { Button } from '@/components/ui/button';
 import { Reveal } from '@/components/marketing/reveal';
 import { CountUp } from '@/components/marketing/count-up';
+import entranceImage from '@/public/images/pitch-entrance.webp';
 
 export const metadata: Metadata = { title: t('about.title') };
 export const revalidate = 3600;
@@ -17,8 +18,9 @@ export const revalidate = 3600;
  * The about page. Two columns from `lg` up, stacked below — the image leads on
  * mobile because it establishes the place faster than a paragraph does.
  *
- * The photograph is a placeholder (`public/images/about-pitch.svg`). Replace it
- * with a real one; the aspect ratio is fixed by the wrapper, so any crop works.
+ * The photograph is `public/images/pitch-entrance.webp`. The aspect ratio is
+ * fixed by the wrapper and the image is `object-cover`, so any replacement
+ * crops rather than distorts.
  */
 const STATS = [
   { value: t('about.stat_1_value'), label: t('about.stat_1_label') },
@@ -76,14 +78,20 @@ export default async function AboutPage() {
           </Reveal>
 
           <Reveal className="order-1 lg:order-2">
-            {/* The image is decorative context, so its alt is a plain
-                description rather than an attempt to narrate the photograph. */}
+            {/* The entrance, with the sign. This page answers "what is this
+                place", and the gate carrying the name answers it faster than
+                the paragraph beside it does — which is why the image leads on
+                mobile and this is the one photograph that gets `priority`.
+
+                Its alt is a plain description rather than an attempt to
+                narrate the photograph. */}
             <div className="relative aspect-4/3 overflow-hidden rounded-(--radius-card) shadow-(--shadow-lg)">
               <Image
-                src="/images/about-pitch.svg"
+                src={entranceImage}
                 alt={t('about.image_alt')}
                 fill
                 sizes="(min-width: 1024px) 40rem, 100vw"
+                placeholder="blur"
                 className="object-cover"
                 priority
               />

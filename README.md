@@ -92,7 +92,7 @@ Everything else in `.env.example` is optional and degrades explicitly:
 | `npm run test:integration` | RLS policy matrix and RPCs, against local Supabase |
 | `npm run test:e2e` | Playwright, RTL locale, axe-core on every public page |
 | `npm run check:secrets` | greps the built client bundle for server-only values |
-| `npm run icons` | regenerates the PWA icon SVGs |
+| `npm run icons` | regenerates every icon from `public/images/logo.png` |
 
 ---
 
@@ -276,8 +276,11 @@ bite. None of them blocks the build; all of them block launch.
    is waiting — the queue at `/admin/access` still holds it either way.
 4. All environment variables from `.env.example` set in Vercel.
 5. `vercel.json` crons active (expire at 02:00, materialise at 02:30).
-6. PWA icons rasterised — `npm run icons` writes both the SVGs and the five PNGs
-   the manifest requires.
+6. Icons generated — `npm run icons` cuts the badge out of
+   `public/images/logo.png` and writes the manifest PNGs, the favicon
+   (`app/icon.png`), the apple-touch icon and the header mark. Re-run it after
+   replacing the logo; the disc's centre and radius are constants at the top of
+   `scripts/generate-icons.mjs` and would need remeasuring for new artwork.
 7. Accessibility coordinator named in `app/(public)/accessibility/page.tsx`.
 8. Memorial content supplied and approved by the family.
 9. Lighthouse checked against NFR-2: Performance ≥ 90, Accessibility 100.

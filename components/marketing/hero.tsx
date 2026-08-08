@@ -1,8 +1,10 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowLeft, CalendarDays, ChevronDown, Info } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import heroImage from '@/public/images/pitch-aerial.webp';
 
 /**
  * The landing hero.
@@ -13,9 +15,12 @@ import { Button } from '@/components/ui/button';
  * The scroll cue at the bottom exists for the same reason: it promises that the
  * schedule is immediately underneath.
  *
- * The background is `public/images/hero-pitch.svg`, a placeholder. Swap it for
- * a real photograph of the pitch; the overlay below is tuned to keep the
- * headline legible over a mid-tone image either way.
+ * The background is the aerial view of the pitch. It is served through
+ * <Image> rather than as a CSS `background-image` for one reason that matters
+ * on a phone: only the former is resized and re-encoded per device, so a 4G
+ * visitor is not made to download a desktop-width file. The overlays below are
+ * tuned to keep the headline legible over it — and over any photograph that
+ * replaces it, including a bright one.
  *
  * This is the ONLY place the booking call to action lives. It used to be echoed
  * by a button docked over the schedule, which said the same thing twice and
@@ -47,23 +52,51 @@ export function Hero({
         'short:pt-20 short:pb-6',
       )}
     >
-      {/* The image. `background-image` rather than <Image> because it is purely
-          decorative — it carries no information a screen reader needs, and this
-          keeps it out of the accessibility tree entirely. */}
-      <div
-        aria-hidden
-        className="absolute inset-0 -z-20 bg-primary-900 bg-cover bg-center"
-        style={{ backgroundImage: "url('/images/hero-pitch.svg')" }}
-      />
+      {/* The image is decorative — everything it says is said again in the
+          headline — so its alt is empty and it stays out of the accessibility
+          tree. `priority` because it is the largest paint on the landing page:
+          lazy-loading the thing the page is mostly made of only moves the
+          moment the visitor waits for.
 
-      {/* Two overlays. The vertical gradient anchors the text at the bottom;
-          the top scrim is what guarantees the header's white wordmark stays
-          legible over WHATEVER photograph replaces the placeholder, including a
-          bright one. Without it the chrome's legibility is a property of the
-          image rather than of the design. */}
+          The crop is per-breakpoint, not one compromise for both. A tall phone
+          sees a narrow slice, so it is pushed away from the floodlight mast and
+          onto the pitch and the goal; a wide screen already holds the whole
+          frame and only needs the horizon lifted off the headline. */}
+      <div aria-hidden className="absolute inset-0 -z-20 bg-primary-900">
+        <Image
+          src={heroImage}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          placeholder="blur"
+          className="object-cover object-[62%_42%] lg:object-[50%_38%]"
+        />
+      </div>
+
+      {/* Three overlays, each with one job.
+          1. The vertical gradient anchors the text at the bottom. It is
+             deliberately lighter from `lg` up, where the copy occupies one side
+             of the frame rather than all of it — a full-strength wash there
+             costs the photograph its green for no legibility gained.
+          2. On a wide screen the copy sits at the inline start, which is the
+             RIGHT under dir="rtl", so a horizontal scrim darkens that side only
+             and leaves the pitch itself vivid.
+          3. The top scrim guarantees the header's white wordmark stays legible
+             over WHATEVER photograph is behind it, including a bright one.
+             Without it the chrome's legibility is a property of the image
+             rather than of the design. */}
       <div
         aria-hidden
-        className="absolute inset-0 -z-10 bg-linear-to-t from-primary-900/95 via-primary-900/55 to-primary-900/40"
+        className={cn(
+          'absolute inset-0 -z-10 bg-linear-to-t',
+          'from-primary-900/95 via-primary-900/55 to-primary-900/35',
+          'lg:from-primary-900/88 lg:via-primary-900/35 lg:to-primary-900/12',
+        )}
+      />
+      <div
+        aria-hidden
+        className="absolute inset-0 -z-10 hidden bg-linear-to-l from-primary-900/85 via-primary-900/30 to-transparent lg:block"
       />
       <div
         aria-hidden
