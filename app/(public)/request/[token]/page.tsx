@@ -35,7 +35,7 @@ export default async function RequestStatusPage({
         <p className="mt-3 text-(--ink-muted)">{t('status.not_found_help')}</p>
         <div className="mt-6 flex flex-wrap gap-2">
           <Button asChild variant="secondary">
-            <Link href="/trustees">{t('nav.trustees')}</Link>
+            <Link href="/#trustees">{t('nav.trustees')}</Link>
           </Button>
           <Button asChild variant="quiet">
             <Link href="/">{t('common.back_home')}</Link>

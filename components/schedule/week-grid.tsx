@@ -1,5 +1,3 @@
-import Link from 'next/link';
-import { Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { t } from '@/lib/i18n';
 import {
@@ -16,17 +14,12 @@ import {
   eventsForDate,
   gridHourRange,
   hoursForDate,
-  isSlotClosed,
   layoutDayEvents,
 } from '@/lib/schedule';
 import { toInstant } from '@/lib/time';
 import type { PublicClosure, PublicEvent, PublicSettings } from '@/lib/types';
 import { EventBlock } from '@/components/schedule/event-block';
 import { NowMarker } from '@/components/schedule/now-marker';
-import { GridKeyboardScope } from '@/components/schedule/grid-keyboard';
-
-/** The granularity of the tappable empty-slot cells (FR-10). */
-const SLOT_MINUTES = 60;
 
 /**
  * §10.1 time grid. The signature element (§11.3): pitch line-markings drawn as
@@ -59,91 +52,63 @@ export function WeekGrid({
   for (let m = Math.ceil(startMinute / 60) * 60; m <= endMinute; m += 60) hourMarks.push(m);
 
   return (
-    <GridKeyboardScope>
-      {/* The same seven-day grid at every width — a phone gets this exact
-          layout, not a simplified stand-in. Below `lg`, where seven 104px
-          columns plus the axis (≈49rem) no longer fit the shell, the card
-          scrolls horizontally instead of squeezing them illegible; the hour
-          axis and day-name row stay pinned to their edges while it does, via
-          `sticky` on both axes, so there is always a frame of reference for
-          what is currently in view. `max-h` + `overflow-auto` turn the
-          vertical scroll from page-level to internal, which `position:
-          sticky` needs in order to pin horizontally too — a sticky element's
-          containing block has to actually be a scroll container on the axis
-          it needs to pin against.
+    // The same seven-day grid at every width, with no scroll of its own at
+    // any width — the seven columns SHRINK to fit the shell instead of
+    // overflowing it. The hour axis narrows and the day-name text drops a
+    // size below `sm` so a 320px phone still holds all seven without a
+    // scrollbar; nothing is cropped, just smaller.
+    <div className="pitch-field overflow-clip rounded-(--radius-card) border border-(--hairline) shadow-(--shadow-sm)">
+      <DayHeader days={days} today={today} />
 
-          From `lg` up, all seven columns already fit at their natural
-          `flex-1` width with room to spare, so there is nothing to scroll —
-          the card reverts to `overflow-visible`, unbounded height, and the
-          page-level scroll (with the day row sticking under the site header
-          instead of the card's own top) that this had before. Without this
-          the `lg:` split, `overflow-auto`+`max-h` would still show a
-          scrollbar's reserved gutter on a screen that never needs one. */}
-      <div
-        className={cn(
-          'pitch-field overflow-auto rounded-(--radius-card) border border-(--hairline)',
-          'shadow-(--shadow-sm) max-h-[75vh] lg:max-h-none lg:overflow-visible',
-        )}
-      >
-        <DayHeader days={days} today={today} />
+      {/* The grid is read-only: nothing in it is a control, so there is no
+          `role="grid"`, no keyboard grid navigation and no per-cell markup —
+          just seven day-columns of information. A11Y-5's <DayList> is the
+          accessible representation of the same data. */}
+      {/* The half-row of padding gives the first and last hour labels, which
+          are centred on their own rule, somewhere to sit without being
+          clipped by the day strip above or the card edge below. */}
+      <div className="flex pt-3 pb-3" role="presentation">
+        <HourAxis hourMarks={hourMarks} startMinute={startMinute} endMinute={endMinute} />
 
-        {/* No `role="grid"` here. The layout is seven day-COLUMNS with no
-            rows, so the grid role's required `row` children can never exist and
-            asserting it produces a broken accessibility tree rather than a
-            useful one. A11Y-5's <DayList> is the accessible representation of
-            this data, and A11Y-4's arrow-key movement is driven by the
-            `data-grid-*` attributes, not by ARIA. */}
-        {/* The half-row of padding gives the first and last hour labels, which
-            are centred on their own rule, somewhere to sit without being
-            clipped by the day strip above or the card edge below. */}
-        <div className="flex pt-3 pb-3" role="presentation">
-          <HourAxis hourMarks={hourMarks} startMinute={startMinute} endMinute={endMinute} />
-
-          {days.map((date, dayIndex) => (
-            <DayColumn
-              key={date}
-              date={date}
-              dayIndex={dayIndex}
-              isToday={date === today}
-              events={eventsForDate(events, date)}
-              closures={closuresForDate(closures, date)}
-              settings={settings}
-              startMinute={startMinute}
-              endMinute={endMinute}
-              hourMarks={hourMarks}
-            />
-          ))}
-        </div>
+        {days.map((date, dayIndex) => (
+          <DayColumn
+            key={date}
+            date={date}
+            dayIndex={dayIndex}
+            isToday={date === today}
+            events={eventsForDate(events, date)}
+            closures={closuresForDate(closures, date)}
+            settings={settings}
+            startMinute={startMinute}
+            endMinute={endMinute}
+            hourMarks={hourMarks}
+          />
+        ))}
       </div>
-    </GridKeyboardScope>
+    </div>
   );
 }
 
 /** §10.1 week strip: Hebrew day letters plus day-of-month, today highlighted. */
 function DayHeader({ days, today }: { days: LocalDate[]; today: LocalDate }) {
   return (
-    // Below `lg` this sticks to the top of the card's own scroll area — see
-    // the `max-h` note above. From `lg`, the card no longer scrolls itself
-    // and this reverts to sticking under the site header as the PAGE
-    // scrolls, exactly as it did before the card became scrollable.
-    <div className="sticky top-0 z-20 flex border-b border-(--grid-line-strong) bg-(--surface-raised) lg:top-(--header-h)">
-      {/* Spacer matching the hour axis width. Pinned to the same edge as
-          <HourAxis>, so the corner cell stays put through both scroll axes. */}
-      <div className="sticky start-0 z-10 w-14 shrink-0 bg-(--surface-raised) pitch-touchline" aria-hidden />
+    // The strip sticks under the site header so the day you are looking at
+    // is still named once you have scrolled down to the evening hours.
+    <div className="sticky top-(--header-h) z-20 flex border-b border-(--grid-line-strong) bg-(--surface-raised)">
+      {/* Spacer matching the hour axis width — narrower on a phone, see
+          <HourAxis>. */}
+      <div className="w-10 shrink-0 pitch-touchline sm:w-14" aria-hidden />
 
       {days.map((date, index) => {
         const isToday = date === today;
         return (
           <div
             key={date}
-            className={cn(
-              'relative min-w-[6.5rem] flex-1 py-2.5 text-center',
-              index > 0 && 'pitch-daydivider',
-            )}
+            className={cn('relative flex-1 py-2 text-center sm:py-2.5', index > 0 && 'pitch-daydivider')}
           >
             <div
               className={cn(
-                'text-[0.6875rem] font-medium',
+                'text-[0.625rem] font-medium sm:text-[0.6875rem]',
                 isToday ? 'font-semibold text-primary-600' : 'text-(--ink-faint)',
               )}
             >
@@ -154,7 +119,7 @@ function DayHeader({ days, today }: { days: LocalDate[]; today: LocalDate }) {
                 eye finds it before it has read anything. */}
             <div
               className={cn(
-                'tnum mx-auto mt-1 flex size-7 items-center justify-center rounded-full text-sm',
+                'tnum mx-auto mt-1 flex size-6 items-center justify-center rounded-full text-xs sm:size-7 sm:text-sm',
                 isToday
                   ? 'bg-primary font-bold text-white shadow-(--shadow-xs)'
                   : 'font-medium text-(--ink)',
@@ -193,18 +158,15 @@ function HourAxis({
   const span = endMinute - startMinute;
 
   return (
-    <div
-      className="sticky start-0 z-10 w-14 shrink-0 bg-(--grid-surface) pitch-touchline"
-      aria-hidden
-    >
+    <div className="relative w-10 shrink-0 pitch-touchline sm:w-14" aria-hidden>
       <div className="relative h-[68vh]" style={bodyStyle(startMinute, endMinute)}>
         {hourMarks.map((minute) => (
           <div
             key={minute}
-            className="absolute inset-x-0 -translate-y-1/2 pe-2 text-end"
+            className="absolute inset-x-0 -translate-y-1/2 pe-1 text-end sm:pe-2"
             style={{ top: `${((minute - startMinute) / span) * 100}%` }}
           >
-            <span className="tnum text-[0.6875rem] font-medium text-(--ink-faint)">
+            <span className="tnum text-[0.5625rem] font-medium text-(--ink-faint) sm:text-[0.6875rem]">
               {timeFromMinutes(minute)}
             </span>
           </div>
@@ -237,15 +199,10 @@ function DayColumn({
 }) {
   const span = endMinute - startMinute;
   const dayHours = hoursForDate(settings.openingHours, date);
-  const allDayClosure = closures.find((closure) => closure.allDay);
 
   return (
     <div
-      className={cn(
-        'relative min-w-[6.5rem] flex-1',
-        dayIndex > 0 && 'pitch-daydivider',
-        isToday && 'pitch-today',
-      )}
+      className={cn('relative flex-1', dayIndex > 0 && 'pitch-daydivider', isToday && 'pitch-today')}
     >
       <div className="relative h-[68vh]" style={bodyStyle(startMinute, endMinute)}>
         {/* Hour hairlines. */}
@@ -280,64 +237,6 @@ function DayColumn({
           />
         ))}
 
-        {/* FR-10: empty slots inside opening hours are tappable and pre-fill the
-            request form with that date and time. */}
-        {dayHours && !allDayClosure && settings.requestsOpen
-          ? buildSlots(dayHours, startMinute, endMinute).map((slot, slotIndex) => {
-              const start = toInstant(date, timeFromMinutes(slot.from));
-              const end = toInstant(date, timeFromMinutes(slot.to));
-              const busy =
-                isSlotClosed(closures, start, end) ||
-                events.some(
-                  (event) =>
-                    new Date(event.startsAt) < end && start < new Date(event.endsAt),
-                );
-              if (busy) return null;
-
-              return (
-                <Link
-                  key={slot.from}
-                  href={`/request?date=${date}&start=${timeFromMinutes(slot.from)}&end=${timeFromMinutes(slot.to)}`}
-                  data-grid-cell
-                  data-grid-col={dayIndex}
-                  data-grid-row={slotIndex}
-                  aria-label={`${formatWeekdayLong(date)} ${timeFromMinutes(slot.from)} — ${t('schedule.free_slot')}`}
-                  /* A free hour is an invitation, so it warms rather than
-                     greys under the pointer — the same amber the CTA uses,
-                     at the lowest alpha that still registers. The inset ring
-                     draws the slot's own edges, which is what tells you the
-                     tap will book that hour and not the whole column. */
-                  /* A free hour is an invitation: it warms to the brand green
-                     under the pointer and reveals a "+" that is not drawn until
-                     there is a pointer to draw it for. On touch there is no
-                     hover, so the whole cell is simply tappable. */
-                  className={cn(
-                    'group absolute inset-x-px flex items-center justify-center rounded-[6px]',
-                    'transition-colors duration-(--duration-tip) ease-(--ease-out-quiet)',
-                    'hover:bg-primary-50 focus-visible:bg-primary-50',
-                    'motion-reduce:transition-none',
-                  )}
-                  style={{
-                    top: `${((slot.from - startMinute) / span) * 100}%`,
-                    height: `${((slot.to - slot.from) / span) * 100}%`,
-                  }}
-                >
-                  <span
-                    aria-hidden
-                    className={cn(
-                      'flex size-5 items-center justify-center rounded-full bg-primary text-white',
-                      'opacity-0 transition-opacity duration-(--duration-tip) ease-(--ease-out-quiet)',
-                      'group-hover:opacity-100 group-focus-visible:opacity-100',
-                      'motion-reduce:transition-none',
-                    )}
-                  >
-                    <Plus className="size-3.5" strokeWidth={3} />
-                  </span>
-                </Link>
-              );
-            })
-          : null}
-
         {layoutDayEvents(events).map(({ event, col, cols }) => (
           <EventBlock
             key={event.id}
@@ -353,27 +252,6 @@ function DayColumn({
       </div>
     </div>
   );
-}
-
-function buildSlots(
-  dayHours: [string, string],
-  startMinute: number,
-  endMinute: number,
-): Array<{ from: number; to: number }> {
-  const [open, close] = dayHours;
-  const openMinute = Math.max(startMinute, minutes(open));
-  const closeMinute = Math.min(endMinute, minutes(close));
-  const slots: Array<{ from: number; to: number }> = [];
-
-  for (let m = openMinute; m + SLOT_MINUTES <= closeMinute; m += SLOT_MINUTES) {
-    slots.push({ from: m, to: m + SLOT_MINUTES });
-  }
-  return slots;
-}
-
-function minutes(time: string): number {
-  const [h = '0', m = '0'] = time.split(':');
-  return Number(h) * 60 + Number(m);
 }
 
 function ClosureOverlay({

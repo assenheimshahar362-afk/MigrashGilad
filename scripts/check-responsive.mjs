@@ -44,7 +44,10 @@ const DEVICES = [
   { name: 'wide', w: 1920, h: 1080, dpr: 1, touch: false },
 ];
 
-const PAGES = ['/', '/schedule/month', '/request', '/about', '/contact', '/trustees', '/rules', '/login'];
+// /request, /about, /contact, /trustees, /rules and /accessibility are now
+// anchor sections on '/' (redirected there), not separate documents — auditing
+// them again would just re-measure the same page.
+const PAGES = ['/', '/schedule/month', '/login'];
 
 const browser = await chromium.launch();
 const problems = [];

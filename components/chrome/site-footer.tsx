@@ -19,13 +19,13 @@ import { PitchWordmark } from '@/components/chrome/pitch-wordmark';
  * which is why it is in that row and never behind a disclosure.
  */
 const LINKS = [
-  { href: '/request', label: t('nav.request') },
+  { href: '/#request', label: t('nav.request') },
   { href: '/schedule/month', label: t('nav.month') },
-  { href: '/about', label: t('nav.about') },
-  { href: '/trustees', label: t('nav.trustees') },
-  { href: '/contact', label: t('nav.contact') },
-  { href: '/rules', label: t('nav.rules') },
-  { href: '/accessibility', label: t('nav.accessibility') },
+  { href: '/#about', label: t('nav.about') },
+  { href: '/#trustees', label: t('nav.trustees') },
+  { href: '/#contact', label: t('nav.contact') },
+  { href: '/#rules', label: t('nav.rules') },
+  { href: '/#accessibility', label: t('nav.accessibility') },
 ] as const;
 
 /* Placeholder handles — swap for the real accounts. A social icon that leads

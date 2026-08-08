@@ -25,12 +25,17 @@ import { AuthIcons } from '@/components/chrome/auth-icons';
  * The schedule is deliberately absent: it IS the landing page, and the badge to
  * its start already goes there. A nav item pointing at the page you are almost
  * always on is a slot spent saying nothing.
+ *
+ * Every other link is an anchor into that same page (§ one-page merge) —
+ * `/#request` rather than `/request` — so from anywhere else on the site
+ * (the month view, a request-status link) they still resolve correctly,
+ * Next just navigates home first.
  */
 const LINKS = [
-  { href: '/request', label: t('nav.request'), exact: false },
-  { href: '/about', label: t('nav.about'), exact: false },
-  { href: '/trustees', label: t('nav.trustees'), exact: false },
-  { href: '/contact', label: t('nav.contact'), exact: false },
+  { href: '/#request', label: t('nav.request') },
+  { href: '/#about', label: t('nav.about') },
+  { href: '/#trustees', label: t('nav.trustees') },
+  { href: '/#contact', label: t('nav.contact') },
 ] as const;
 
 /** The routes whose first element is a full-bleed hero, so the bar has to start
@@ -128,24 +133,21 @@ export function SiteHeader({ pitchName }: { pitchName: string }) {
                 : 'border border-white/15 bg-white/10 backdrop-blur-sm',
             )}
           >
+            {/* No "active" state: every link is an anchor on the same page,
+                so pathname alone can no longer tell them apart, and a
+                scroll-spy is more machinery than a nav bar earns. */}
             {LINKS.map((link) => {
-              const active = link.exact ? pathname === link.href : pathname.startsWith(link.href);
               return (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    aria-current={active ? 'page' : undefined}
                     className={cn(
                       'press flex h-9 items-center rounded-full px-4 text-sm font-medium whitespace-nowrap',
                       'transition-[background-color,color,box-shadow] duration-(--duration-tip)',
                       'ease-(--ease-out-quiet)',
                       solid
-                        ? active
-                          ? 'bg-(--surface-raised) font-semibold text-primary-700 shadow-(--shadow-xs)'
-                          : 'text-(--ink-muted) hover:text-(--ink)'
-                        : active
-                          ? 'bg-white font-semibold text-primary-800 shadow-(--shadow-xs)'
-                          : 'text-white/85 hover:text-white',
+                        ? 'text-(--ink-muted) hover:text-(--ink)'
+                        : 'text-white/85 hover:text-white',
                     )}
                   >
                     {link.label}

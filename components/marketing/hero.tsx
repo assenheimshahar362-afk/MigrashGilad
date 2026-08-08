@@ -115,7 +115,7 @@ export function Hero({
         <div className="animate-rise-in mt-7 flex flex-wrap items-center gap-3 [animation-delay:180ms]">
           {requestsOpen ? (
             <Button asChild size="lg">
-              <Link href="/request">
+              <Link href="/#request">
                 {t('hero.cta_primary')}
                 <ArrowLeft className="size-5" aria-hidden />
               </Link>

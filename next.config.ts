@@ -64,6 +64,21 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
   },
+  // The site used to be six routes; each is now an anchor section on the
+  // home page (§ merge). These keep old bookmarks and any indexed links
+  // working rather than 404ing. `/request/:token` is a distinct dynamic
+  // route and is NOT covered by the `/request` source below — Next only
+  // matches the exact path, not its children.
+  async redirects() {
+    return [
+      { source: '/request', destination: '/#request', permanent: true },
+      { source: '/about', destination: '/#about', permanent: true },
+      { source: '/trustees', destination: '/#trustees', permanent: true },
+      { source: '/contact', destination: '/#contact', permanent: true },
+      { source: '/rules', destination: '/#rules', permanent: true },
+      { source: '/accessibility', destination: '/#accessibility', permanent: true },
+    ];
+  },
 };
 
 const withSerwist = withSerwistInit({

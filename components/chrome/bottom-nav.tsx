@@ -20,13 +20,17 @@ import { t } from '@/lib/i18n';
  * the press itself, which is feedback rather than decoration.
  */
 const TABS = [
-  { href: '/', label: t('nav.schedule'), Icon: CalendarDays, exact: true },
+  { href: '/', label: t('nav.schedule'), Icon: CalendarDays },
   // The short label, not `nav.request`: five tabs on a 360px screen leave 72px
   // each, and "הזמנת מגרש" wraps or truncates in every one of them.
-  { href: '/request', label: t('nav.request_short'), Icon: FilePlus2, exact: false },
-  { href: '/about', label: t('nav.about'), Icon: Info, exact: false },
-  { href: '/trustees', label: t('nav.trustees'), Icon: Users, exact: false },
-  { href: '/contact', label: t('nav.contact'), Icon: Phone, exact: false },
+  //
+  // Every tab past the first is an anchor into the home page (§ one-page
+  // merge) rather than its own route, so only the first can ever be "active"
+  // by pathname — see the note below.
+  { href: '/#request', label: t('nav.request_short'), Icon: FilePlus2 },
+  { href: '/#about', label: t('nav.about'), Icon: Info },
+  { href: '/#trustees', label: t('nav.trustees'), Icon: Users },
+  { href: '/#contact', label: t('nav.contact'), Icon: Phone },
 ] as const;
 
 export function BottomNav() {
@@ -40,8 +44,11 @@ export function BottomNav() {
       )}
     >
       <ul className="mx-auto flex max-w-[560px]">
-        {TABS.map(({ href, label, Icon, exact }) => {
-          const active = exact ? pathname === href : pathname.startsWith(href);
+        {TABS.map(({ href, label, Icon }) => {
+          // Only the calendar tab (a real route, `/`) can be "active"; the
+          // rest are anchors on that same page and pathname cannot tell them
+          // apart from one another.
+          const active = href === '/' && pathname === '/';
           return (
             <li key={href} className="flex-1">
               <Link

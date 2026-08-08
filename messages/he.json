@@ -31,7 +31,6 @@
   "schedule.sr_heading": "פירוט אירועי השבוע",
   "schedule.sr_day_events": "{day}, {count} אירועים",
   "schedule.sr_day_empty": "{day}, אין אירועים",
-  "schedule.free_slot": "מועד פנוי — להגשת בקשה",
   "schedule.closed_day": "המגרש סגור ביום זה",
   "schedule.more_count": "עוד {count}",
   "schedule.day_detail": "פירוט היום",

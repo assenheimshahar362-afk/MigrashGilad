@@ -6,15 +6,13 @@ import AxeBuilder from '@axe-core/playwright';
  * A11Y-10: axe-core on every public page, zero serious or critical violations
  * allowed to merge.
  */
+// /request, /about, /contact, /trustees, /rules and /accessibility used to be
+// separate documents; each is now an anchor section on '/' (old links
+// permanent-redirect there — see the dedicated test below), so auditing them
+// here would just re-scan the same document six times.
 const PUBLIC_PAGES = [
   '/',
   '/schedule/month',
-  '/request',
-  '/about',
-  '/contact',
-  '/trustees',
-  '/rules',
-  '/accessibility',
   // Since §2 was amended, /login wears the public chrome like any other page,
   // so it is held to the same axe budget.
   '/login',
@@ -104,16 +102,20 @@ test.describe('Scenario 1 — the week is legible with no login', () => {
 
 test.describe('Scenario 2 — a request in under 60 seconds, no account', () => {
   test('the request form is three short steps and asks for no password', async ({ page }) => {
-    await page.goto('/request');
+    await page.goto('/#request');
 
-    await expect(page.getByRole('heading', { level: 2 })).toContainText('מתי');
+    // The page now carries many <h2>s (one per section, plus this one from
+    // the form's own step indicator), so each check is scoped to the step
+    // indicator's heading specifically rather than "the" level-2 heading.
+    const step = page.getByRole('heading', { level: 2 });
+    await expect(step.filter({ hasText: 'מתי' })).toBeVisible();
     await expect(page.locator('input[type="password"]')).toHaveCount(0);
 
     await page.getByRole('button', { name: 'לשלב הבא' }).click();
-    await expect(page.getByRole('heading', { level: 2 })).toContainText('מה');
+    await expect(step.filter({ hasText: 'מה' })).toBeVisible();
 
     await page.getByRole('button', { name: 'לשלב הבא' }).click();
-    await expect(page.getByRole('heading', { level: 2 })).toContainText('מי');
+    await expect(step.filter({ hasText: 'מי' })).toBeVisible();
 
     // §10.3: numeric keypad for the phone, and the field runs LTR so the digits
     // are not reordered as they are typed into an RTL document.
@@ -127,8 +129,27 @@ test.describe('Scenario 7 — a status page for an unknown token', () => {
   test('an unrecognised token explains itself and offers a trustee', async ({ page }) => {
     await page.goto('/request/this-token-does-not-exist-000000');
     await expect(page.getByRole('heading', { level: 1 })).toContainText('לא נמצאה בקשה');
-    await expect(page.getByRole('link', { name: 'נאמנים' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'נאמני קהילה' }).first()).toBeVisible();
   });
+});
+
+test.describe('The one-page merge — old routes redirect, not 404', () => {
+  const OLD_ROUTES: Array<[string, string]> = [
+    ['/request', '#request'],
+    ['/about', '#about'],
+    ['/trustees', '#trustees'],
+    ['/contact', '#contact'],
+    ['/rules', '#rules'],
+    ['/accessibility', '#accessibility'],
+  ];
+
+  for (const [from, hash] of OLD_ROUTES) {
+    test(`${from} redirects to /${hash}`, async ({ page }) => {
+      await page.goto(from);
+      await expect(page).toHaveURL(new RegExp(`/\\${hash}$`));
+      await expect(page.locator(`section${hash}`)).toBeVisible();
+    });
+  }
 });
 
 test.describe('A11Y-10 — axe-core on every public page', () => {

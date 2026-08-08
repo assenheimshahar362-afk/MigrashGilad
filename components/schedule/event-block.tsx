@@ -57,8 +57,8 @@ export function EventBlock({
          of Google Calendar. The rule is `border-inline-start`, so it lands on
          the correct side under dir="rtl" without a second declaration. */
       className={cn(
-        'absolute z-10 overflow-hidden rounded-[6px] px-2 py-1 text-start',
-        'text-xs font-semibold leading-tight',
+        'absolute z-10 overflow-hidden rounded-[6px] px-1 py-0.5 text-start sm:px-2 sm:py-1',
+        'text-[0.5625rem] font-semibold leading-tight sm:text-xs',
         style.block,
         style.patternClass,
       )}
@@ -71,9 +71,9 @@ export function EventBlock({
       <span className="block truncate leading-[1.25]">{title}</span>
       <TimeRange
         range={range}
-        className="tnum block text-[0.6875rem] font-medium leading-[1.3]"
+        className="tnum block text-[0.5rem] font-medium leading-[1.3] sm:text-[0.6875rem]"
       />
-      <span className="block truncate text-[0.625rem] font-normal leading-[1.25]">
+      <span className="block truncate text-[0.5rem] font-normal leading-[1.25] sm:text-[0.625rem]">
         {style.label}
       </span>
     </div>
