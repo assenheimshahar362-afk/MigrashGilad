@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
-import { CalendarRange, MapPin, Clock, Map as MapIcon } from 'lucide-react';
+import { CalendarRange, MapPin, Clock } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { getSchedule, getSettings, getTrustees } from '@/lib/data';
@@ -23,7 +23,6 @@ import { Hero } from '@/components/marketing/hero';
 import { Reveal } from '@/components/marketing/reveal';
 import { TrusteeCard } from '@/components/trustees/trustee-card';
 import { TrusteeContactGrid } from '@/components/trustees/trustee-contact-grid';
-import { Button } from '@/components/ui/button';
 import entranceImage from '@/public/images/pitch-entrance.webp';
 import type { TrusteeRow } from '@/lib/types';
 
@@ -268,6 +267,9 @@ function ContactSection({ trustees }: { trustees: TrusteeRow[] }) {
           </div>
 
           <div className="card relative overflow-hidden">
+            {/* The embed's own UI already has an "open in Google Maps"
+                affordance (the place-name link inside the frame), so no
+                overlay button duplicates it here. */}
             <iframe
               title={t('contact.map_title')}
               src="https://www.google.com/maps?q=%D7%A7%D7%99%D7%91%D7%95%D7%A5+%D7%92%D7%A0%D7%99%D7%92%D7%A8&output=embed"
@@ -275,25 +277,6 @@ function ContactSection({ trustees }: { trustees: TrusteeRow[] }) {
               referrerPolicy="no-referrer-when-downgrade"
               className="min-h-[22rem] w-full border-0 lg:min-h-full"
             />
-            <Button
-              asChild
-              variant="secondary"
-              // `start-1/2` (logical, app is RTL-only) resolves to
-              // `right:50%`, which puts the button's RIGHT edge at centre —
-              // so centring it needs a translate back toward the END
-              // (positive X in RTL), not `-translate-x-1/2` which pulls
-              // further toward the start and lands it off-centre.
-              className="absolute bottom-4 start-1/2 translate-x-1/2 shadow-(--shadow-md)"
-            >
-              <a
-                href="https://www.google.com/maps/search/?api=1&query=%D7%A7%D7%99%D7%91%D7%95%D7%A5+%D7%92%D7%A0%D7%99%D7%92%D7%A8"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <MapIcon className="size-5" aria-hidden />
-                {t('contact.map_open')}
-              </a>
-            </Button>
           </div>
         </div>
       </div>

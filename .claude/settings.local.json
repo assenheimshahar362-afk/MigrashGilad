@@ -33,12 +33,8 @@
       "PowerShell(node \"C:\\\\Users\\\\Shahar.a\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--shahar-MigrashGilad\\\\eed4c98b-3442-4d97-9db3-e04db91ef5f4\\\\scratchpad\\\\verify-merge.mjs\")",
       "PowerShell(node \"C:\\\\Users\\\\Shahar.a\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--shahar-MigrashGilad\\\\eed4c98b-3442-4d97-9db3-e04db91ef5f4\\\\scratchpad\\\\dead-code.mjs\")",
       "PowerShell(Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue; try { Remove-Item tsconfig.tsbuildinfo -Force -ErrorAction Stop } catch {}; try { Remove-Item public\\\\sw.js -Force -ErrorAction Stop } catch {}; \"deleted: .next, tsconfig.tsbuildinfo, public/sw.js\"; \"\"; \"remaining supabase/:\"; Get-ChildItem -Recurse supabase -File | ForEach-Object { \"  \" + $_.FullName.Replace\\(\\(Get-Location\\).Path + '\\\\',''\\) })",
-      "Bash(npx next *)",
-      "WebSearch",
-      "Bash(npx tsc *)",
-      "Bash(npm run *)",
-      "Bash(xargs grep -l \"translate-x\")",
-      "Bash(grep -i \"start\\\\|sm\\\\\\\\\\\\\\\\:\")"
+      "Bash(git read-tree *)",
+      "Bash(npm run *)"
     ]
   }
 }
