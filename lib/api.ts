@@ -27,17 +27,19 @@ export function ok<T>(body: T, status = 200) {
  * Anything that changes what a visitor would see calls this.
  */
 export function revalidateSchedule() {
-  revalidateTag(SCHEDULE_TAG);
+  // 'max' profile: revalidate immediately on write, no implicit staleness
+  // window. Matches pre-Next-16 revalidateTag(tag) behavior.
+  revalidateTag(SCHEDULE_TAG, 'max');
 }
 
 export function revalidateSettings() {
-  revalidateTag(SETTINGS_TAG);
+  revalidateTag(SETTINGS_TAG, 'max');
   // Opening hours change the grid, so the schedule cache is stale too.
-  revalidateTag(SCHEDULE_TAG);
+  revalidateTag(SCHEDULE_TAG, 'max');
 }
 
 export function revalidateTrustees() {
-  revalidateTag(TRUSTEES_TAG);
+  revalidateTag(TRUSTEES_TAG, 'max');
 }
 
 export { errorResponse };

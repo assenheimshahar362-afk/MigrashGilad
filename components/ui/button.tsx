@@ -10,9 +10,12 @@ import { cn } from '@/lib/utils';
  * "compact" button in this product, because the whole thing is used one-handed
  * at a pitch gate.
  *
- * Motion: `transform`, colour and shadow are transitioned BY NAME, never with
- * `all` — `all` would also animate the focus outline, which has to appear on
- * the frame the key is pressed.
+ * Motion: `translate`, `scale`, colour and shadow are transitioned BY NAME,
+ * never with `all` — `all` would also animate the focus outline, which has to
+ * appear on the frame the key is pressed. `translate`/`scale` BY NAME, not
+ * `transform`: Tailwind v4 compiles the hover-lift and active-press utilities
+ * below to those two standalone CSS properties, not to `transform` — listing
+ * `transform` here would transition nothing they actually set.
  *
  * The interaction is a two-part gesture: a 1px lift on hover (fine pointers
  * only, via `motion-safe` + the media query Tailwind applies to `hover:`) and a
@@ -23,7 +26,7 @@ const buttonVariants = cva(
   cn(
     'relative isolate inline-flex select-none items-center justify-center gap-2',
     'rounded-(--radius-input) font-semibold whitespace-nowrap',
-    'transition-[transform,background-color,border-color,color,box-shadow,opacity]',
+    'transition-[translate,scale,background-color,border-color,color,box-shadow,opacity]',
     'duration-(--duration-press) ease-(--ease-out-quiet)',
     'active:scale-[0.97]',
     'disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none',

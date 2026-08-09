@@ -5,6 +5,7 @@ import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import logoMark from '@/public/images/logo-mark.webp';
 import { PitchWordmark } from '@/components/chrome/pitch-wordmark';
+import { RequestNavTrigger } from '@/components/request/request-nav-trigger';
 
 /**
  * The dark footer. It is the only large dark surface left in the product, which
@@ -19,14 +20,19 @@ import { PitchWordmark } from '@/components/chrome/pitch-wordmark';
  * which is why it is in that row and never behind a disclosure.
  */
 const LINKS = [
-  { href: '/#request', label: t('nav.request') },
   { href: '/schedule/month', label: t('nav.month') },
   { href: '/#about', label: t('nav.about') },
   { href: '/#trustees', label: t('nav.trustees') },
   { href: '/#contact', label: t('nav.contact') },
-  { href: '/#rules', label: t('nav.rules') },
-  { href: '/#accessibility', label: t('nav.accessibility') },
+  { href: '/rules', label: t('nav.rules') },
+  { href: '/accessibility', label: t('nav.accessibility') },
 ] as const;
+
+const footerNavItemClassName = cn(
+  'flex min-h-11 items-center rounded-(--radius-input) px-3 text-sm',
+  'transition-colors duration-(--duration-tip) ease-(--ease-out-quiet)',
+  'hover:bg-white/8 hover:text-white focus-visible:outline-white',
+);
 
 /* Placeholder handles — swap for the real accounts. A social icon that leads
    nowhere is worse than no icon, so each is rendered only when its href is set
@@ -103,16 +109,17 @@ export function SiteFooter({ pitchName }: { pitchName: string }) {
           className="mt-10 border-y border-white/10 py-2"
         >
           <ul className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1">
+            {/* The booking form is a floating modal now, not an anchor — see
+                request-modal-context.tsx — so this one entry opens it
+                directly instead of linking to `/#request`. */}
+            <li>
+              <RequestNavTrigger className={footerNavItemClassName}>
+                {t('nav.request')}
+              </RequestNavTrigger>
+            </li>
             {LINKS.map((link) => (
               <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className={cn(
-                    'flex min-h-11 items-center rounded-(--radius-input) px-3 text-sm',
-                    'transition-colors duration-(--duration-tip) ease-(--ease-out-quiet)',
-                    'hover:bg-white/8 hover:text-white focus-visible:outline-white',
-                  )}
-                >
+                <Link href={link.href} className={footerNavItemClassName}>
                   {link.label}
                 </Link>
               </li>
@@ -148,7 +155,11 @@ export function WhatsAppButton({
       className={cn(
         'press inline-flex min-h-14 items-center justify-center gap-3 rounded-(--radius-input)',
         'bg-[#25D366] px-7 text-base font-semibold text-[#0b3b21] shadow-(--shadow-md)',
-        'transition-[background-color,box-shadow,transform] duration-(--duration-press)',
+        // `translate` alongside `transform`: `.press`'s active-scale is a
+        // literal `transform`, but Tailwind v4 compiles the hover-lift
+        // (`-translate-y-px`) below to the separate `translate` property —
+        // without it here that lift snaps instead of easing in.
+        'transition-[background-color,box-shadow,transform,translate] duration-(--duration-press)',
         'ease-(--ease-out-quiet) motion-safe:hover:-translate-y-px hover:bg-[#20bd5a]',
         'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
         className,
@@ -168,7 +179,8 @@ export function PhoneButton({ phone, className }: { phone: string; className?: s
       className={cn(
         'press inline-flex min-h-14 items-center justify-center gap-3 rounded-(--radius-input)',
         'border border-(--hairline) bg-(--surface-raised) px-7 text-base font-semibold text-(--ink)',
-        'shadow-(--shadow-xs) transition-[background-color,border-color,box-shadow,transform]',
+        // `translate` alongside `transform`: see WhatsAppButton above.
+        'shadow-(--shadow-xs) transition-[background-color,border-color,box-shadow,transform,translate]',
         'duration-(--duration-press) ease-(--ease-out-quiet)',
         'motion-safe:hover:-translate-y-px hover:border-(--hairline-strong) hover:bg-(--surface-hover)',
         className,

@@ -60,11 +60,23 @@ export function SheetContent({
           'bg-(--surface-raised) p-5 shadow-(--shadow-sheet) safe-bottom',
           'data-[state=open]:animate-[sheet-up_420ms_var(--ease-drawer)_both]',
           'data-[state=closed]:animate-[sheet-up_240ms_var(--ease-out-quiet)_reverse_both]',
-          // Desktop: a centred dialog, not a drawer.
+          // Desktop: a centred dialog, not a drawer. `start-1/2` (logical,
+          // app is RTL-only) resolves to `right:50%`, putting the dialog's
+          // RIGHT edge at viewport centre — centring it from there needs a
+          // +50% pull back toward the end, which is why `dialog-in` below
+          // bakes in `translate3d(50%, -50%, 0)`.
+          //
+          // That centring transform is NOT also expressed as Tailwind
+          // `translate-x-1/2`/`-translate-y-1/2` utility classes here — those
+          // compile to the standalone CSS `translate` property (Tailwind v4),
+          // which composes ON TOP OF `transform` rather than being folded
+          // into it. Since Radix mounts Content fresh on every open (the
+          // enter animation always runs, `fill: both` always ends up holding
+          // its `to` state), adding both would translate the dialog TWICE —
+          // exactly what previously sent it off-centre. The keyframe alone is
+          // the single source of truth for this transform.
           'sm:inset-x-auto sm:start-1/2 sm:bottom-auto sm:top-1/2',
-          // The keyframes below carry the same translate and `fill: both` holds
-          // it, but these keep the dialog centred if the animation never runs.
-          'sm:w-[min(32rem,calc(100vw-2rem))] sm:-translate-x-1/2 sm:-translate-y-1/2',
+          'sm:w-[min(32rem,calc(100vw-2rem))]',
           'sm:rounded-(--radius-card) sm:border sm:shadow-(--shadow-lg)',
           'sm:data-[state=open]:animate-[dialog-in_220ms_var(--ease-out-quiet)_both]',
           'sm:data-[state=closed]:animate-[dialog-in_150ms_var(--ease-out-quiet)_reverse_both]',

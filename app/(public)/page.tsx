@@ -11,7 +11,6 @@ import {
   localWeekDays,
   startOfLocalWeek,
   todayLocal,
-  WEEKDAY_NAMES,
   type LocalDate,
 } from '@/lib/time';
 import { closuresForDate } from '@/lib/schedule';
@@ -22,7 +21,6 @@ import { Legend } from '@/components/schedule/legend';
 import { OfflineBanner } from '@/components/pwa/offline-banner';
 import { Hero } from '@/components/marketing/hero';
 import { Reveal } from '@/components/marketing/reveal';
-import { RequestForm } from '@/components/request/request-form';
 import { TrusteeCard } from '@/components/trustees/trustee-card';
 import { TrusteeContactGrid } from '@/components/trustees/trustee-contact-grid';
 import { Button } from '@/components/ui/button';
@@ -37,28 +35,34 @@ export const metadata: Metadata = {
  * The whole public site, one page. FR-7: the calendar is readable with no
  * login and no JavaScript-blocking auth check — it is server-rendered and
  * cached (NFR-3), and the only client JavaScript on this route is the
- * now-marker, the legend toggle, the week-swipe handler and the request
- * form — none of which the content depends on.
+ * now-marker, the legend toggle and the week-swipe handler — none of which
+ * the content depends on.
  *
  * G1: the calendar is the landing screen. A visitor should know who has the
  * pitch this week in under five seconds, without tapping anything.
  *
  * What used to be six routes (/request, /about, /trustees, /contact, /rules,
- * /accessibility) are now `<section id="…">` anchors on this one page — the
- * header, footer and bottom tab bar all link to `/#id` rather than a
- * separate route. Only the admin/manager area, the month view and a
- * visitor's own request-status link stay on their own routes: the first is a
- * genuinely different application behind auth, the second is a different
- * SHAPE of the same calendar rather than a section of prose, and the third is
- * a private, tokenised deep link that has no business being anchored into a
- * page search engines index.
+ * /accessibility) are down to three still living here as `<section id="…">`
+ * anchors — /about, /trustees, /contact — with the header, footer and bottom
+ * tab bar linking to `/#id` for those. The other three moved back to being
+ * real routes, by product request: /request is now a floating modal rather
+ * than a page at all (`components/request/request-modal.tsx`), mounted once
+ * in the public layout so it opens the same way from every public route;
+ * /rules and /accessibility (`app/(public)/rules`,
+ * `app/(public)/accessibility`) are ordinary pages again, each with its own
+ * <h1>. Along with the admin/manager area, the month view and a visitor's
+ * own request-status link, that is everything left with its own route: the
+ * first is a genuinely different application behind auth, the month view is
+ * a different SHAPE of the same calendar rather than a section of prose, and
+ * the request-status link is a private, tokenised deep link that has no
+ * business being anchored into a page search engines index.
  */
 export const revalidate = 300;
 
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ week?: string; date?: string; start?: string; end?: string }>;
+  searchParams: Promise<{ week?: string }>;
 }) {
   const params = await searchParams;
 
@@ -146,12 +150,9 @@ export default async function HomePage({
         </div>
       </section>
 
-      <RequestSection settings={settings} prefill={params} />
       <AboutSection />
       <TrusteesSection trustees={trustees} />
       <ContactSection trustees={trustees} />
-      <RulesSection settings={settings} />
-      <AccessibilitySection />
     </>
   );
 }
@@ -159,51 +160,6 @@ export default async function HomePage({
 function parseWeek(value: string | undefined): LocalDate | null {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
   return Number.isNaN(Date.parse(`${value}T12:00:00Z`)) ? null : value;
-}
-
-/** §10.3 / FR-11. G2: name + phone + slot, five fields, no account. */
-function RequestSection({
-  settings,
-  prefill,
-}: {
-  settings: Awaited<ReturnType<typeof getSettings>>;
-  prefill: { date?: string; start?: string; end?: string };
-}) {
-  return (
-    <section id="request" className="section scroll-mt-24 border-t border-(--hairline)">
-      <div className="shell-narrow">
-        <p className="text-sm font-semibold text-primary-600">{t('app.tagline')}</p>
-        <h2 className="mt-3 text-display">{t('request.title')}</h2>
-
-        {settings.requestsOpen ? (
-          <div className="card mt-8 p-6 sm:p-8">
-            <RequestForm
-              settings={settings}
-              prefill={{
-                date: sanitiseDate(prefill.date),
-                start: sanitiseTime(prefill.start),
-                end: sanitiseTime(prefill.end),
-              }}
-            />
-          </div>
-        ) : (
-          <div className="card mt-8 p-8 text-center">
-            <p className="text-(--ink-muted)">
-              {settings.requestsClosedMsg ?? t('error.ERR_REQUESTS_CLOSED')}
-            </p>
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
-function sanitiseDate(value: string | undefined): string | undefined {
-  return value && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : undefined;
-}
-
-function sanitiseTime(value: string | undefined): string | undefined {
-  return value && /^\d{2}:\d{2}$/.test(value) ? value : undefined;
 }
 
 /**
@@ -322,7 +278,12 @@ function ContactSection({ trustees }: { trustees: TrusteeRow[] }) {
             <Button
               asChild
               variant="secondary"
-              className="absolute bottom-4 start-1/2 -translate-x-1/2 shadow-(--shadow-md)"
+              // `start-1/2` (logical, app is RTL-only) resolves to
+              // `right:50%`, which puts the button's RIGHT edge at centre —
+              // so centring it needs a translate back toward the END
+              // (positive X in RTL), not `-translate-x-1/2` which pulls
+              // further toward the start and lands it off-centre.
+              className="absolute bottom-4 start-1/2 translate-x-1/2 shadow-(--shadow-md)"
             >
               <a
                 href="https://www.google.com/maps/search/?api=1&query=%D7%A7%D7%99%D7%91%D7%95%D7%A5+%D7%92%D7%A0%D7%99%D7%92%D7%A8"
@@ -363,151 +324,3 @@ function InfoCard({
   );
 }
 
-/**
- * §3 rules and usage terms. The opening-hours table is generated from
- * settings rather than written out, so it cannot drift from what the booking
- * rules actually enforce. All seven days are listed, in the same style;
- * Friday and Saturday are ordinary rows.
- */
-function RulesSection({ settings }: { settings: Awaited<ReturnType<typeof getSettings>> }) {
-  return (
-    <section id="rules" className="section scroll-mt-24 border-t border-(--hairline)">
-      <div className="shell-narrow">
-        <h2 className="text-display">{t('rules.title')}</h2>
-
-        <div className="mt-8">
-          <h3 className="text-h2">{t('settings.opening_hours')}</h3>
-          <table className="mt-3 w-full border-collapse text-start">
-            <caption className="sr-only">{t('settings.opening_hours')}</caption>
-            <tbody>
-              {WEEKDAY_NAMES.map((name, day) => {
-                const hours = settings.openingHours[String(day)] ?? null;
-                return (
-                  <tr key={name} className="border-b border-(--hairline)">
-                    <th scope="row" className="py-2 text-start font-semibold">
-                      {name}
-                    </th>
-                    <td className="py-2 text-end">
-                      {hours ? (
-                        <bdi dir="ltr" className="tnum">
-                          {hours[0]}–{hours[1]}
-                        </bdi>
-                      ) : (
-                        t('settings.day_closed')
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="mt-8 space-y-3">
-          <h3 className="text-h2">כללי שימוש</h3>
-          <ul className="list-disc space-y-2 ps-5">
-            <li>המגרש פתוח לכל חברי הקהילה בשעות הפעילות המופיעות למעלה, בכל שבעת ימות השבוע.</li>
-            <li>
-              שימוש מאורגן מחייב בקשה מראש — לפחות {settings.minLeadHours} שעות לפני המועד, ועד{' '}
-              {settings.maxHorizonDays} ימים קדימה.
-            </li>
-            <li>משך מקסימלי לבקשה: {settings.maxDurationMin} דקות.</li>
-            <li>יש לפנות את המגרש בשעה שנקבעה, כדי לא לפגוע בקבוצה שאחריכם.</li>
-            <li>אין להשאיר ציוד, אשפה או בקבוקים במגרש בסוף השימוש.</li>
-            <li>נעלי פקקים מתכת אסורות לשימוש על הדשא.</li>
-            <li>סגירות לתחזוקה, למזג אוויר או לימי זיכרון מתפרסמות בלוח הזמנים מראש.</li>
-          </ul>
-        </div>
-
-        <div className="mt-8">
-          <h3 className="text-h2">שאלות</h3>
-          <p className="mt-2">
-            אפשר לפנות ל
-            <Link href="/#trustees" className="underline underline-offset-4">
-              {t('trustees.title')}
-            </Link>
-            .
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/**
- * A11Y-9: a Hebrew accessibility statement with the name and contact details
- * of the accessibility coordinator — required by the Equal Rights for
- * Persons with Disabilities regulations, not optional.
- *
- * [DECISION NEEDED — open decision #9] The named coordinator and their
- * contact details must come from the product owner before launch. The
- * placeholders below are marked so they cannot ship unnoticed.
- */
-const COORDINATOR = {
-  name: '[שם רכז/ת הנגישות]',
-  phone: '[טלפון]',
-  email: '[אימייל]',
-};
-
-function AccessibilitySection() {
-  return (
-    <section id="accessibility" className="section scroll-mt-24 border-t border-(--hairline)">
-      <div className="shell-narrow">
-        <h2 className="text-display">{t('a11y.title')}</h2>
-
-        <div className="mt-6 space-y-3">
-          <p>
-            אתר מגרש גלעד נבנה כדי לאפשר שימוש נוח ושוויוני לכלל הציבור, לרבות אנשים עם מוגבלות.
-            האתר עומד בדרישות תקן ישראלי 5568 ברמת AA, בהתאם לתקנות שוויון זכויות לאנשים עם מוגבלות
-            (התאמות נגישות לשירות).
-          </p>
-        </div>
-
-        <div className="mt-8 space-y-3">
-          <h3 className="text-h2">מה נגיש באתר</h3>
-          <ul className="list-disc space-y-2 ps-5">
-            <li>האתר כולו ניתן להפעלה מהמקלדת, כולל לוח הזמנים — מקשי החצים מדלגים בין ימים ושעות.</li>
-            <li>
-              ללוח הזמנים קיימת חלופה טקסטואלית מלאה לקוראי מסך: רשימת אירועי השבוע לפי ימים, לפי סדר
-              כרונולוגי.
-            </li>
-            <li>{t('a11y.legend_colour_note')}</li>
-            <li>ניגודיות הצבעים באתר עומדת ביחס של 4.5:1 לפחות בטקסט רגיל.</li>
-            <li>כל שדות הטפסים מסומנים בתוויות, והודעות שגיאה מוצמדות לשדה שאליו הן שייכות.</li>
-            <li>האתר מכבד את העדפות מערכת ההפעלה לצמצום אנימציות ולהגברת ניגודיות.</li>
-          </ul>
-        </div>
-
-        <div className="mt-8 space-y-3">
-          <h3 className="text-h2">מגבלות ידועות</h3>
-          <p>
-            תוכן שנוסף על ידי מנהלי המגרש עשוי במקרים נדירים לחסר תיאור חלופי. נשמח לקבל דיווח על כל
-            תקלה כזו ולתקן אותה.
-          </p>
-        </div>
-
-        <div className="mt-8 space-y-3">
-          <h3 className="text-h2">רכז/ת הנגישות</h3>
-          <dl className="space-y-1">
-            <div className="flex gap-2">
-              <dt className="font-semibold">שם:</dt>
-              <dd>{COORDINATOR.name}</dd>
-            </div>
-            <div className="flex gap-2">
-              <dt className="font-semibold">טלפון:</dt>
-              <dd>
-                <bdi dir="ltr">{COORDINATOR.phone}</bdi>
-              </dd>
-            </div>
-            <div className="flex gap-2">
-              <dt className="font-semibold">אימייל:</dt>
-              <dd>
-                <bdi dir="ltr">{COORDINATOR.email}</bdi>
-              </dd>
-            </div>
-          </dl>
-        </div>
-      </div>
-    </section>
-  );
-}

@@ -7,7 +7,7 @@ import { t, isMessageKey } from '@/lib/i18n';
 import { requestFormSchema, type RequestFormValues } from '@/lib/validation/request';
 import { REQUESTABLE_USAGE_TYPES, type PublicSettings } from '@/lib/types';
 import { usageTypeLabel } from '@/lib/usage-type';
-import { addLocalDays, minutesFromTime, timeFromMinutes, toInstant, todayLocal } from '@/lib/time';
+import { addLocalDays, toInstant, todayLocal } from '@/lib/time';
 import { ArrowLeft, CircleAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
@@ -21,13 +21,12 @@ import { SuccessPanel } from '@/components/request/success-panel';
  * screen stays within one thumb-reach — מתי / מה / מי.
  *
  * G2: a resident should be done in under 60 seconds. That budget is why the
- * duration chips exist, why the phone field opens the numeric keypad, and why
- * there is no account to create.
+ * phone field opens the numeric keypad and there is no account to create.
+ * Duration is not its own field — it is start and end time, and asking for
+ * it a third way just gave two controls a chance to disagree.
  */
 const STEPS = ['when', 'what', 'who'] as const;
 type Step = (typeof STEPS)[number];
-
-const DURATION_CHIPS = [60, 90, 120] as const;
 
 export function RequestForm({
   settings,
@@ -67,7 +66,6 @@ export function RequestForm({
     register,
     handleSubmit,
     watch,
-    setValue,
     trigger,
     setFocus,
     formState: { errors, isSubmitting },
@@ -194,42 +192,6 @@ export function RequestForm({
               {(props) => <Input type="time" step={900} {...props} {...register('endTime')} />}
             </Field>
           </div>
-
-          <fieldset>
-            <legend className="mb-2.5 text-sm font-semibold">{t('request.field.duration')}</legend>
-            <div className="flex flex-wrap gap-2">
-              {DURATION_CHIPS.filter((minutes) => minutes <= settings.maxDurationMin).map(
-                (minutes) => {
-                  const active =
-                    minutesFromTime(values.endTime) - minutesFromTime(values.startTime) === minutes;
-                  return (
-                    <button
-                      key={minutes}
-                      type="button"
-                      aria-pressed={active}
-                      onClick={() =>
-                        setValue(
-                          'endTime',
-                          timeFromMinutes(minutesFromTime(values.startTime) + minutes),
-                          { shouldValidate: true },
-                        )
-                      }
-                      className={cn(
-                        'press tap-target rounded-(--radius-chip) border px-5 text-sm font-semibold',
-                        'transition-[background-color,border-color,color,box-shadow,transform]',
-                        'duration-(--duration-press) ease-(--ease-out-quiet)',
-                        active
-                          ? 'border-primary bg-primary text-white shadow-(--shadow-xs)'
-                          : 'border-(--hairline) bg-(--surface-raised) text-(--ink) hover:border-(--hairline-strong) hover:bg-(--surface-hover)',
-                      )}
-                    >
-                      {durationLabel(minutes)}
-                    </button>
-                  );
-                },
-              )}
-            </div>
-          </fieldset>
 
           <AvailabilityHint
             date={values.date}
@@ -426,11 +388,6 @@ function fieldError(message: string | undefined): string | undefined {
   if (!message) return undefined;
   const key = `error.${message}`;
   return isMessageKey(key) ? t(key) : t('error.ERR_VALIDATION');
-}
-
-function durationLabel(minutes: number): string {
-  if (minutes % 60 === 0) return `${minutes / 60} ${t('common.hours')}`;
-  return `${(minutes / 60).toFixed(1).replace('.0', '')} ${t('common.hours')}`;
 }
 
 /** The earliest local date that satisfies the minimum lead time (FR-17). */

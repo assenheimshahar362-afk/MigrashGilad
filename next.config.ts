@@ -56,6 +56,13 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   typedRoutes: false,
+  // @serwist/next only hooks the webpack compiler (no Turbopack support yet:
+  // https://github.com/serwist/serwist/issues/54). It's a no-op in dev
+  // (disabled above), so Turbopack dev is fine; `next build` is forced onto
+  // webpack via the `build` script so the service worker still gets built.
+  // This empty object just tells Next "Turbopack is intentional" and
+  // silences its webpack-config-with-no-turbopack-config safety check.
+  turbopack: {},
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.supabase.co', pathname: '/storage/v1/object/public/**' },
@@ -64,19 +71,23 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
   },
-  // The site used to be six routes; each is now an anchor section on the
-  // home page (§ merge). These keep old bookmarks and any indexed links
-  // working rather than 404ing. `/request/:token` is a distinct dynamic
-  // route and is NOT covered by the `/request` source below — Next only
-  // matches the exact path, not its children.
+  // The site used to be six routes, then briefly merged into anchor
+  // sections on the home page (§ merge). /rules and /accessibility have
+  // since moved back to being real routes (app/(public)/rules,
+  // app/(public)/accessibility) and need no redirect any more — Next serves
+  // them directly. /about, /trustees, /contact are still anchors; these
+  // redirects keep old bookmarks and any indexed links working rather than
+  // 404ing. `/request/:token` is a distinct dynamic route and is NOT covered
+  // by the `/request` source below — Next only matches the exact path, not
+  // its children.
   async redirects() {
     return [
-      { source: '/request', destination: '/#request', permanent: true },
+      // The booking form is a floating modal now (no #request section to
+      // land on), so an old bookmark goes to the home page plain.
+      { source: '/request', destination: '/', permanent: true },
       { source: '/about', destination: '/#about', permanent: true },
       { source: '/trustees', destination: '/#trustees', permanent: true },
       { source: '/contact', destination: '/#contact', permanent: true },
-      { source: '/rules', destination: '/#rules', permanent: true },
-      { source: '/accessibility', destination: '/#accessibility', permanent: true },
     ];
   },
 };

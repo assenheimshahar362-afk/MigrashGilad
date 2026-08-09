@@ -1,9 +1,11 @@
 -- ===========================================================================
--- Migrash Gilad — development seed (Milestone 1)
+-- Migrash Gilad — development seed. Run AFTER supabase/init.sql.
 --
 -- Two trustees and a week of sample events that deliberately spans Friday and
 -- Saturday, so that any code path which quietly skips the weekend shows up
 -- immediately in the grid (§1.4, acceptance scenario 18).
+--
+-- Only the two real usage types are used: 'community' and 'association'.
 --
 -- Times are written in Asia/Jerusalem local time and converted on the way in.
 -- ===========================================================================
@@ -19,8 +21,8 @@ values
 on conflict do nothing;
 
 -- ---------------------------------------------------------------------------
--- A recurring association allocation and a recurring Friday community slot.
--- Weekday 2 = Tuesday, weekday 5 = Friday, weekday 6 = Saturday.
+-- A recurring association allocation and a recurring Friday/Saturday
+-- community slot. Weekday 2 = Tuesday, weekday 5 = Friday, weekday 6 = Saturday.
 -- ---------------------------------------------------------------------------
 insert into recurring_rules (title, usage_type, weekday, start_time, end_time, valid_from, contact_name)
 values
@@ -75,7 +77,9 @@ end $$;
 
 -- ---------------------------------------------------------------------------
 -- One maintenance closure next week, so the closure rendering has something to
--- show without an admin having to create one by hand.
+-- show without an admin having to create one by hand. This is a CLOSURE (the
+-- pitch is blocked), not a usage_type — it is not a "community"/"association"
+-- event and never appears in the schedule legend.
 -- ---------------------------------------------------------------------------
 insert into closures (reason, starts_at, ends_at, all_day)
 values (

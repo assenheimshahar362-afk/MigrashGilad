@@ -1,8 +1,12 @@
+import { Suspense } from 'react';
 import { getSettings } from '@/lib/data';
 import { SiteHeader } from '@/components/chrome/site-header';
 import { BottomNav } from '@/components/chrome/bottom-nav';
 import { SiteFooter } from '@/components/chrome/site-footer';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
+import { RequestModalProvider } from '@/components/request/request-modal-context';
+import { RequestModal } from '@/components/request/request-modal';
+import { RequestModalUrlOpener } from '@/components/request/request-modal-url-opener';
 
 /**
  * §3 global chrome for the public site. The header, tab bar and footer are the
@@ -12,21 +16,33 @@ import { InstallPrompt } from '@/components/pwa/install-prompt';
  * The header decides for itself whether to start transparent — it already reads
  * the pathname for its active-link state, and a function cannot be handed from
  * a server layout into a client component anyway.
+ *
+ * The booking form (§10.3) is a floating modal rather than a page section, so
+ * its provider wraps everything here — the header, footer and tab bar all
+ * open it — and `<RequestModal>` itself is mounted once, alongside them,
+ * rather than inside any one page.
  */
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   const settings = await getSettings();
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <SiteHeader pitchName={settings.pitchName} />
+    <RequestModalProvider>
+      <div className="flex min-h-dvh flex-col">
+        <SiteHeader pitchName={settings.pitchName} />
 
-      <main id="main" className="flex-1">
-        {children}
-      </main>
+        <main id="main" className="flex-1">
+          {children}
+        </main>
 
-      <SiteFooter pitchName={settings.pitchName} />
-      <BottomNav />
-      <InstallPrompt />
-    </div>
+        <SiteFooter pitchName={settings.pitchName} />
+        <BottomNav />
+        <InstallPrompt />
+      </div>
+
+      <RequestModal settings={settings} />
+      <Suspense fallback={null}>
+        <RequestModalUrlOpener />
+      </Suspense>
+    </RequestModalProvider>
   );
 }

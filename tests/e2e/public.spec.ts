@@ -6,12 +6,17 @@ import AxeBuilder from '@axe-core/playwright';
  * A11Y-10: axe-core on every public page, zero serious or critical violations
  * allowed to merge.
  */
-// /request, /about, /contact, /trustees, /rules and /accessibility used to be
-// separate documents; each is now an anchor section on '/' (old links
+// /request, /about, /contact and /trustees used to be separate documents;
+// /about, /contact and /trustees are still anchor sections on '/' (old links
 // permanent-redirect there — see the dedicated test below), so auditing them
-// here would just re-scan the same document six times.
+// here would just re-scan the same document three times. /request is a
+// floating modal, not a document, so there is nothing to navigate to and
+// scan. /rules and /accessibility moved back to being real pages, so they
+// are audited here like any other route.
 const PUBLIC_PAGES = [
   '/',
+  '/rules',
+  '/accessibility',
   '/schedule/month',
   // Since §2 was amended, /login wears the public chrome like any other page,
   // so it is held to the same axe budget.
@@ -102,7 +107,11 @@ test.describe('Scenario 1 — the week is legible with no login', () => {
 
 test.describe('Scenario 2 — a request in under 60 seconds, no account', () => {
   test('the request form is three short steps and asks for no password', async ({ page }) => {
-    await page.goto('/#request');
+    // The form is a floating modal now, not a page section; `?book=1` opens
+    // it on load the same way the PWA shortcut does (request-modal-url-
+    // opener.tsx), so this waits on the same code path a real user's click
+    // would drive rather than reaching in through a different door.
+    await page.goto('/?book=1');
 
     // The page now carries many <h2>s (one per section, plus this one from
     // the form's own step indicator), so each check is scoped to the step
@@ -135,12 +144,9 @@ test.describe('Scenario 7 — a status page for an unknown token', () => {
 
 test.describe('The one-page merge — old routes redirect, not 404', () => {
   const OLD_ROUTES: Array<[string, string]> = [
-    ['/request', '#request'],
     ['/about', '#about'],
     ['/trustees', '#trustees'],
     ['/contact', '#contact'],
-    ['/rules', '#rules'],
-    ['/accessibility', '#accessibility'],
   ];
 
   for (const [from, hash] of OLD_ROUTES) {
@@ -150,6 +156,25 @@ test.describe('The one-page merge — old routes redirect, not 404', () => {
       await expect(page.locator(`section${hash}`)).toBeVisible();
     });
   }
+
+  // /request is the exception: there is no #request section to land on any
+  // more, since the booking form is a floating modal (request-modal.tsx).
+  test('/request redirects to / plain', async ({ page }) => {
+    await page.goto('/request');
+    await expect(page).toHaveURL(/\/$/);
+  });
+});
+
+test.describe('/rules and /accessibility are real pages again', () => {
+  test('/rules renders the usage terms with an <h1>', async ({ page }) => {
+    await page.goto('/rules');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('תקנון');
+  });
+
+  test('/accessibility renders the accessibility statement with an <h1>', async ({ page }) => {
+    await page.goto('/accessibility');
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('נגישות');
+  });
 });
 
 test.describe('A11Y-10 — axe-core on every public page', () => {

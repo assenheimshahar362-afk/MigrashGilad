@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { CalendarDays, FilePlus2, Users, Info, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { t } from '@/lib/i18n';
+import { useRequestModal } from '@/components/request/request-modal-context';
 
 /**
  * The mobile tab bar. Hidden from `lg` up, where the header navigation takes
@@ -21,20 +22,22 @@ import { t } from '@/lib/i18n';
  */
 const TABS = [
   { href: '/', label: t('nav.schedule'), Icon: CalendarDays },
-  // The short label, not `nav.request`: five tabs on a 360px screen leave 72px
-  // each, and "הזמנת מגרש" wraps or truncates in every one of them.
-  //
-  // Every tab past the first is an anchor into the home page (§ one-page
-  // merge) rather than its own route, so only the first can ever be "active"
-  // by pathname — see the note below.
-  { href: '/#request', label: t('nav.request_short'), Icon: FilePlus2 },
   { href: '/#about', label: t('nav.about'), Icon: Info },
   { href: '/#trustees', label: t('nav.trustees'), Icon: Users },
   { href: '/#contact', label: t('nav.contact'), Icon: Phone },
 ] as const;
 
+// The short label, not `nav.request`: five tabs on a 360px screen leave 72px
+// each, and "הזמנת מגרש" wraps or truncates in every one of them. It opens
+// the floating booking modal (request-modal-context.tsx) rather than linking
+// anywhere, so it is rendered on its own below instead of living in TABS.
+const REQUEST_TAB = { label: t('nav.request_short'), Icon: FilePlus2 };
+
+const tabClassName = 'press tap-target relative flex flex-col items-center justify-center gap-1 py-2 text-[0.6875rem] font-medium';
+
 export function BottomNav() {
   const pathname = usePathname();
+  const { openRequestModal } = useRequestModal();
 
   return (
     <nav
@@ -44,6 +47,17 @@ export function BottomNav() {
       )}
     >
       <ul className="mx-auto flex max-w-[560px]">
+        <li className="flex-1">
+          <button
+            type="button"
+            onClick={() => openRequestModal()}
+            className={cn(tabClassName, 'w-full text-(--ink-muted)')}
+          >
+            <REQUEST_TAB.Icon className="relative size-[22px]" aria-hidden strokeWidth={1.75} />
+            <span className="relative">{REQUEST_TAB.label}</span>
+          </button>
+        </li>
+
         {TABS.map(({ href, label, Icon }) => {
           // Only the calendar tab (a real route, `/`) can be "active"; the
           // rest are anchors on that same page and pathname cannot tell them
@@ -55,8 +69,7 @@ export function BottomNav() {
                 href={href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'press tap-target relative flex flex-col items-center justify-center gap-1 py-2',
-                  'text-[0.6875rem] font-medium',
+                  tabClassName,
                   active ? 'text-primary-700 font-semibold' : 'text-(--ink-muted)',
                 )}
               >

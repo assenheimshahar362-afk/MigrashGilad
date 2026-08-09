@@ -72,7 +72,11 @@ export function TrusteeContactGrid({ trustees }: { trustees: TrusteeRow[] }) {
                   className={cn(
                     'press inline-flex min-h-14 items-center justify-center gap-3 rounded-(--radius-input)',
                     'bg-[#25D366] px-7 text-base font-semibold text-[#0b3b21] shadow-(--shadow-md)',
-                    'transition-[background-color,box-shadow,transform] duration-(--duration-press)',
+                    // `translate` alongside `transform`: `.press`'s active-scale
+                    // is a literal `transform`, but Tailwind v4 compiles the
+                    // hover-lift (`-translate-y-px`) to the separate `translate`
+                    // property — without it here that lift snaps, not eases.
+                    'transition-[background-color,box-shadow,transform,translate] duration-(--duration-press)',
                     'ease-(--ease-out-quiet) motion-safe:hover:-translate-y-px hover:bg-[#20bd5a]',
                   )}
                 >
@@ -86,7 +90,8 @@ export function TrusteeContactGrid({ trustees }: { trustees: TrusteeRow[] }) {
                 className={cn(
                   'press inline-flex min-h-14 items-center justify-center gap-3 rounded-(--radius-input)',
                   'border border-(--hairline) bg-(--surface-raised) px-7 text-base font-semibold text-(--ink)',
-                  'shadow-(--shadow-xs) transition-[background-color,border-color,box-shadow,transform]',
+                  // `translate` alongside `transform`: see the WhatsApp button above.
+                  'shadow-(--shadow-xs) transition-[background-color,border-color,box-shadow,transform,translate]',
                   'duration-(--duration-press) ease-(--ease-out-quiet)',
                   'motion-safe:hover:-translate-y-px hover:border-(--hairline-strong) hover:bg-(--surface-hover)',
                 )}

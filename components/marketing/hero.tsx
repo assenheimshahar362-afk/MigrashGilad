@@ -1,9 +1,8 @@
-import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, CalendarDays, ChevronDown, Info } from 'lucide-react';
+import { ChevronDown, Info } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { RequestCtaButton } from '@/components/request/request-cta-button';
 import heroImage from '@/public/images/pitch-aerial.webp';
 
 /**
@@ -114,12 +113,7 @@ export function Hero({
 
         <div className="animate-rise-in mt-7 flex flex-wrap items-center gap-3 [animation-delay:180ms]">
           {requestsOpen ? (
-            <Button asChild size="lg">
-              <Link href="/#request">
-                {t('hero.cta_primary')}
-                <ArrowLeft className="size-5" aria-hidden />
-              </Link>
-            </Button>
+            <RequestCtaButton />
           ) : (
             /* FR-37. It takes the button's place rather than sitting beside a
                disabled one: there is nothing to press, and a greyed-out button
@@ -132,13 +126,6 @@ export function Hero({
               {closedMessage ?? t('error.ERR_REQUESTS_CLOSED')}
             </p>
           )}
-
-          <Button asChild size="lg" variant="onField">
-            <Link href="#schedule">
-              <CalendarDays className="size-5" aria-hidden />
-              {t('hero.cta_secondary')}
-            </Link>
-          </Button>
         </div>
 
       </div>

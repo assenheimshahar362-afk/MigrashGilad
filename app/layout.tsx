@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import { fontVariables } from '@/app/fonts';
 import { getSettings } from '@/lib/data';
 import { isMemorialDay } from '@/lib/schedule';
@@ -6,7 +7,31 @@ import { todayLocal } from '@/lib/time';
 import { t } from '@/lib/i18n';
 import { SkipLink } from '@/components/chrome/skip-link';
 import { ServiceWorkerBridge } from '@/components/pwa/service-worker-bridge';
+import { AccessibilityMenu } from '@/components/a11y/accessibility-menu';
 import './globals.css';
+
+/**
+ * Applies a saved accessibility preference (font scale, contrast, underlined
+ * links, reduced motion — see `components/a11y/accessibility-menu.tsx`) to
+ * `<html>` before the page paints, so a returning visitor who set one never
+ * sees a flash of the unadjusted page. `beforeInteractive` is what makes Next
+ * inline this ahead of hydration; `<html suppressHydrationWarning>` below is
+ * needed because this intentionally sets attributes React did not render.
+ */
+const A11Y_INIT_SCRIPT = `
+(function () {
+  try {
+    var raw = localStorage.getItem('mg.a11y-prefs');
+    if (!raw) return;
+    var prefs = JSON.parse(raw);
+    var root = document.documentElement;
+    root.dataset.a11yFontScale = prefs.fontScale || 'md';
+    root.dataset.a11yContrast = String(!!prefs.contrast);
+    root.dataset.a11yUnderlineLinks = String(!!prefs.underlineLinks);
+    root.dataset.a11yMotion = prefs.reduceMotion ? 'reduce' : 'no-preference';
+  } catch (e) {}
+})();
+`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
@@ -52,10 +77,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // with a content hash, so there is nothing to declare here. Both are written
   // by `npm run icons` from the club badge.
   return (
-    <html lang="he" dir="rtl" data-memorial-day={memorialDay ? 'true' : 'false'}>
+    <html lang="he" dir="rtl" data-memorial-day={memorialDay ? 'true' : 'false'} suppressHydrationWarning>
       <body className={fontVariables}>
+        <Script id="a11y-init" strategy="beforeInteractive">
+          {A11Y_INIT_SCRIPT}
+        </Script>
         <SkipLink />
         {children}
+        <AccessibilityMenu />
         <ServiceWorkerBridge />
       </body>
     </html>

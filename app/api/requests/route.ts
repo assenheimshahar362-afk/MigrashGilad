@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     notifyAdminsOfNewRequest(data);
 
     // The pending badge on the dashboard is derived from the schedule cache tag.
-    revalidateTag(SCHEDULE_TAG);
+    revalidateTag(SCHEDULE_TAG, 'max');
 
     return NextResponse.json(
       {

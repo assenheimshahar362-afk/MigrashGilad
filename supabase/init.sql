@@ -1,39 +1,93 @@
 -- ===========================================================================
--- Migrash Gilad — the whole database, in one migration.
+-- Migrash Gilad — the whole database, in one file.
 --
--- This is the single source of truth for the schema. It is applied by the
--- Supabase CLI (`supabase db reset`, `supabase db push`) and by CI, and it can
--- equally be pasted whole into the Supabase dashboard SQL editor — it contains
--- no psql meta-commands, so both paths work.
+-- Single source of truth for the schema. Paste whole into the Supabase
+-- dashboard SQL editor. Contains no psql meta-commands.
 --
 --   PART 1 schema     — extensions, enums, tables, indexes, guard triggers
 --   PART 2 functions  — security-definer RPCs and grants
 --   PART 3 rls        — row level security on every table
 --   PART 4 bootstrap  — the first super admin and the single settings row
 --
--- Sample data lives in supabase/seed.sql and is applied separately, by
--- `supabase db reset` without --no-seed. It is development data and does not
--- belong in a real database.
+-- usage_type carries only 'community' and 'association' — the product
+-- recognises exactly these two categories, baked in directly.
+-- Sample data lives in supabase/seed.sql, run after this file.
 --
 -- Re-runnable. Every statement is `if not exists` / `or replace` /
 -- `drop ... if exists`, so running it twice is a no-op rather than an error.
 --
 -- ---------------------------------------------------------------------------
--- BEFORE YOU RUN: set the super admin at the bottom of this file, under
--- "PART 4 — BOOTSTRAP". §2 says the super admin tier is bootstrapped, not
--- granted; no UI can create the first one. If you leave the placeholder you
--- will not be able to sign in as an administrator.
+-- BEFORE YOU RUN:
+--  1. PART 0 below DROPS every table/function/type this script owns, so the
+--     rest of the file always starts from a clean slate — safe to re-run
+--     regardless of what state the target database is currently in. THIS IS
+--     DESTRUCTIVE: it deletes all data in those tables (auth.users itself is
+--     untouched). Do not run against a database holding real bookings.
+--  2. Check the super admin email at the bottom, under "PART 4 — BOOTSTRAP".
+--     §2 says the super admin tier is bootstrapped, not granted; no UI can
+--     create the first one.
 -- ---------------------------------------------------------------------------
 -- ===========================================================================
 
 
 -- ===========================================================================
 -- ===========================================================================
+-- PART 0 — RESET
+-- Drops everything PART 1-4 create, in FK-safe order, so this script is
+-- re-runnable against a database in ANY prior state (empty, partially
+-- applied, or shaped by an older version of this schema) without hitting
+-- "already exists" on an object whose definition changed underneath it —
+-- which is exactly what happened to `events_no_overlap`: Postgres raises
+-- 42P07 (duplicate_table) for a colliding EXCLUDE-constraint index, not
+-- 42710 (duplicate_object), so `exception when duplicate_object` never
+-- caught it on a second run.
+-- ===========================================================================
+-- ===========================================================================
+
+drop table if exists notification_log   cascade;
+drop table if exists rate_limits        cascade;
+drop table if exists push_subscriptions cascade;
+drop table if exists audit_log          cascade;
+drop table if exists events             cascade;
+drop table if exists recurring_rules    cascade;
+drop table if exists booking_requests   cascade;
+drop table if exists closures           cascade;
+drop table if exists site_settings      cascade;
+drop table if exists access_requests    cascade;
+drop table if exists trustees           cascade;
+drop table if exists admin_profiles     cascade;
+drop table if exists admin_allowlist    cascade;
+
+drop function if exists preview_closure_conflicts(timestamptz, timestamptz) cascade;
+drop function if exists create_closure(text, timestamptz, timestamptz, boolean, boolean) cascade;
+drop function if exists materialize_recurring(int) cascade;
+drop function if exists anonymise_old_requests(int) cascade;
+drop function if exists expire_stale_requests() cascade;
+drop function if exists cancel_request_public(text) cascade;
+drop function if exists cancel_request_admin(uuid, int, text) cascade;
+drop function if exists reject_request(uuid, int, text) cascade;
+drop function if exists approve_request(uuid, int, timestamptz, timestamptz, text) cascade;
+drop function if exists decide_access_request(uuid, boolean, admin_role, text) cascade;
+drop function if exists add_manager(citext, text, admin_role) cascade;
+drop function if exists set_manager_role(uuid, admin_role, boolean) cascade;
+drop function if exists my_allowlist_id() cascade;
+drop function if exists is_super_admin() cascade;
+drop function if exists is_admin() cascade;
+drop function if exists touch_updated_at() cascade;
+drop function if exists assert_opening_hours_shape() cascade;
+drop function if exists assert_super_admin_survives() cascade;
+
+drop type if exists access_request_status;
+drop type if exists admin_role;
+drop type if exists event_source;
+drop type if exists event_status;
+drop type if exists request_status;
+drop type if exists usage_type;
+
+
+-- ===========================================================================
+-- ===========================================================================
 -- PART 1 — SCHEMA
--- Spec §6.1 extensions and enums, §6.2 tables.
---
--- Guiding constraint (§1.4): the system manages exactly one pitch. There is no
--- facility entity and no pitch_id column anywhere below. Do not add one.
 -- ===========================================================================
 -- ===========================================================================
 
@@ -47,10 +101,7 @@ create extension if not exists "citext";
 do $$ begin
   create type usage_type as enum (
     'community',      -- שימוש קהילתי
-    'association',    -- שימוש עמותה
-    'special_event',  -- אירוע מיוחד
-    'maintenance',    -- תחזוקה
-    'closed'          -- סגור
+    'association'      -- שימוש עמותה
   );
 exception when duplicate_object then null; end $$;
 
@@ -71,6 +122,10 @@ exception when duplicate_object then null; end $$;
 -- Only two authenticated tiers exist. A visitor has no row anywhere.
 do $$ begin
   create type admin_role as enum ('admin', 'super_admin');
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create type access_request_status as enum ('pending', 'approved', 'rejected');
 exception when duplicate_object then null; end $$;
 
 -- ---------------------------------------------------------------------------
@@ -122,6 +177,37 @@ create table if not exists admin_profiles (
   last_seen  timestamptz,
   created_at timestamptz not null default now()
 );
+
+-- ---------------------------------------------------------------------------
+-- Self-service access requests. A row here grants NOTHING on its own —
+-- approving one is what writes admin_allowlist, via decide_access_request()
+-- in PART 2, which is super-admin-only and audited like every other
+-- privileged write.
+-- ---------------------------------------------------------------------------
+create table if not exists access_requests (
+  id            uuid primary key default gen_random_uuid(),
+  email         citext not null,
+  full_name     text,
+  -- 'google' | 'password'. Kept as text rather than an enum: it mirrors
+  -- whatever Supabase Auth reports, and a new provider must not need a
+  -- migration before a person can ask for access.
+  provider      text not null default 'password',
+  user_id       uuid references auth.users(id) on delete set null,
+  status        access_request_status not null default 'pending',
+  created_at    timestamptz not null default now(),
+  decided_at    timestamptz,
+  decided_by    uuid references auth.users(id),
+  decided_note  text
+);
+
+-- One live request per address. A second sign-in attempt while pending must
+-- update the existing row rather than filling the queue with duplicates, and a
+-- rejected person may ask again later.
+create unique index if not exists access_requests_pending_email_idx
+  on access_requests (email) where status = 'pending';
+
+create index if not exists access_requests_status_idx
+  on access_requests (status, created_at desc);
 
 -- ---------------------------------------------------------------------------
 -- Trustees (נאמני קהילה)
@@ -218,11 +304,13 @@ create table if not exists events (
   constraint event_time_order check (ends_at > starts_at)
 );
 
--- Hard guarantee (G4): no two live events overlap. Enforced in the database,
--- not only in the UI.
+-- Hard guarantee (G4): no two live events of the SAME category overlap.
+-- Association and community may share a slot (one of each, at once); two
+-- bookings of the same category still cannot double-book.
 do $$ begin
   alter table events add constraint events_no_overlap
     exclude using gist (
+      usage_type with =,
       tstzrange(starts_at, ends_at, '[)') with &&
     ) where (status = 'scheduled');
 exception when duplicate_object then null; end $$;
@@ -355,8 +443,8 @@ create trigger trustees_touch before update on trustees
 -- ===========================================================================
 -- ===========================================================================
 -- PART 2 — FUNCTIONS
--- Spec §6.3. Every guarded mutation is a `security definer` RPC so that the
--- invariants of §2 cannot be bypassed by writing to a table directly.
+-- Every guarded mutation is a `security definer` RPC so that the invariants
+-- of §2 cannot be bypassed by writing to a table directly.
 -- ===========================================================================
 -- ===========================================================================
 
@@ -469,6 +557,74 @@ begin
 
   insert into audit_log (actor_id, entity, entity_id, action, before, after)
   values (auth.uid(), 'admin_allowlist', target.id, 'add', null, to_jsonb(target));
+
+  return target;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Access requests. Decision is the ONLY path from a request to an
+-- allowlist row; a pending row grants nothing on its own.
+-- ---------------------------------------------------------------------------
+create or replace function decide_access_request(
+  p_request_id uuid,
+  p_approve    boolean,
+  p_role       admin_role default 'admin',
+  p_note       text default null
+) returns access_requests
+language plpgsql security definer set search_path = public as $$
+declare
+  target   access_requests;
+  existing admin_allowlist;
+begin
+  if not is_super_admin() then
+    raise exception 'ERR_NOT_AUTHORIZED';
+  end if;
+
+  select * into target from access_requests where id = p_request_id for update;
+  if not found then raise exception 'ERR_NOT_FOUND'; end if;
+
+  -- A request is decided once. Re-approving a decided row would let an
+  -- allowlist entry be recreated from a stale browser tab.
+  if target.status <> 'pending' then
+    raise exception 'ERR_ALREADY_DECIDED';
+  end if;
+
+  update access_requests
+     set status       = case when p_approve then 'approved' else 'rejected' end,
+         decided_at   = now(),
+         decided_by   = auth.uid(),
+         decided_note = p_note
+   where id = target.id
+  returning * into target;
+
+  if p_approve then
+    -- Same restore-rather-than-collide behaviour as add_manager(): the unique
+    -- index on admin_allowlist covers active rows only, but the audit trail
+    -- must stay on one row per address.
+    select * into existing from admin_allowlist where email = target.email;
+
+    if found then
+      update admin_allowlist
+         set revoked_at = null,
+             role       = p_role,
+             full_name  = coalesce(existing.full_name, target.full_name)
+       where id = existing.id
+      returning * into existing;
+    else
+      insert into admin_allowlist (email, full_name, role, created_by)
+      values (target.email, target.full_name, p_role, auth.uid())
+      returning * into existing;
+    end if;
+
+    insert into audit_log (actor_id, entity, entity_id, action, before, after)
+    values (auth.uid(), 'admin_allowlist', existing.id, 'add', null, to_jsonb(existing));
+  end if;
+
+  insert into audit_log (actor_id, entity, entity_id, action, before, after)
+  values (auth.uid(), 'access_requests', target.id,
+          case when p_approve then 'approve' else 'reject' end,
+          null, to_jsonb(target));
 
   return target;
 end;
@@ -840,9 +996,9 @@ grant execute on function is_super_admin() to authenticated, anon;
 -- ===========================================================================
 -- ===========================================================================
 -- PART 3 — ROW LEVEL SECURITY
--- Spec §6.4. RLS is enabled on EVERY table. The public site reads with the
--- anon key; all public writes go through server-side route handlers using the
--- service role key, never directly from the browser.
+-- RLS is enabled on EVERY table. The public site reads with the anon key;
+-- all public writes go through server-side route handlers using the service
+-- role key, never directly from the browser.
 -- ===========================================================================
 -- ===========================================================================
 
@@ -854,6 +1010,7 @@ alter table booking_requests   enable row level security;
 alter table recurring_rules    enable row level security;
 alter table admin_allowlist    enable row level security;
 alter table admin_profiles     enable row level security;
+alter table access_requests    enable row level security;
 alter table audit_log          enable row level security;
 alter table push_subscriptions enable row level security;
 alter table notification_log   enable row level security;
@@ -928,6 +1085,14 @@ create policy allowlist_super_insert on admin_allowlist
   for insert to authenticated with check (is_super_admin());
 -- Deliberately NO update/delete policy: writes go through the RPC.
 
+-- Admins read the access-request queue; only the RPC writes it. The insert on
+-- sign-up is done server-side with the service role, because the person
+-- making it is by definition not an admin yet.
+drop policy if exists access_requests_admin_read on access_requests;
+create policy access_requests_admin_read on access_requests
+  for select to authenticated using (is_admin());
+-- Deliberately NO insert/update/delete policy for anon or authenticated.
+
 drop policy if exists audit_super_read on audit_log;
 create policy audit_super_read on audit_log
   for select to authenticated using (is_super_admin());
@@ -972,12 +1137,14 @@ create policy notifications_super_read on notification_log
 -- ===========================================================================
 -- ===========================================================================
 
--- >>> EDIT THESE TWO LINES BEFORE RUNNING <<<
--- The email must match the address you will sign in with. Re-running with a
--- different email adds a second super admin; it does not replace the first.
+-- >>> CHECK THIS EMAIL BEFORE RUNNING <<<
+-- Must match the address you will sign in with (Google OAuth). Re-running
+-- with a different email adds a second super admin; it does not replace the
+-- first. Prefilled with the address on this session's context — change it if
+-- that isn't who should be super admin.
 do $$
 declare
-  v_super_admin_email citext := 'dev-super-admin@example.com';
+  v_super_admin_email citext := 'shacharassen3667@gmail.com';
   v_super_admin_name  text   := 'מנהל על';
 begin
   insert into admin_allowlist (email, full_name, role)
@@ -985,10 +1152,6 @@ begin
   on conflict (email) do update
     set role = 'super_admin',
         revoked_at = null;
-
-  if v_super_admin_email = 'dev-super-admin@example.com' then
-    raise notice 'Super admin left at the placeholder address — edit it and re-run, or no one can sign in.';
-  end if;
 end $$;
 
 -- The single settings row. All seven keys are required and identical: Friday

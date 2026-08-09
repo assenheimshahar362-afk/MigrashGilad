@@ -31,7 +31,7 @@ export async function POST(
 
     if (error) return errorResponse(codeFromDbError(error));
 
-    revalidateTag(SCHEDULE_TAG);
+    revalidateTag(SCHEDULE_TAG, 'max');
 
     return NextResponse.json({ status: 'cancelled' as const });
   });

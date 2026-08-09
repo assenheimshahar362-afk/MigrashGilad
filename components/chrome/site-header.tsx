@@ -9,6 +9,7 @@ import { PitchWordmark } from '@/components/chrome/pitch-wordmark';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { AuthIcons } from '@/components/chrome/auth-icons';
+import { RequestNavTrigger } from '@/components/request/request-nav-trigger';
 
 /**
  * Global header.
@@ -26,13 +27,13 @@ import { AuthIcons } from '@/components/chrome/auth-icons';
  * its start already goes there. A nav item pointing at the page you are almost
  * always on is a slot spent saying nothing.
  *
- * Every other link is an anchor into that same page (§ one-page merge) —
- * `/#request` rather than `/request` — so from anywhere else on the site
- * (the month view, a request-status link) they still resolve correctly,
- * Next just navigates home first.
+ * "request" is not a link at all any more — it opens the floating booking
+ * modal (`request-modal-context.tsx`) from wherever you are, which is why it
+ * works identically from the month view or a request-status page without
+ * navigating home first the way an anchor would have. Every other entry is
+ * still an anchor into the home page (§ one-page merge).
  */
 const LINKS = [
-  { href: '/#request', label: t('nav.request') },
   { href: '/#about', label: t('nav.about') },
   { href: '/#trustees', label: t('nav.trustees') },
   { href: '/#contact', label: t('nav.contact') },
@@ -57,6 +58,13 @@ export function SiteHeader({ pitchName }: { pitchName: string }) {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, [overHero]);
+
+  const navItemClassName = cn(
+    'press flex h-9 items-center rounded-full px-4 text-sm font-medium whitespace-nowrap',
+    'transition-[background-color,color,box-shadow] duration-(--duration-tip)',
+    'ease-(--ease-out-quiet)',
+    solid ? 'text-(--ink-muted) hover:text-(--ink)' : 'text-white/85 hover:text-white',
+  );
 
   return (
     <header
@@ -136,25 +144,18 @@ export function SiteHeader({ pitchName }: { pitchName: string }) {
             {/* No "active" state: every link is an anchor on the same page,
                 so pathname alone can no longer tell them apart, and a
                 scroll-spy is more machinery than a nav bar earns. */}
-            {LINKS.map((link) => {
-              return (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className={cn(
-                      'press flex h-9 items-center rounded-full px-4 text-sm font-medium whitespace-nowrap',
-                      'transition-[background-color,color,box-shadow] duration-(--duration-tip)',
-                      'ease-(--ease-out-quiet)',
-                      solid
-                        ? 'text-(--ink-muted) hover:text-(--ink)'
-                        : 'text-white/85 hover:text-white',
-                    )}
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              );
-            })}
+            <li>
+              <RequestNavTrigger className={navItemClassName}>
+                {t('nav.request')}
+              </RequestNavTrigger>
+            </li>
+            {LINKS.map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} className={navItemClassName}>
+                  {link.label}
+                </Link>
+              </li>
+            ))}
           </ul>
         </nav>
 

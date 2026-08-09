@@ -587,10 +587,22 @@ html[data-memorial-day='true'] body {
 }
 
 /* The desktop centred variant. From 0.96, never from 0: nothing in the real
-   world appears out of nothing, and `scale(0)` reads as a glitch. */
+   world appears out of nothing, and `scale(0)` reads as a glitch.
+   The +50% X matches `start-1/2` on an RTL-only app (see sheet.tsx) — it
+   resolves to `right:50%`, so centring pulls back toward the end (+X), not
+   the start (-X) a LTR `left:50%` would need. */
 @keyframes dialog-in {
-  from { transform: translate3d(-50%, -50%, 0) scale(0.96); opacity: 0; }
-  to   { transform: translate3d(-50%, -50%, 0) scale(1); opacity: 1; }
+  from { transform: translate3d(50%, -50%, 0) scale(0.96); opacity: 0; }
+  to   { transform: translate3d(50%, -50%, 0) scale(1); opacity: 1; }
+}
+
+/* The accessibility menu (components/a11y/accessibility-menu.tsx): anchored
+   beside its launcher button rather than centred, so — like a popover, unlike
+   `dialog-in` above — it grows from the edge it is pinned to (`origin-bottom`
+   in the component) instead of the viewport centre. */
+@keyframes anchored-menu-in {
+  from { transform: translate3d(0, 8px, 0) scale(0.95); opacity: 0; }
+  to   { transform: translate3d(0, 0, 0) scale(1); opacity: 1; }
 }
 
 /* A toast enters from the edge it lives on, so a swipe back down is the gesture
@@ -683,6 +695,69 @@ html[data-memorial-day='true'] body {
     --ink-muted: var(--ink);
     --ink-faint: var(--ink);
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Manual accessibility menu (components/a11y/accessibility-menu.tsx).
+   §3/A11Y-9 do not mandate a floating widget — the legal requirement is
+   WCAG 2.0 AA conformance plus the accessibility statement (already at
+   /accessibility), both of which hold regardless of this menu. It exists for
+   visitors who benefit from larger text, stronger contrast or less motion but
+   do not know how (or are not able) to set that at the OS level. Where a rule
+   below duplicates an `@media` query above, that duplication is deliberate:
+   same treatment, reachable without touching OS settings.
+   --------------------------------------------------------------------------- */
+
+:root[data-a11y-font-scale='lg'] {
+  font-size: 112.5%;
+}
+
+:root[data-a11y-font-scale='xl'] {
+  font-size: 125%;
+}
+
+:root[data-a11y-contrast='true'] {
+  --hairline: currentColor;
+  --hairline-strong: currentColor;
+  --grid-line: var(--ink-muted);
+  --grid-line-strong: var(--ink);
+  --ink-muted: var(--ink);
+  --ink-faint: var(--ink);
+}
+
+:root[data-a11y-underline-links='true'] a {
+  text-decoration: underline !important;
+  text-underline-offset: 2px;
+}
+
+/* Same treatment as `@media (prefers-reduced-motion: reduce)` above, applied
+   on demand instead of read from the OS. */
+:root[data-a11y-motion='reduce'] *,
+:root[data-a11y-motion='reduce'] *::before,
+:root[data-a11y-motion='reduce'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+:root[data-a11y-motion='reduce'] .animate-week-forward,
+:root[data-a11y-motion='reduce'] .animate-week-back,
+:root[data-a11y-motion='reduce'] .animate-rise-in,
+:root[data-a11y-motion='reduce'] .stagger > * {
+  animation: fade-in 120ms ease-out both !important;
+}
+
+:root[data-a11y-motion='reduce'] [data-reveal='pending'] {
+  opacity: 1;
+  transform: none;
+}
+
+:root[data-a11y-motion='reduce'] .press:active,
+:root[data-a11y-motion='reduce'] .press-sm:active,
+:root[data-a11y-motion='reduce'] .card-interactive:hover,
+:root[data-a11y-motion='reduce'] .card-interactive:active {
+  transform: none;
 }
 
 /* ---------------------------------------------------------------------------

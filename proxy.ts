@@ -16,7 +16,7 @@ import { createServerClient } from '@supabase/ssr';
  * middleware would double every admin page's database round trips. The layouts
  * under app/(admin) resolve the role server-side instead (§2).
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
