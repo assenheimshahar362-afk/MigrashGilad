@@ -19,8 +19,10 @@ const PUBLIC_PAGES = [
   '/accessibility',
   '/schedule/month',
   // Since §2 was amended, /login wears the public chrome like any other page,
-  // so it is held to the same axe budget.
+  // so it is held to the same axe budget. /register is its sibling, split out
+  // of the old tabbed form onto its own route.
   '/login',
+  '/register',
 ];
 
 /**

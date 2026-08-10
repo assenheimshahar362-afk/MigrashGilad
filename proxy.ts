@@ -53,8 +53,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(login);
   }
 
-  // An already-signed-in admin landing on /login goes straight to the queue.
-  if (pathname === '/login' && user) {
+  // An already-signed-in admin landing on /login or /register goes straight
+  // to the queue — signing up again grants nothing they don't already have.
+  if ((pathname === '/login' || pathname === '/register') && user) {
     const dashboard = request.nextUrl.clone();
     dashboard.pathname = '/admin';
     dashboard.search = '';
@@ -72,5 +73,6 @@ export const config = {
      */
     '/admin/:path*',
     '/login',
+    '/register',
   ],
 };

@@ -34,7 +34,15 @@
       "PowerShell(node \"C:\\\\Users\\\\Shahar.a\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--shahar-MigrashGilad\\\\eed4c98b-3442-4d97-9db3-e04db91ef5f4\\\\scratchpad\\\\dead-code.mjs\")",
       "PowerShell(Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue; try { Remove-Item tsconfig.tsbuildinfo -Force -ErrorAction Stop } catch {}; try { Remove-Item public\\\\sw.js -Force -ErrorAction Stop } catch {}; \"deleted: .next, tsconfig.tsbuildinfo, public/sw.js\"; \"\"; \"remaining supabase/:\"; Get-ChildItem -Recurse supabase -File | ForEach-Object { \"  \" + $_.FullName.Replace\\(\\(Get-Location\\).Path + '\\\\',''\\) })",
       "Bash(git read-tree *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(curl -s -i \"https://migrash-gilad-dmnxahpeo-shahars-projects-efe38c4f.vercel.app/login\" -o /dev/null -w \"HTTP %{http_code}\\\\n\" -D -)",
+      "Bash(npx vercel *)",
+      "Bash(npx supabase *)",
+      "Bash(mkdir -p \"c:/shahar/MigrashGilad/app/\\(public\\)/register\")",
+      "Bash(npx tsc *)"
+    ],
+    "additionalDirectories": [
+      "c:\\shahar\\MigrashGilad\\app\\(public)"
     ]
   }
 }
