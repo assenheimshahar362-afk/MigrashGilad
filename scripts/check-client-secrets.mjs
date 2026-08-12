@@ -44,7 +44,7 @@ const SECRET_ENV_VARS = [
   'SUPABASE_SERVICE_ROLE_KEY',
   'TURNSTILE_SECRET_KEY',
   'VAPID_PRIVATE_KEY',
-  'RESEND_API_KEY',
+  'GMAIL_APP_PASSWORD',
   'CRON_SECRET',
   'IP_HASH_SALT',
   'GOOGLE_CLIENT_SECRET',
@@ -56,7 +56,6 @@ const SECRET_PATTERNS = [
   // A Supabase service-role JWT always carries this role claim.
   { name: 'service_role JWT', regex: /"role"\s*:\s*"service_role"/ },
   { name: 'service_role JWT (encoded)', regex: /ImNlcnZpY2Vfcm9sZSI|InNlcnZpY2Vfcm9sZSI/ },
-  { name: 'Resend key', regex: /\bre_[A-Za-z0-9]{16,}\b/ },
 ];
 
 const SCANNABLE = new Set(['.js', '.mjs', '.cjs', '.map', '.json', '.txt', '.html']);

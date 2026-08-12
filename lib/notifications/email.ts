@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { Resend } from 'resend';
+import nodemailer, { type Transporter } from 'nodemailer';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { reportError } from '@/lib/errors';
 import { logNotification } from '@/lib/notifications/log';
@@ -8,15 +8,39 @@ import { t } from '@/lib/i18n';
 import { formatDateLong, formatTimeRange, formatWeekdayLong, localDate } from '@/lib/time';
 import { usageTypeLabel } from '@/lib/usage-type';
 import { absoluteUrl, formatIsraeliPhone } from '@/lib/utils';
-import type { AccessRequestRow, BookingRequestRow } from '@/lib/types';
+import type { AccessRequestRow, AdminRole, BookingRequestRow } from '@/lib/types';
 
-let resend: Resend | null | undefined;
+/**
+ * Sent through the sender's own Gmail account over SMTP, not a transactional
+ * email API — no domain to verify, no DNS records, just an address and an app
+ * password. The trade-off is Gmail's own sending caps (500/day on a personal
+ * account), which a community pitch's notification volume never gets near.
+ *
+ * `GMAIL_APP_PASSWORD` is an app password (myaccount.google.com/apppasswords),
+ * not the account's real password — it requires 2-Step Verification to be
+ * turned on first, and it is the only credential this ever holds.
+ */
+let transporter: Transporter | null | undefined;
 
-function getResend(): Resend | null {
-  if (resend !== undefined) return resend;
-  const key = process.env.RESEND_API_KEY;
-  resend = key ? new Resend(key) : null;
-  return resend;
+function getTransport(): Transporter | null {
+  if (transporter !== undefined) return transporter;
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+  transporter =
+    user && pass
+      ? nodemailer.createTransport({ service: 'gmail', auth: { user, pass } })
+      : null;
+  return transporter;
+}
+
+/** The header the recipient sees. A display name if the account carries one,
+ *  the Gmail address on its own otherwise — Gmail rejects a From address that
+ *  isn't the authenticated account (or a configured alias of it), so there is
+ *  no separate "from" setting to get out of sync with `GMAIL_USER`. */
+function fromAddress(): string {
+  const user = process.env.GMAIL_USER ?? '';
+  const name = process.env.NOTIFY_FROM_NAME;
+  return name ? `${name} <${user}>` : user;
 }
 
 /**
@@ -110,6 +134,48 @@ function renderAccessRequestEmail(request: AccessRequestRow): { subject: string;
   return { subject, html };
 }
 
+/**
+ * §2: sent to the APPLICANT, once, the moment a super admin approves their
+ * access request — the mirror of `renderAccessRequestEmail` above, which told
+ * the super admin one existed. Unlike that one, this carries a real CTA: the
+ * person can act on it themselves now, because approving is what makes them
+ * allowed to.
+ */
+function renderAccessApprovedEmail(
+  request: AccessRequestRow,
+  role: AdminRole,
+): { subject: string; html: string } {
+  const loginUrl = absoluteUrl('/login');
+  const subject = t('access.approved_email_subject');
+
+  const html = `<!doctype html>
+<html lang="he" dir="rtl">
+  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width" /></head>
+  <body style="margin:0;padding:24px;background:#F2F5F0;font-family:Assistant,Arial,sans-serif;color:#12253C;" dir="rtl">
+    <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #D6DED3;">
+      <div style="background:#122540;color:#F2F5F0;padding:20px 24px;">
+        <div style="font-size:18px;font-weight:700;">${escapeHtml(t('app.name'))}</div>
+        <div style="font-size:14px;opacity:.85;margin-top:4px;">${escapeHtml(t('access.approved_email_title'))}</div>
+      </div>
+      <div style="padding:24px;">
+        <p style="margin:0 0 16px;font-size:16px;line-height:1.65;">
+          ${escapeHtml(t('access.approved_email_body'))}
+        </p>
+        <dl style="margin:0 0 24px;font-size:15px;line-height:1.8;">
+          ${row('דוא״ל', `<span dir="ltr">${escapeHtml(request.email)}</span>`)}
+          ${row('הרשאה', escapeHtml(t(`managers.role.${role}` as const)))}
+        </dl>
+        <a href="${loginUrl}" style="display:inline-block;background:#D63B2B;color:#ffffff;text-decoration:none;font-weight:700;padding:14px 22px;border-radius:8px;font-size:16px;">
+          ${escapeHtml(t('access.approved_email_cta'))}
+        </a>
+      </div>
+    </div>
+  </body>
+</html>`;
+
+  return { subject, html };
+}
+
 function row(label: string, value: string): string {
   return `<div style="display:flex;gap:8px;"><dt style="min-width:96px;color:#7A8A82;">${escapeHtml(label)}</dt><dd style="margin:0;font-weight:600;">${value}</dd></div>`;
 }
@@ -123,6 +189,48 @@ function escapeHtml(value: string): string {
 }
 
 /**
+ * Send one rendered message to one address, logging the attempt either way
+ * (§9.3). Shared by `sendToAdmins`'s fan-out and by a single-recipient send
+ * like `emailAccessApproved` — the failure handling (log, report, move on)
+ * has to be identical either way, or a silent Gmail outage would only show up
+ * in one of the two paths.
+ */
+async function sendOne(
+  to: string,
+  { subject, html }: { subject: string; html: string },
+  where: string,
+): Promise<boolean> {
+  const client = getTransport();
+
+  if (!client) {
+    await logNotification({
+      channel: 'email',
+      target: to,
+      subject,
+      status: 'failed',
+      error: 'GMAIL_USER or GMAIL_APP_PASSWORD not configured',
+    });
+    return false;
+  }
+
+  try {
+    await client.sendMail({ from: fromAddress(), to, subject, html });
+    await logNotification({ channel: 'email', target: to, subject, status: 'sent' });
+    return true;
+  } catch (error) {
+    reportError(error, { where, to });
+    await logNotification({
+      channel: 'email',
+      target: to,
+      subject,
+      status: 'failed',
+      error: String((error as Error).message ?? error),
+    });
+    return false;
+  }
+}
+
+/**
  * Send one rendered message to a set of admins.
  *
  * Sent individually rather than as one message with many recipients: admins
@@ -130,22 +238,9 @@ function escapeHtml(value: string): string {
  * the whole batch.
  */
 async function sendToAdmins(
-  { subject, html }: { subject: string; html: string },
+  message: { subject: string; html: string },
   { superOnly = false, where }: { superOnly?: boolean; where: string },
 ): Promise<number> {
-  const client = getResend();
-  const from = process.env.NOTIFY_FROM_EMAIL;
-
-  if (!client || !from) {
-    await logNotification({
-      channel: 'email',
-      target: 'admins',
-      status: 'failed',
-      error: 'RESEND_API_KEY or NOTIFY_FROM_EMAIL not configured',
-    });
-    return 0;
-  }
-
   const supabase = createAdminClient();
   let query = supabase
     .from('admin_allowlist')
@@ -159,29 +254,8 @@ async function sendToAdmins(
   const recipients = (data ?? []).map((r) => r.email as string);
   if (recipients.length === 0) return 0;
 
-  let sent = 0;
-
-  await Promise.all(
-    recipients.map(async (to) => {
-      try {
-        const result = await client.emails.send({ from, to, subject, html });
-        if (result.error) throw new Error(result.error.message);
-        sent += 1;
-        await logNotification({ channel: 'email', target: to, subject, status: 'sent' });
-      } catch (error) {
-        reportError(error, { where, to });
-        await logNotification({
-          channel: 'email',
-          target: to,
-          subject,
-          status: 'failed',
-          error: String((error as Error).message ?? error),
-        });
-      }
-    }),
-  );
-
-  return sent;
+  const results = await Promise.all(recipients.map((to) => sendOne(to, message, where)));
+  return results.filter(Boolean).length;
 }
 
 export async function emailAdminsNewRequest(request: BookingRequestRow): Promise<number> {
@@ -198,4 +272,14 @@ export async function emailAdminsAccessRequest(request: AccessRequestRow): Promi
     superOnly: true,
     where: 'emailAdminsAccessRequest',
   });
+}
+
+/**
+ * The applicant's own notification, sent once `decide_access_request()` has
+ * committed the approval — never speculatively, and never for a rejection
+ * (§2: a refusal is not announced by mail; the person is simply not on the
+ * allowlist).
+ */
+export async function emailAccessApproved(request: AccessRequestRow, role: AdminRole): Promise<boolean> {
+  return sendOne(request.email, renderAccessApprovedEmail(request, role), 'emailAccessApproved');
 }

@@ -12,7 +12,10 @@ function configure(): boolean {
 
   const publicKey = process.env.VAPID_PUBLIC_KEY;
   const privateKey = process.env.VAPID_PRIVATE_KEY;
-  const contact = process.env.NOTIFY_FROM_EMAIL ?? 'admin@example.com';
+  // VAPID wants a contact address, not an email account — this reuses
+  // whichever one is already configured for outgoing mail rather than asking
+  // for a third env var.
+  const contact = process.env.NOTIFY_FROM_EMAIL ?? process.env.GMAIL_USER ?? 'admin@example.com';
   if (!publicKey || !privateKey) return false;
 
   webpush.setVapidDetails(`mailto:${contact}`, publicKey, privateKey);

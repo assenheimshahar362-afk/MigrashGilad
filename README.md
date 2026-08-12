@@ -73,9 +73,9 @@ Everything else in `.env.example` is optional and degrades explicitly:
 
 - **No `TURNSTILE_SECRET_KEY`** → bot protection is skipped, and logged as an
   error in production. Set it before launch.
-- **No `RESEND_API_KEY`** / **no VAPID keys** → that notification channel writes
-  a `failed` row to `notification_log` and the others still run. The dashboard
-  badge means no request is ever lost (§9.1).
+- **No `GMAIL_USER`/`GMAIL_APP_PASSWORD`** / **no VAPID keys** → that
+  notification channel writes a `failed` row to `notification_log` and the
+  others still run. The dashboard badge means no request is ever lost (§9.1).
 - **No Upstash** → rate limiting uses the `rate_limits` Postgres table instead.
 
 ---
@@ -232,7 +232,7 @@ occurrences.
 
 `notification_log` records every attempt with its failure. The dashboard badge
 is derived from the pending queue, not from notifications, so the request is
-still there. Check `RESEND_API_KEY` and the VAPID keys.
+still there. Check `GMAIL_USER`/`GMAIL_APP_PASSWORD` and the VAPID keys.
 
 ### Web Push on iOS is not working
 
@@ -272,10 +272,11 @@ bite. None of them blocks the build; all of them block launch.
 3a. Supabase Auth → Providers → Email: enabled with **Confirm email** ON, and
    `https://<domain>/auth/callback` added to the redirect allowlist. With
    confirmations off, an unverified address would reach the approval queue.
-3b. `RESEND_API_KEY` and `NOTIFY_FROM_EMAIL` set, or nobody is told a request
-   is waiting — the queue at `/admin/access` still holds it either way.
+3b. `GMAIL_USER` and `GMAIL_APP_PASSWORD` set, or nobody is told a request is
+   waiting — the queue at `/admin/access` still holds it either way.
 4. All environment variables from `.env.example` set in Vercel.
-5. `vercel.json` crons active (expire at 02:00, materialise at 02:30).
+5. `vercel.json` crons active (expire at 02:00, materialise at 02:30, anonymise
+   monthly at 03:00 on the 1st).
 6. Icons generated — `npm run icons` cuts the badge out of
    `public/images/logo.png` and writes the manifest PNGs, the favicon
    (`app/icon.png`), the apple-touch icon and the header mark. Re-run it after

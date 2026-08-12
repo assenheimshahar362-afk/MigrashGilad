@@ -1,8 +1,10 @@
-import { handleRoute, codeFromDbError, errorResponse } from '@/lib/errors';
+import { handleRoute, codeFromDbError, errorResponse, reportError } from '@/lib/errors';
 import { requireSuperAdmin } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
 import { accessDecisionInput } from '@/lib/validation/auth';
 import { ok, parseBody } from '@/lib/api';
+import { emailAccessApproved } from '@/lib/notifications/email';
+import type { AccessRequestRow } from '@/lib/types';
 
 /**
  * `PATCH /api/admin/access/[id]` — SUPER ADMIN only.
@@ -28,6 +30,22 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     });
 
     if (error) return errorResponse(codeFromDbError(error));
+
+    // The applicant learns they were approved by mail — never for a rejection
+    // (§2). Awaited rather than fired-and-forgotten (unlike the fan-out on a
+    // new booking request): this action happens a handful of times a month,
+    // not per visitor, so there is no latency budget to protect here. A
+    // failed send must not lose the approval itself — the allowlist write
+    // already committed inside the RPC — so a send failure is reported and
+    // swallowed, never surfaced as if the approval had failed.
+    if (input.approve) {
+      const approved = data as AccessRequestRow;
+      try {
+        await emailAccessApproved(approved, input.role);
+      } catch (sendError) {
+        reportError(sendError, { where: 'emailAccessApproved', requestId: approved.id });
+      }
+    }
 
     return ok({ request: data });
   });

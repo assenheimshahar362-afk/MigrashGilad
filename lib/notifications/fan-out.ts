@@ -15,7 +15,7 @@ import type { BookingRequestRow } from '@/lib/types';
  * on an SMTP round trip would be a needless part of that budget.
  */
 export function notifyAdminsOfNewRequest(request: BookingRequestRow): void {
-  after(async () => {
+  const run = async () => {
     const day = formatWeekdayLong(localDate(request.requested_start));
     const date = formatDateShort(localDate(request.requested_start));
     const range = formatTimeRange(request.requested_start, request.requested_end);
@@ -28,7 +28,7 @@ export function notifyAdminsOfNewRequest(request: BookingRequestRow): void {
       requestId: request.id,
     };
 
-    // Channels are independent: a failing Resend key must not stop web push.
+    // Channels are independent: a broken Gmail credential must not stop web push.
     const results = await Promise.allSettled([
       pushToAdmins(payload),
       emailAdminsNewRequest(request),
@@ -39,5 +39,20 @@ export function notifyAdminsOfNewRequest(request: BookingRequestRow): void {
         reportError(result.reason, { where: 'notifyAdminsOfNewRequest', requestId: request.id });
       }
     }
-  });
+  };
+
+  // `after()` throws SYNCHRONOUSLY — not a rejected promise — when `waitUntil`
+  // isn't available in the current runtime (a plain `next start`/self-host
+  // without the Vercel adapter, some local dev setups). That would take the
+  // whole booking submission down with it, which is a far worse outcome than
+  // a best-effort notification: the visitor's booking is the point, the
+  // fan-out is a courtesy. Falling back to firing `run()` unawaited keeps the
+  // request bulletproof either way, at the cost of no delivery guarantee if
+  // this specific runtime kills the process before it finishes.
+  try {
+    after(run);
+  } catch (error) {
+    reportError(error, { where: 'notifyAdminsOfNewRequest.after', requestId: request.id });
+    void run();
+  }
 }
