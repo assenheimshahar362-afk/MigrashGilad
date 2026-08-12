@@ -82,17 +82,6 @@ export const recurringPatchInput = recurringFields
     'ERR_VALIDATION',
   );
 
-export const closureInput = z
-  .object({
-    reason: z.string().trim().min(1).max(200),
-    start: z.iso.datetime({ offset: true }),
-    end: z.iso.datetime({ offset: true }),
-    allDay: z.boolean().default(false),
-    cancelConflicts: z.boolean().default(false),
-  })
-  .strict()
-  .refine((v) => new Date(v.end) > new Date(v.start), 'ERR_VALIDATION');
-
 export const trusteeInput = z
   .object({
     fullName: z.string().trim().min(2).max(80),
@@ -108,38 +97,6 @@ export const trusteeInput = z
   .strict();
 
 export const trusteeUpdateInput = trusteeInput.partial();
-
-/**
- * All seven keys are required (FR-37a). A missing key is a validation error,
- * not a default — the database refuses it too, and the two must agree.
- */
-const openingHoursSchema = z
-  .record(
-    z.enum(['0', '1', '2', '3', '4', '5', '6']),
-    z.tuple([timeString, timeString]).nullable(),
-  )
-  .refine(
-    (v) => ['0', '1', '2', '3', '4', '5', '6'].every((d) => d in v),
-    'ERR_OPENING_HOURS_INCOMPLETE',
-  )
-  .refine(
-    (v) => Object.values(v).every((slot) => slot === null || slot[1] > slot[0]),
-    'ERR_VALIDATION',
-  );
-
-export const settingsInput = z
-  .object({
-    pitchName: z.string().trim().min(1).max(80).optional(),
-    openingHours: openingHoursSchema.optional(),
-    minLeadHours: z.number().int().min(0).max(720).optional(),
-    maxHorizonDays: z.number().int().min(1).max(730).optional(),
-    maxDurationMin: z.number().int().min(15).max(360).optional(),
-    requestsOpen: z.boolean().optional(),
-    requestsClosedMsg: z.string().max(300).nullable().optional(),
-    memorialHtml: z.string().max(50_000).nullable().optional(),
-    memorialDays: z.array(dateString).max(50).optional(),
-  })
-  .strict();
 
 export const addManagerInput = z
   .object({
@@ -175,12 +132,5 @@ export const auditQueryInput = z
     entity: z.string().max(40).optional(),
     from: dateString.optional(),
     to: dateString.optional(),
-  })
-  .strict();
-
-export const maintenanceInput = z
-  .object({
-    action: z.enum(['materialize', 'expire', 'anonymise']),
-    dryRun: z.boolean().default(false),
   })
   .strict();

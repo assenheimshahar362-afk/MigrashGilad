@@ -4,13 +4,13 @@ import type { RequestStatus } from '@/lib/types';
 
 /**
  * §10.4 status pill. Colour is a reinforcement, never the carrier — the label
- * is always present, and the shapes differ by border weight so the six states
- * are still distinguishable in the monochrome memorial-day variant (FR-40).
+ * is always present, and the border style differs per state so the six are
+ * still distinguishable for a colourblind reader, or in print/grayscale.
  */
 /* Soft tint + dark ink, not saturated fills. A saturated badge shouts at the
    same volume whatever it says; a tinted one lets "approved" sit quietly and
    "rejected" still register. The border style stays a per-state signal so the
-   six remain distinguishable in the monochrome memorial variant. */
+   six remain distinguishable without colour. */
 const STYLES: Record<RequestStatus, string> = {
   pending: 'bg-accent-100 text-accent-ink border border-dashed border-accent-600/50',
   approved: 'bg-success/12 text-success-ink border border-success/40',
@@ -21,7 +21,7 @@ const STYLES: Record<RequestStatus, string> = {
 };
 
 /** The dot is a third, non-colour carrier of the state, and it is what lets the
- *  pill stay legible at a glance in the monochrome memorial variant. */
+ *  pill stay legible at a glance without colour. */
 const DOTS: Record<RequestStatus, string> = {
   pending: 'bg-accent-600',
   approved: 'bg-success',

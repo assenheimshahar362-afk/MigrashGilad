@@ -1,21 +1,15 @@
 import 'server-only';
 
 import { unstable_cache } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
 import { createPublicClient } from '@/lib/supabase/public';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { reportError } from '@/lib/errors';
 import {
-  FALLBACK_SETTINGS,
-  toPublicClosure,
+  SITE_SETTINGS,
   toPublicEvent,
-  toPublicSettings,
-  type ClosureRow,
   type EventRow,
-  type PublicClosure,
   type PublicEvent,
   type PublicSettings,
-  type SiteSettingsRow,
   type TrusteeRow,
 } from '@/lib/types';
 import { addLocalDays, toInstant, type LocalDate } from '@/lib/time';
@@ -29,7 +23,6 @@ import { addLocalDays, toInstant, type LocalDate } from '@/lib/time';
  * a Supabase outage from cache.
  */
 export const SCHEDULE_TAG = 'schedule';
-export const SETTINGS_TAG = 'settings';
 export const TRUSTEES_TAG = 'trustees';
 
 async function fetchScheduleUncached(from: LocalDate, to: LocalDate) {
@@ -40,35 +33,23 @@ async function fetchScheduleUncached(from: LocalDate, to: LocalDate) {
   const rangeStart = toInstant(addLocalDays(from, -1), '00:00').toISOString();
   const rangeEnd = toInstant(addLocalDays(to, 2), '00:00').toISOString();
 
-  const [eventsResult, closuresResult] = await Promise.all([
-    supabase
-      .from('events')
-      .select('*')
-      .eq('status', 'scheduled')
-      .gte('starts_at', rangeStart)
-      .lt('starts_at', rangeEnd)
-      .order('starts_at', { ascending: true }),
-    supabase
-      .from('closures')
-      .select('*')
-      .lt('starts_at', rangeEnd)
-      .gt('ends_at', rangeStart)
-      .order('starts_at', { ascending: true }),
-  ]);
+  const { data, error } = await supabase
+    .from('events')
+    .select('*')
+    .eq('status', 'scheduled')
+    .gte('starts_at', rangeStart)
+    .lt('starts_at', rangeEnd)
+    .order('starts_at', { ascending: true });
 
-  if (eventsResult.error) throw eventsResult.error;
-  if (closuresResult.error) throw closuresResult.error;
+  if (error) throw error;
 
-  return {
-    events: (eventsResult.data as EventRow[]).map(toPublicEvent),
-    closures: (closuresResult.data as ClosureRow[]).map(toPublicClosure),
-  };
+  return { events: (data as EventRow[]).map(toPublicEvent) };
 }
 
 export async function getSchedule(
   from: LocalDate,
   to: LocalDate,
-): Promise<{ events: PublicEvent[]; closures: PublicClosure[] }> {
+): Promise<{ events: PublicEvent[] }> {
   const cached = unstable_cache(
     () => fetchScheduleUncached(from, to),
     ['schedule', from, to],
@@ -79,47 +60,18 @@ export async function getSchedule(
     return await cached();
   } catch (error) {
     reportError(error, { where: 'getSchedule', from, to });
-    return { events: [], closures: [] };
+    return { events: [] };
   }
 }
 
-async function fetchSettingsUncached(): Promise<PublicSettings> {
-  const supabase = createPublicClient();
-  const { data, error } = await supabase
-    .from('site_settings')
-    .select('*')
-    .eq('id', 1)
-    .maybeSingle<SiteSettingsRow>();
-
-  if (error || !data) {
-    if (error) reportError(error, { where: 'getSettings' });
-    return FALLBACK_SETTINGS;
-  }
-  return toPublicSettings(data);
-}
-
+/**
+ * Was a cached read of the `site_settings` row; that table (and the
+ * super-admin screen for it) is gone, so this is now a fixed value — see the
+ * note on `PublicSettings`. Kept `async` so every existing `await
+ * getSettings()` call site needed no change.
+ */
 export async function getSettings(): Promise<PublicSettings> {
-  const cached = unstable_cache(fetchSettingsUncached, ['settings'], {
-    tags: [SETTINGS_TAG],
-    revalidate: 300,
-  });
-  try {
-    return await cached();
-  } catch (error) {
-    reportError(error, { where: 'getSettings' });
-    return FALLBACK_SETTINGS;
-  }
-}
-
-/** The full settings row, including memorial HTML. Super admin screens only. */
-export async function getSettingsRow(): Promise<SiteSettingsRow | null> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from('site_settings')
-    .select('*')
-    .eq('id', 1)
-    .maybeSingle<SiteSettingsRow>();
-  return data ?? null;
+  return SITE_SETTINGS;
 }
 
 async function fetchTrusteesUncached(): Promise<TrusteeRow[]> {

@@ -4,12 +4,11 @@ import {
   localTime,
   minutesFromTime,
   overlaps,
-  toInstant,
   weekdayOfLocalDate,
   type LocalDate,
   type LocalTime,
 } from '@/lib/time';
-import type { OpeningHours, PublicClosure, PublicEvent, PublicSettings } from '@/lib/types';
+import type { OpeningHours, PublicEvent, PublicSettings } from '@/lib/types';
 import { AppError } from '@/lib/errors';
 
 /**
@@ -47,9 +46,9 @@ export function gridHourRange(
     end = Math.max(end, minutesFromTime(hours[1]));
   }
 
-  // Every day closed, or no dates: fall back to the seed window so the grid
-  // still has a shape to render.
-  if (start >= end) return { startMinute: 6 * 60, endMinute: 23 * 60 };
+  // Every day closed, or no dates: fall back to the default window so the
+  // grid still has a shape to render.
+  if (start >= end) return { startMinute: 7 * 60, endMinute: 23 * 60 };
   return { startMinute: start, endMinute: end };
 }
 
@@ -57,17 +56,6 @@ export function eventsForDate(events: PublicEvent[], date: LocalDate): PublicEve
   return events
     .filter((event) => localDate(event.startsAt) === date)
     .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
-}
-
-export function closuresForDate(closures: PublicClosure[], date: LocalDate): PublicClosure[] {
-  const dayStart = toInstant(date, '00:00');
-  const dayEnd = toInstant(addLocalDays(date, 1), '00:00');
-  return closures.filter((closure) => overlaps(closure.startsAt, closure.endsAt, dayStart, dayEnd));
-}
-
-/** FR-9: a closure suppresses the "request this slot" affordance. */
-export function isSlotClosed(closures: PublicClosure[], start: Date, end: Date): boolean {
-  return closures.some((closure) => overlaps(closure.startsAt, closure.endsAt, start, end));
 }
 
 export function conflictingEvents(events: PublicEvent[], start: Date, end: Date): PublicEvent[] {
@@ -181,11 +169,6 @@ export function assertWithinOpeningHours(openingHours: OpeningHours, start: Date
   if (startMinutes < minutesFromTime(hours[0]) || endMinutes > minutesFromTime(hours[1])) {
     throw new AppError('ERR_OUTSIDE_HOURS');
   }
-}
-
-/** FR-40: the site renders muted on a memorial day stored per-year in settings. */
-export function isMemorialDay(settings: PublicSettings, date: LocalDate): boolean {
-  return settings.memorialDays.includes(date);
 }
 
 /**

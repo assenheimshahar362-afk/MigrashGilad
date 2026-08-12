@@ -65,6 +65,14 @@ export type PublicEvent = {
   contactPhone: string | null;
 }
 
+/**
+ * The `closures` table itself is still real (§6.2) — `approve_request` still
+ * refuses to approve a slot a closure covers, so an old row keeps mattering at
+ * the database level even with the admin UI for it gone. This type exists only
+ * so `database.types.ts` keeps mirroring the actual schema; nothing in the app
+ * reads or writes this table any more; see `event-editor.tsx` for how a
+ * closure is now entered — as a plain event.
+ */
 export type ClosureRow = {
   id: string;
   reason: string;
@@ -73,14 +81,6 @@ export type ClosureRow = {
   all_day: boolean;
   created_by: string | null;
   created_at: string;
-}
-
-export type PublicClosure = {
-  id: string;
-  reason: string;
-  startsAt: string;
-  endsAt: string;
-  allDay: boolean;
 }
 
 export type TrusteeRow = {
@@ -160,31 +160,21 @@ export type PublicRequestView = {
 /** `"0".."6"` = Sunday..Saturday. A `null` value means closed all day. */
 export type OpeningHours = Record<string, [string, string] | null>;
 
-export type SiteSettingsRow = {
-  id: number;
-  pitch_name: string;
-  opening_hours: OpeningHours;
-  min_lead_hours: number;
-  max_horizon_days: number;
-  max_duration_min: number;
-  requests_open: boolean;
-  requests_closed_msg: string | null;
-  memorial_html: string | null;
-  memorial_days: string[];
-  updated_at: string;
-  updated_by: string | null;
-}
-
-/** Settings safe to serve to anonymous clients. */
+/**
+ * Was `site_settings`, a super-admin-editable row — pitch name, opening
+ * hours, request limits, a "pause requests" switch and a memorial page. Only
+ * opening hours ever changed in practice, and never per-day; everything else
+ * sat at whatever the schema defaulted to. The table (and the admin screen
+ * for it) is gone; these are that same shape, fixed in code instead of a
+ * database row. Changing one now means changing this file and redeploying,
+ * not signing in.
+ */
 export type PublicSettings = {
   pitchName: string;
   openingHours: OpeningHours;
   minLeadHours: number;
   maxHorizonDays: number;
   maxDurationMin: number;
-  requestsOpen: boolean;
-  requestsClosedMsg: string | null;
-  memorialDays: string[];
 }
 
 export type ManagerRow = {
@@ -267,7 +257,6 @@ export type AdminIdentity = {
 
 export type ScheduleResponse = {
   events: PublicEvent[];
-  closures: PublicClosure[];
   settings: PublicSettings;
 }
 
@@ -286,29 +275,6 @@ export function toPublicEvent(row: EventRow): PublicEvent {
     source: row.source,
     contactName: row.contact_name,
     contactPhone: row.show_contact ? row.contact_phone : null,
-  };
-}
-
-export function toPublicClosure(row: ClosureRow): PublicClosure {
-  return {
-    id: row.id,
-    reason: row.reason,
-    startsAt: row.starts_at,
-    endsAt: row.ends_at,
-    allDay: row.all_day,
-  };
-}
-
-export function toPublicSettings(row: SiteSettingsRow): PublicSettings {
-  return {
-    pitchName: row.pitch_name,
-    openingHours: row.opening_hours,
-    minLeadHours: row.min_lead_hours,
-    maxHorizonDays: row.max_horizon_days,
-    maxDurationMin: row.max_duration_min,
-    requestsOpen: row.requests_open,
-    requestsClosedMsg: row.requests_closed_msg,
-    memorialDays: row.memorial_days ?? [],
   };
 }
 
@@ -335,23 +301,22 @@ export function firstNameOnly(fullName: string): string {
   return fullName.trim().split(/\s+/)[0] ?? fullName;
 }
 
+/** The same range every day of the week — no per-day exceptions any more. */
 export const DEFAULT_OPENING_HOURS: OpeningHours = {
-  '0': ['06:00', '23:00'],
-  '1': ['06:00', '23:00'],
-  '2': ['06:00', '23:00'],
-  '3': ['06:00', '23:00'],
-  '4': ['06:00', '23:00'],
-  '5': ['06:00', '23:00'],
-  '6': ['06:00', '23:00'],
+  '0': ['07:00', '23:00'],
+  '1': ['07:00', '23:00'],
+  '2': ['07:00', '23:00'],
+  '3': ['07:00', '23:00'],
+  '4': ['07:00', '23:00'],
+  '5': ['07:00', '23:00'],
+  '6': ['07:00', '23:00'],
 };
 
-export const FALLBACK_SETTINGS: PublicSettings = {
+/** The fixed values `getSettings()` returns — see the note on `PublicSettings`. */
+export const SITE_SETTINGS: PublicSettings = {
   pitchName: 'מגרש גלעד',
   openingHours: DEFAULT_OPENING_HOURS,
   minLeadHours: 12,
   maxHorizonDays: 90,
   maxDurationMin: 180,
-  requestsOpen: true,
-  requestsClosedMsg: null,
-  memorialDays: [],
 };

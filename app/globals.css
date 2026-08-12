@@ -67,11 +67,6 @@
   --color-danger: #ef4444;
   --color-danger-ink: #b91c1c;
 
-  /* The memorial tone stays apart from the brand on purpose. */
-  --color-memorial: #64748b;
-  --color-memorial-ink: #475569;
-  --color-memorial-chrome: #cbd5e1;
-
   /* -------------------------------------------------------------------------
      Typography. The `*-loaded` variables come from next/font in app/fonts.ts;
      the literal families after them render before the swap.
@@ -519,39 +514,6 @@
     rgb(239 68 68 / 0.16) 0 3px,
     transparent 3px 11px
   );
-}
-
-/* ---------------------------------------------------------------------------
-   FR-40: on a memorial day the site renders in a muted monochrome variant.
-   --------------------------------------------------------------------------- */
-html[data-memorial-day='true'] body {
-  filter: grayscale(0.9);
-}
-
-/* The memorial page keeps a deliberately slower, quieter layout. It is the one
-   screen the "premium product" language is held back from. */
-.memorial-prose {
-  font-size: 1.125rem;
-  line-height: 1.9;
-  max-inline-size: 62ch;
-}
-
-.memorial-prose p {
-  margin-block: 1.5em;
-}
-
-.memorial-prose h2 {
-  font-size: var(--text-h2);
-  margin-block: 2em 0.6em;
-  color: var(--color-memorial-ink);
-}
-
-.memorial-prose img {
-  max-inline-size: 100%;
-  block-size: auto;
-  border-radius: var(--radius-card);
-  margin-block: 2em;
-  box-shadow: var(--shadow-md);
 }
 
 /* ---------------------------------------------------------------------------

@@ -52,12 +52,6 @@ const MATRIX: Record<string, Record<Actor, Record<Verb, boolean>>> = {
     admin: { select: true, insert: true, update: true, delete: true },
     super_admin: { select: true, insert: true, update: true, delete: true },
   },
-  site_settings: {
-    // Readable by everyone; writable only by the super admin (FR-37).
-    anon: { select: true, insert: false, update: false, delete: false },
-    admin: { select: true, insert: false, update: false, delete: false },
-    super_admin: { select: true, insert: false, update: true, delete: false },
-  },
   booking_requests: {
     // §6.4: NO anon access at all. Public reads and writes are proxied by the
     // server, which filters by public_token.
@@ -178,10 +172,6 @@ describeIf('Scenario 6 — the anon key is powerless where it must be', () => {
   it('cannot insert into events', async () => {
     expect(await isDenied(anon, 'events', 'insert')).toBe(true);
   });
-
-  it('cannot update site_settings', async () => {
-    expect(await isDenied(anon, 'site_settings', 'update')).toBe(true);
-  });
 });
 
 // ---------------------------------------------------------------------------
@@ -279,8 +269,6 @@ function probeRow(table: string): Record<string, unknown> {
       };
     case 'admin_allowlist':
       return { email: `rls-probe-${Math.round(Number(now.slice(-4)))}@example.test` };
-    case 'site_settings':
-      return { min_lead_hours: 12 };
     case 'admin_profiles':
       return { user_id: '00000000-0000-0000-0000-000000000001', email: 'rls-probe@example.test' };
     case 'audit_log':

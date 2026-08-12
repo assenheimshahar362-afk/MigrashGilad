@@ -7,7 +7,7 @@
 --   PART 1 schema     — extensions, enums, tables, indexes, guard triggers
 --   PART 2 functions  — security-definer RPCs and grants
 --   PART 3 rls        — row level security on every table
---   PART 4 bootstrap  — the first super admin and the single settings row
+--   PART 4 bootstrap  — the first super admin
 --
 -- usage_type carries only 'community' and 'association' — the product
 -- recognises exactly these two categories, baked in directly.
@@ -334,48 +334,6 @@ create table if not exists closures (
   constraint closure_time_order check (ends_at > starts_at)
 );
 create index if not exists closures_range_idx on closures using gist (tstzrange(starts_at, ends_at, '[)'));
-
--- ---------------------------------------------------------------------------
--- Settings (single row)
--- ---------------------------------------------------------------------------
-create table if not exists site_settings (
-  id                  int primary key default 1 check (id = 1),
-  pitch_name          text not null default 'מגרש גלעד',
-  -- Keys "0".."6" = Sunday..Saturday. ALL SEVEN keys are required and are
-  -- treated identically; a day is closed only by an explicit null value.
-  -- Seed: every day ["06:00","23:00"].
-  opening_hours       jsonb not null,
-  min_lead_hours      int  not null default 12,
-  max_horizon_days    int  not null default 90,
-  max_duration_min    int  not null default 180,
-  requests_open       boolean not null default true,
-  requests_closed_msg text,
-  memorial_html       text,
-  memorial_days       date[] not null default '{}',
-  updated_at          timestamptz not null default now(),
-  updated_by          uuid references auth.users(id)
-);
-
--- All seven keys must be present. Friday and Saturday are ordinary operating
--- days (§1.4) — the schema refuses to let them be quietly omitted.
-create or replace function assert_opening_hours_shape()
-returns trigger language plpgsql as $$
-declare
-  d int;
-begin
-  for d in 0..6 loop
-    if not (new.opening_hours ? d::text) then
-      raise exception 'ERR_OPENING_HOURS_INCOMPLETE: missing day %', d;
-    end if;
-  end loop;
-  return new;
-end;
-$$;
-
-drop trigger if exists site_settings_opening_hours_guard on site_settings;
-create trigger site_settings_opening_hours_guard
-  before insert or update on site_settings
-  for each row execute function assert_opening_hours_shape();
 
 -- ---------------------------------------------------------------------------
 -- Audit + notifications
@@ -1005,7 +963,6 @@ grant execute on function is_super_admin() to authenticated, anon;
 alter table events             enable row level security;
 alter table trustees           enable row level security;
 alter table closures           enable row level security;
-alter table site_settings      enable row level security;
 alter table booking_requests   enable row level security;
 alter table recurring_rules    enable row level security;
 alter table admin_allowlist    enable row level security;
@@ -1031,10 +988,6 @@ create policy trustees_public_read on trustees
 
 drop policy if exists closures_public_read on closures;
 create policy closures_public_read on closures
-  for select to anon, authenticated using (true);
-
-drop policy if exists settings_public_read on site_settings;
-create policy settings_public_read on site_settings
   for select to anon, authenticated using (true);
 
 drop policy if exists recurring_public_read on recurring_rules;
@@ -1067,10 +1020,6 @@ create policy closures_admin_write on closures
 drop policy if exists recurring_admin_write on recurring_rules;
 create policy recurring_admin_write on recurring_rules
   for all to authenticated using (is_admin()) with check (is_admin());
-
-drop policy if exists settings_super_write on site_settings;
-create policy settings_super_write on site_settings
-  for update to authenticated using (is_super_admin()) with check (is_super_admin());
 
 -- ---------------------------------------------------------------------------
 -- Admins may see who the managers are; only the super admin may change the
@@ -1154,19 +1103,6 @@ begin
         revoked_at = null;
 end $$;
 
--- The single settings row. All seven keys are required and identical: Friday
--- and Saturday are ordinary operating days (§1.4, FR-37a).
-insert into site_settings (id, opening_hours)
-values (
-  1,
-  jsonb_build_object(
-    '0', jsonb_build_array('06:00', '23:00'),
-    '1', jsonb_build_array('06:00', '23:00'),
-    '2', jsonb_build_array('06:00', '23:00'),
-    '3', jsonb_build_array('06:00', '23:00'),
-    '4', jsonb_build_array('06:00', '23:00'),
-    '5', jsonb_build_array('06:00', '23:00'),
-    '6', jsonb_build_array('06:00', '23:00')
-  )
-)
-on conflict (id) do nothing;
+-- Pitch name, opening hours and request limits used to live in a
+-- super-admin-editable `site_settings` row here. They are fixed values in
+-- code now (`lib/types.ts`, `SITE_SETTINGS`) — nothing left to bootstrap.

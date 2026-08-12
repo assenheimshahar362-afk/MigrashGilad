@@ -49,8 +49,12 @@ export default async function RegisterPage({
   );
 }
 
-/** An open redirect here would be a way to launder a phishing link. */
+/**
+ * An open redirect here would be a way to launder a phishing link, so only an
+ * `/admin/...` path is ever honoured. With no such target, land on the public
+ * home page rather than the dashboard — see the matching note on /login.
+ */
 function sanitiseNext(next: string | undefined): string {
-  if (!next || !next.startsWith('/admin')) return '/admin';
+  if (!next || !next.startsWith('/admin')) return '/';
   return next;
 }

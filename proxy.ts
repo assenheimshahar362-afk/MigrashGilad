@@ -53,13 +53,18 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(login);
   }
 
-  // An already-signed-in admin landing on /login or /register goes straight
-  // to the queue — signing up again grants nothing they don't already have.
+  // An already-signed-in admin landing on /login or /register has nothing to
+  // do there. `next` is honoured only when it points back into /admin — that
+  // means they were bounced here from a protected page they were actually
+  // trying to reach, so send them on to it. Otherwise land on the public home
+  // page, not the dashboard: signing in should not by itself drop a manager
+  // into /admin with no way back out except signing out again.
   if ((pathname === '/login' || pathname === '/register') && user) {
-    const dashboard = request.nextUrl.clone();
-    dashboard.pathname = '/admin';
-    dashboard.search = '';
-    return NextResponse.redirect(dashboard);
+    const next = request.nextUrl.searchParams.get('next');
+    const target = request.nextUrl.clone();
+    target.pathname = next && next.startsWith('/admin') ? next : '/';
+    target.search = '';
+    return NextResponse.redirect(target);
   }
 
   return response;

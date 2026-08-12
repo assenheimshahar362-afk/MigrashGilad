@@ -21,7 +21,6 @@ import type {
   OpeningHours,
   RecurringRuleRow,
   RequestStatus,
-  SiteSettingsRow,
   TrusteeRow,
   UsageType,
 } from '@/lib/types';
@@ -153,25 +152,6 @@ export type Database = {
         Row: ClosureRow;
         Insert: Insertable<ClosureRow, 'id' | 'all_day' | 'created_by' | 'created_at'>;
         Update: Partial<ClosureRow>;
-        Relationships: [];
-      };
-      site_settings: {
-        Row: SiteSettingsRow;
-        Insert: Insertable<
-          SiteSettingsRow,
-          | 'id'
-          | 'pitch_name'
-          | 'min_lead_hours'
-          | 'max_horizon_days'
-          | 'max_duration_min'
-          | 'requests_open'
-          | 'requests_closed_msg'
-          | 'memorial_html'
-          | 'memorial_days'
-          | 'updated_at'
-          | 'updated_by'
-        >;
-        Update: Partial<SiteSettingsRow>;
         Relationships: [];
       };
       audit_log: {

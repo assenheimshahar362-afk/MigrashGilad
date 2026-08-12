@@ -15,13 +15,10 @@ import type { AdminRole } from '@/lib/types';
 const LINKS = [
   { href: '/admin', label: t('admin.nav.dashboard'), exact: true, super: false },
   { href: '/admin/calendar', label: t('admin.nav.calendar'), super: false },
-  { href: '/admin/recurring', label: t('admin.nav.recurring'), super: false },
-  { href: '/admin/closures', label: t('admin.nav.closures'), super: false },
   { href: '/admin/trustees', label: t('admin.nav.trustees'), super: false },
   { href: '/admin/requests', label: t('admin.nav.requests'), super: false },
   { href: '/admin/access', label: t('admin.nav.access'), super: true },
   { href: '/admin/managers', label: t('admin.nav.managers'), super: true },
-  { href: '/admin/settings', label: t('admin.nav.settings'), super: true },
   { href: '/admin/audit', label: t('admin.nav.audit'), super: true },
 ] as const;
 
@@ -30,8 +27,8 @@ export function AdminNav({ role }: { role: AdminRole }) {
   const links = LINKS.filter((link) => !link.super || role === 'super_admin');
 
   return (
-    <nav aria-label={t('admin.title')} className="border-t border-white/12">
-      <ul className="mx-auto flex max-w-[960px] gap-1 overflow-x-auto px-2 py-2">
+    <nav aria-label={t('admin.title')}>
+      <ul className="mx-auto flex max-w-[960px] gap-1 overflow-x-auto px-2 pb-2">
         {links.map((link) => {
           const active =
             'exact' in link && link.exact ? pathname === link.href : pathname.startsWith(link.href);
@@ -42,15 +39,20 @@ export function AdminNav({ role }: { role: AdminRole }) {
                 aria-current={active ? 'page' : undefined}
                 /* The tab strip is navigated many times per admin session, so
                    the active state does not transition between tabs — only the
-                   press scales. */
+                   press scales.
+                   Pills rather than rounded rectangles, and brand green rather
+                   than a white chip: this strip now sits under the site's own
+                   frosted header instead of on a dark band of its own, so it
+                   has to read as the same family of chrome as the nav pills up
+                   there (§ site-header.tsx). */
                 className={cn(
-                  'press flex h-11 items-center whitespace-nowrap rounded-(--radius-input) px-3',
+                  'press flex h-11 items-center whitespace-nowrap rounded-full px-3.5',
                   'text-sm font-semibold',
                   'transition-[background-color,color,transform] duration-(--duration-press)',
                   'ease-(--ease-out-quiet)',
                   active
-                    ? 'bg-white text-primary-800 shadow-(--shadow-xs)'
-                    : 'text-white/70 hover:bg-white/12 hover:text-white',
+                    ? 'bg-primary-600 text-white shadow-(--shadow-xs)'
+                    : 'text-(--ink-muted) hover:bg-(--surface-hover) hover:text-(--ink)',
                 )}
               >
                 {link.label}

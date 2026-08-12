@@ -10,8 +10,8 @@ import {
   todayLocal,
   type LocalDate,
 } from '@/lib/time';
-import { closuresForDate, eventsForDate } from '@/lib/schedule';
-import type { PublicClosure, PublicEvent } from '@/lib/types';
+import { eventsForDate } from '@/lib/schedule';
+import type { PublicEvent } from '@/lib/types';
 import { usageTypeStyle } from '@/lib/usage-type';
 
 /**
@@ -27,11 +27,9 @@ const MAX_BARS = 3;
 export function MonthGrid({
   monthStart,
   events,
-  closures,
 }: {
   monthStart: LocalDate;
   events: PublicEvent[];
-  closures: PublicClosure[];
 }) {
   const days = localMonthGrid(monthStart);
   const today = todayLocal();
@@ -54,7 +52,6 @@ export function MonthGrid({
             inMonth={isSameLocalMonth(date, monthStart)}
             isToday={date === today}
             events={eventsForDate(events, date)}
-            closures={closuresForDate(closures, date)}
           />
         ))}
       </div>
@@ -67,24 +64,20 @@ function DayCell({
   inMonth,
   isToday,
   events,
-  closures,
 }: {
   date: LocalDate;
   inMonth: boolean;
   isToday: boolean;
   events: PublicEvent[];
-  closures: PublicClosure[];
 }) {
   const bars = events.slice(0, MAX_BARS);
   const overflow = events.length - bars.length;
-  const closed = closures.length > 0;
 
   const label = [
     formatWeekdayLong(date),
     events.length > 0
       ? t('schedule.sr_day_events', { day: '', count: events.length }).trim()
       : t('schedule.sr_day_empty', { day: '' }).trim(),
-    closed ? t('schedule.closed_banner', { reason: closures[0]?.reason ?? '' }) : '',
   ]
     .filter(Boolean)
     .join(', ');
@@ -104,7 +97,6 @@ function DayCell({
         // days you are not looking at (A11Y-2).
         !inMonth && 'bg-(--surface-sunken)',
         isToday && 'ring-2 ring-inset ring-primary',
-        closed && 'closure-hatch',
       )}
     >
       <span

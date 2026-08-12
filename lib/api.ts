@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { revalidateTag } from 'next/cache';
 import type { ZodType } from 'zod';
 import { AppError, errorResponse } from '@/lib/errors';
-import { SCHEDULE_TAG, SETTINGS_TAG, TRUSTEES_TAG } from '@/lib/data';
+import { SCHEDULE_TAG, TRUSTEES_TAG } from '@/lib/data';
 
 /**
  * §7 input: every route handler validates with a Zod schema and rejects unknown
@@ -29,12 +29,6 @@ export function ok<T>(body: T, status = 200) {
 export function revalidateSchedule() {
   // 'max' profile: revalidate immediately on write, no implicit staleness
   // window. Matches pre-Next-16 revalidateTag(tag) behavior.
-  revalidateTag(SCHEDULE_TAG, 'max');
-}
-
-export function revalidateSettings() {
-  revalidateTag(SETTINGS_TAG, 'max');
-  // Opening hours change the grid, so the schedule cache is stale too.
   revalidateTag(SCHEDULE_TAG, 'max');
 }
 

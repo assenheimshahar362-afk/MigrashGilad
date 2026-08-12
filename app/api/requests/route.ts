@@ -54,9 +54,6 @@ export async function POST(request: NextRequest) {
 
     const settings = await getSettings();
 
-    // FR-37: the global "requests paused" switch.
-    if (!settings.requestsOpen) throw new AppError('ERR_REQUESTS_CLOSED');
-
     const start = new Date(input.start);
     const end = new Date(input.end);
 

@@ -5,14 +5,55 @@ import { useRouter } from 'next/navigation';
 import { t } from '@/lib/i18n';
 import { USAGE_TYPES, type EventRow } from '@/lib/types';
 import { usageTypeLabel } from '@/lib/usage-type';
-import { localDate, localTime, minutesFromTime, toInstant, todayLocal } from '@/lib/time';
+import {
+  WEEKDAY_NAMES,
+  addLocalMonths,
+  localDate,
+  localTime,
+  minutesFromTime,
+  toInstant,
+  todayLocal,
+  weekdayOfLocalDate,
+  type LocalDate,
+} from '@/lib/time';
 import { apiFetch, errorText } from '@/lib/client-api';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
 
+type RepeatPreset = '3m' | '6m' | '1y' | '2y' | 'none';
+
+/**
+ * The date a recurring series is opened up to, expressed the way an admin
+ * thinks about it — "a year out" — rather than as a calendar date they have
+ * to compute themselves.
+ *
+ * This is `recurring_rules.valid_until`, not how far ahead occurrences get
+ * generated right now: `materialize_recurring` (§ init.sql) only ever
+ * materialises 120 days at a time, called here on create and nightly by cron.
+ * A "2 years" series does not insert 730 days of events today — it just tells
+ * the nightly job not to stop rolling the 120-day window forward until then.
+ */
+function repeatUntil(date: LocalDate, preset: RepeatPreset): LocalDate | null {
+  switch (preset) {
+    case '3m':
+      return addLocalMonths(date, 3);
+    case '6m':
+      return addLocalMonths(date, 6);
+    case '1y':
+      return addLocalMonths(date, 12);
+    case '2y':
+      return addLocalMonths(date, 24);
+    case 'none':
+      return null;
+  }
+}
+
 /**
  * §10.9 admin CRUD. FR-33: this is how fixed community and association hours
- * are entered, bypassing the request flow.
+ * are entered, bypassing the request flow. FR-34: it is also, now, how a
+ * WEEKLY RECURRING series is opened — the "אירוע חוזר" toggle below posts to
+ * `/api/admin/recurring` instead of `/api/admin/events`, so there is no
+ * separate page for that any more (§10.9 used to have one).
  *
  * The form works in LOCAL wall-clock time and converts once, at submit, through
  * `toInstant` (§14). Nothing here ever adds hours to a string.
@@ -27,6 +68,7 @@ export function EventEditor({
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [generated, setGenerated] = useState<number | null>(null);
 
   const [form, setForm] = useState({
     title: event?.title ?? '',
@@ -38,6 +80,8 @@ export function EventEditor({
     contactName: event?.contact_name ?? '',
     contactPhone: event?.contact_phone ?? '',
     showContact: event?.show_contact ?? false,
+    isRecurring: false,
+    repeatUntilPreset: '1y' as RepeatPreset,
   });
 
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
@@ -45,30 +89,58 @@ export function EventEditor({
 
   const invalidTime = minutesFromTime(form.endTime) <= minutesFromTime(form.startTime);
 
+  // An existing event cannot be turned into a series retroactively — it is a
+  // different object underneath (a `recurring_rules` row, not an `events`
+  // row) with its own edit surface, the list on this same page. The toggle
+  // only makes sense while creating something new.
+  const recurringAvailable = !event;
+  const recurring = recurringAvailable && form.isRecurring;
+
   const submit = async (submitEvent: React.FormEvent) => {
     submitEvent.preventDefault();
     if (invalidTime) return;
 
     setPending(true);
     setError(null);
-
-    const body = {
-      title: form.title.trim(),
-      description: form.description.trim() || undefined,
-      usageType: form.usageType,
-      start: toInstant(form.date, form.startTime).toISOString(),
-      end: toInstant(form.date, form.endTime).toISOString(),
-      contactName: form.contactName.trim() || undefined,
-      contactPhone: form.contactPhone.trim() || undefined,
-      showContact: form.showContact,
-    };
+    setGenerated(null);
 
     try {
-      if (event) {
-        await apiFetch(`/api/admin/events/${event.id}`, { method: 'PATCH', json: body });
+      if (recurring) {
+        const result = await apiFetch<{ generated: number }>('/api/admin/recurring', {
+          method: 'POST',
+          json: {
+            title: form.title.trim(),
+            usageType: form.usageType,
+            weekday: weekdayOfLocalDate(form.date),
+            startTime: form.startTime,
+            endTime: form.endTime,
+            validFrom: form.date,
+            validUntil: repeatUntil(form.date, form.repeatUntilPreset),
+            isActive: true,
+            contactName: form.contactName.trim() || undefined,
+          },
+        });
+        setGenerated(result.generated);
+        setForm((current) => ({ ...current, title: '', contactName: '' }));
       } else {
-        await apiFetch('/api/admin/events', { method: 'POST', json: body });
+        const body = {
+          title: form.title.trim(),
+          description: form.description.trim() || undefined,
+          usageType: form.usageType,
+          start: toInstant(form.date, form.startTime).toISOString(),
+          end: toInstant(form.date, form.endTime).toISOString(),
+          contactName: form.contactName.trim() || undefined,
+          contactPhone: form.contactPhone.trim() || undefined,
+          showContact: form.showContact,
+        };
+
+        if (event) {
+          await apiFetch(`/api/admin/events/${event.id}`, { method: 'PATCH', json: body });
+        } else {
+          await apiFetch('/api/admin/events', { method: 'POST', json: body });
+        }
       }
+
       router.refresh();
       onDone?.();
     } catch (thrown) {
@@ -150,16 +222,61 @@ export function EventEditor({
         </Field>
       </div>
 
-      <Field id="event-description" label={t('calendar.field.description')}>
-        {(props) => (
-          <Textarea
-            {...props}
-            value={form.description}
-            maxLength={1000}
-            onChange={(e) => set('description', e.target.value)}
-          />
-        )}
-      </Field>
+      {recurringAvailable ? (
+        <div className="rounded-(--radius-input) border border-(--hairline) bg-(--surface-sunken) p-4">
+          <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-(--ink)">
+            <input
+              type="checkbox"
+              className="size-5 accent-(--color-floodlight)"
+              checked={form.isRecurring}
+              onChange={(e) => set('isRecurring', e.target.checked)}
+            />
+            {t('calendar.field.recurring')}
+          </label>
+
+          {form.isRecurring ? (
+            <div className="mt-3 space-y-3">
+              <p className="text-xs text-(--ink-muted)">
+                {t('calendar.field.recurring_help', {
+                  weekday: WEEKDAY_NAMES[weekdayOfLocalDate(form.date)] ?? '',
+                })}
+              </p>
+
+              <Field id="event-repeat-until" label={t('calendar.field.repeat_until')} required>
+                {(props) => (
+                  <Select
+                    {...props}
+                    value={form.repeatUntilPreset}
+                    onChange={(e) => set('repeatUntilPreset', e.target.value as RepeatPreset)}
+                  >
+                    <option value="3m">{t('calendar.repeat.3m')}</option>
+                    <option value="6m">{t('calendar.repeat.6m')}</option>
+                    <option value="1y">{t('calendar.repeat.1y')}</option>
+                    <option value="2y">{t('calendar.repeat.2y')}</option>
+                    <option value="none">{t('calendar.repeat.none')}</option>
+                  </Select>
+                )}
+              </Field>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Description, the contact phone and its public visibility all live on
+          `events`, not on `recurring_rules` — a series has nowhere to keep
+          them. Hidden rather than sent and silently dropped. */}
+      {!recurring ? (
+        <Field id="event-description" label={t('calendar.field.description')}>
+          {(props) => (
+            <Textarea
+              {...props}
+              value={form.description}
+              maxLength={1000}
+              onChange={(e) => set('description', e.target.value)}
+            />
+          )}
+        </Field>
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field id="event-contact-name" label={t('calendar.field.contact_name')}>
@@ -172,34 +289,44 @@ export function EventEditor({
             />
           )}
         </Field>
-        <Field id="event-contact-phone" label={t('calendar.field.contact_phone')} hint="05X-XXXXXXX">
-          {(props) => (
-            <Input
-              {...props}
-              type="tel"
-              dir="ltr"
-              inputMode="tel"
-              value={form.contactPhone}
-              onChange={(e) => set('contactPhone', e.target.value)}
-            />
-          )}
-        </Field>
+        {!recurring ? (
+          <Field id="event-contact-phone" label={t('calendar.field.contact_phone')} hint="05X-XXXXXXX">
+            {(props) => (
+              <Input
+                {...props}
+                type="tel"
+                dir="ltr"
+                inputMode="tel"
+                value={form.contactPhone}
+                onChange={(e) => set('contactPhone', e.target.value)}
+              />
+            )}
+          </Field>
+        ) : null}
       </div>
 
       {/* §7 PII: the contact phone is shown publicly ONLY when this is on. */}
-      <label className="flex items-center gap-3 text-sm">
-        <input
-          type="checkbox"
-          className="size-5 accent-(--color-floodlight)"
-          checked={form.showContact}
-          onChange={(e) => set('showContact', e.target.checked)}
-        />
-        {t('calendar.field.show_contact')}
-      </label>
+      {!recurring ? (
+        <label className="flex items-center gap-3 text-sm">
+          <input
+            type="checkbox"
+            className="size-5 accent-(--color-floodlight)"
+            checked={form.showContact}
+            onChange={(e) => set('showContact', e.target.checked)}
+          />
+          {t('calendar.field.show_contact')}
+        </label>
+      ) : null}
 
       {error ? (
         <p role="alert" className="text-sm font-semibold text-danger-ink">
           {error}
+        </p>
+      ) : null}
+
+      {generated !== null ? (
+        <p role="status" className="text-sm font-semibold text-success-ink">
+          {t('recurring.generated', { count: generated })}
         </p>
       ) : null}
 

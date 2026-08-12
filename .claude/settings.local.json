@@ -39,10 +39,16 @@
       "Bash(npx vercel *)",
       "Bash(npx supabase *)",
       "Bash(mkdir -p \"c:/shahar/MigrashGilad/app/\\(public\\)/register\")",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(npx eslint *)",
+      "Bash(npm test *)",
+      "Bash(git rm *)",
+      "Bash(node -e ' *)",
+      "Bash(rm -rf .next)"
     ],
     "additionalDirectories": [
-      "c:\\shahar\\MigrashGilad\\app\\(public)"
+      "c:\\shahar\\MigrashGilad\\app\\(public)",
+      "C:\\shahar\\MigrashGilad\\app\\api\\admin\\closures\\[id]"
     ]
   }
 }

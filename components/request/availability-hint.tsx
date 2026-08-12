@@ -6,11 +6,7 @@ import { t } from '@/lib/i18n';
 import { toInstant } from '@/lib/time';
 import { cn } from '@/lib/utils';
 
-type State =
-  | { kind: 'idle' }
-  | { kind: 'checking' }
-  | { kind: 'available' }
-  | { kind: 'taken'; closed: boolean };
+type State = { kind: 'idle' } | { kind: 'checking' } | { kind: 'available' } | { kind: 'taken' };
 
 /**
  * FR-13: a live availability check before submit, which WARNS and does not
@@ -52,8 +48,8 @@ export function AvailabilityHint({
           setState({ kind: 'idle' });
           return;
         }
-        const body = (await response.json()) as { available: boolean; closed: boolean };
-        setState(body.available ? { kind: 'available' } : { kind: 'taken', closed: body.closed });
+        const body = (await response.json()) as { available: boolean };
+        setState(body.available ? { kind: 'available' } : { kind: 'taken' });
       } catch {
         // Offline, or the check was superseded. The form still submits; the
         // server is the authority on availability anyway.
@@ -95,7 +91,7 @@ export function AvailabilityHint({
       ) : (
         <>
           <TriangleAlert className="size-4" aria-hidden />
-          {state.closed ? t('error.ERR_CLOSED') : t('request.taken')}
+          {t('request.taken')}
         </>
       )}
     </p>

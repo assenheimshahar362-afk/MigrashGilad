@@ -57,6 +57,6 @@ export async function GET(request: NextRequest) {
 }
 
 function sanitiseNext(next: string | null): string {
-  if (!next || !next.startsWith('/admin')) return '/admin';
+  if (!next || !next.startsWith('/admin')) return '/';
   return next;
 }

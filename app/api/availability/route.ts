@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { handleRoute, errorResponse } from '@/lib/errors';
-import { getSchedule, getSettings } from '@/lib/data';
+import { getSchedule } from '@/lib/data';
 import { availabilityInput } from '@/lib/validation/request';
-import { conflictingEvents, isSlotClosed } from '@/lib/schedule';
+import { conflictingEvents } from '@/lib/schedule';
 import { localDate } from '@/lib/time';
 
 /**
@@ -26,22 +26,11 @@ export async function GET(request: NextRequest) {
     const end = new Date(parsed.data.end);
     const date = localDate(start);
 
-    const [{ events, closures }, settings] = await Promise.all([
-      getSchedule(date, localDate(end)),
-      getSettings(),
-    ]);
-
+    const { events } = await getSchedule(date, localDate(end));
     const conflicts = conflictingEvents(events, start, end);
-    const closed = isSlotClosed(closures, start, end);
 
     return NextResponse.json(
-      {
-        available: conflicts.length === 0 && !closed,
-        closed,
-        conflicts,
-        // Echoed so the form can show the right message without a second call.
-        requestsOpen: settings.requestsOpen,
-      },
+      { available: conflicts.length === 0, conflicts },
       { headers: { 'Cache-Control': 'no-store' } },
     );
   });

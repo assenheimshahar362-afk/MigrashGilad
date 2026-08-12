@@ -6,14 +6,13 @@ import {
   gridHourRange,
   hoursForDate,
   isDayClosed,
-  isSlotClosed,
   layoutDayEvents,
 } from '@/lib/schedule';
 import { toInstant } from '@/lib/time';
 import { AppError } from '@/lib/errors';
-import { DEFAULT_OPENING_HOURS, FALLBACK_SETTINGS, type PublicEvent } from '@/lib/types';
+import { DEFAULT_OPENING_HOURS, SITE_SETTINGS, type PublicEvent } from '@/lib/types';
 
-const settings = { ...FALLBACK_SETTINGS };
+const settings = { ...SITE_SETTINGS };
 
 function event(start: string, end: string, date = '2026-08-05'): PublicEvent {
   return {
@@ -31,8 +30,8 @@ function event(start: string, end: string, date = '2026-08-05'): PublicEvent {
 
 describe('opening hours (§1.4 — all seven days are ordinary)', () => {
   it('resolves hours for every weekday including Friday and Saturday', () => {
-    expect(hoursForDate(DEFAULT_OPENING_HOURS, '2026-08-07')).toEqual(['06:00', '23:00']); // Fri
-    expect(hoursForDate(DEFAULT_OPENING_HOURS, '2026-08-08')).toEqual(['06:00', '23:00']); // Sat
+    expect(hoursForDate(DEFAULT_OPENING_HOURS, '2026-08-07')).toEqual(['07:00', '23:00']); // Fri
+    expect(hoursForDate(DEFAULT_OPENING_HOURS, '2026-08-08')).toEqual(['07:00', '23:00']); // Sat
   });
 
   it('treats a day as closed only when settings say so EXPLICITLY', () => {
@@ -43,13 +42,13 @@ describe('opening hours (§1.4 — all seven days are ordinary)', () => {
   it('unions the visible hour range across the week', () => {
     const hours = { ...DEFAULT_OPENING_HOURS, '5': ['08:00', '14:00'] as [string, string] };
     const week = ['2026-08-02', '2026-08-07', '2026-08-08'];
-    expect(gridHourRange(hours, week)).toEqual({ startMinute: 6 * 60, endMinute: 23 * 60 });
+    expect(gridHourRange(hours, week)).toEqual({ startMinute: 7 * 60, endMinute: 23 * 60 });
   });
 
   it('falls back to a usable window when every day is closed', () => {
     const allClosed = Object.fromEntries([...Array(7).keys()].map((d) => [String(d), null]));
     expect(gridHourRange(allClosed, ['2026-08-02'])).toEqual({
-      startMinute: 6 * 60,
+      startMinute: 7 * 60,
       endMinute: 23 * 60,
     });
   });
@@ -148,7 +147,7 @@ describe('assertRequestWindow (FR-17, FR-18)', () => {
   });
 });
 
-describe('conflicts and closures', () => {
+describe('conflicts', () => {
   const events = [event('17:00', '19:00')];
 
   it('finds an overlapping event', () => {
@@ -167,27 +166,6 @@ describe('conflicts and closures', () => {
       toInstant('2026-08-05', '21:00'),
     );
     expect(conflicts).toHaveLength(0);
-  });
-
-  /** Acceptance scenario 10: a Saturday 10:00–14:00 closure covers those hours. */
-  it('reports a Saturday closure as covering its hours', () => {
-    const closures = [
-      {
-        id: 'c1',
-        reason: 'תחזוקה',
-        startsAt: toInstant('2026-08-08', '10:00').toISOString(),
-        endsAt: toInstant('2026-08-08', '14:00').toISOString(),
-        allDay: false,
-      },
-    ];
-
-    expect(
-      isSlotClosed(closures, toInstant('2026-08-08', '11:00'), toInstant('2026-08-08', '12:00')),
-    ).toBe(true);
-
-    expect(
-      isSlotClosed(closures, toInstant('2026-08-08', '15:00'), toInstant('2026-08-08', '16:00')),
-    ).toBe(false);
   });
 });
 

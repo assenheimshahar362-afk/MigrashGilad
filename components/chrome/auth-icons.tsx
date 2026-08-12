@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { LogIn, LogOut, ShieldCheck } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
@@ -25,6 +25,7 @@ import { createClient } from '@/lib/supabase/client';
  */
 export function AuthIcons({ onDark = false }: { onDark?: boolean }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -52,6 +53,11 @@ export function AuthIcons({ onDark = false }: { onDark?: boolean }) {
     await createClient().auth.signOut();
     setSignedIn(false);
     setPending(false);
+    // Signing out of a public page should leave you where you were reading.
+    // Signing out of /admin cannot: the page you are on is gated, so staying
+    // put would only bounce you to /login. Go home instead — this header is
+    // now the admin area's sign-out too, so it has to handle both.
+    if (pathname.startsWith('/admin')) router.push('/');
     router.refresh();
   };
 

@@ -29,12 +29,12 @@ export async function GET(request: NextRequest) {
     const spanDays = (Date.parse(to) - Date.parse(from)) / 86_400_000;
     if (spanDays > 366) return errorResponse('ERR_BAD_RANGE');
 
-    const [{ events, closures }, settings] = await Promise.all([
+    const [{ events }, settings] = await Promise.all([
       getSchedule(from, to),
       getSettings(),
     ]);
 
-    const body: ScheduleResponse = { events, closures, settings };
+    const body: ScheduleResponse = { events, settings };
 
     return NextResponse.json(body, {
       headers: {

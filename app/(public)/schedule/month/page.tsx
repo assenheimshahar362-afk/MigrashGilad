@@ -36,7 +36,7 @@ export default async function MonthSchedulePage({
   const first = grid[0]!;
   const last = grid[grid.length - 1]!;
 
-  const [{ events, closures }, settings] = await Promise.all([
+  const [{ events }, settings] = await Promise.all([
     getSchedule(first, last),
     getSettings(),
   ]);
@@ -73,7 +73,7 @@ export default async function MonthSchedulePage({
       </div>
 
       <div className="py-3">
-        <MonthGrid monthStart={monthStart} events={events} closures={closures} />
+        <MonthGrid monthStart={monthStart} events={events} />
       </div>
 
       <div className="pt-2">

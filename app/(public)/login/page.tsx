@@ -98,8 +98,16 @@ export default async function LoginPage({
   );
 }
 
-/** An open redirect here would be a way to launder a phishing link. */
+/**
+ * An open redirect here would be a way to launder a phishing link, so only an
+ * `/admin/...` path is ever honoured — and only because it means someone was
+ * bounced here from a protected page they were actually trying to reach.
+ * Arriving at /login with no such target (the ordinary case: someone clicked
+ * the sign-in icon) lands back on the public home page, not the dashboard —
+ * signing in should not, by itself, drop a manager into /admin with no way
+ * back out except signing out again.
+ */
 function sanitiseNext(next: string | undefined): string {
-  if (!next || !next.startsWith('/admin')) return '/admin';
+  if (!next || !next.startsWith('/admin')) return '/';
   return next;
 }

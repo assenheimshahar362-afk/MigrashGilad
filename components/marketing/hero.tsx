@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import { ChevronDown, Info } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { RequestCtaButton } from '@/components/request/request-cta-button';
@@ -23,18 +23,9 @@ import heroImage from '@/public/images/pitch-aerial.webp';
  *
  * This is the ONLY place the booking call to action lives. It used to be echoed
  * by a button docked over the schedule, which said the same thing twice and
- * covered the grid; FR-37's "requests are paused" notice came with it, so that
- * state is handled here too — the action and the reason it is unavailable
- * belong in the same spot.
+ * covered the grid.
  */
-export function Hero({
-  requestsOpen = true,
-  closedMessage = null,
-}: {
-  requestsOpen?: boolean;
-  /** FR-37: the admin's reason, shown in place of the button when paused. */
-  closedMessage?: string | null;
-}) {
+export function Hero() {
   return (
     <section
       className={cn(
@@ -112,20 +103,7 @@ export function Hero({
         </p>
 
         <div className="animate-rise-in mt-7 flex flex-wrap items-center gap-3 [animation-delay:180ms]">
-          {requestsOpen ? (
-            <RequestCtaButton />
-          ) : (
-            /* FR-37. It takes the button's place rather than sitting beside a
-               disabled one: there is nothing to press, and a greyed-out button
-               invites the tap anyway. */
-            <p
-              role="status"
-              className="flex max-w-[46ch] items-start gap-2.5 rounded-(--radius-input) border border-white/25 bg-white/12 px-4 py-3 text-sm font-semibold text-white backdrop-blur-sm"
-            >
-              <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
-              {closedMessage ?? t('error.ERR_REQUESTS_CLOSED')}
-            </p>
-          )}
+          <RequestCtaButton />
         </div>
 
       </div>

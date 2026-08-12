@@ -9,15 +9,8 @@ import {
   todayLocal,
   type LocalDate,
 } from '@/lib/time';
-import {
-  closuresForDate,
-  eventsForDate,
-  gridHourRange,
-  hoursForDate,
-  layoutDayEvents,
-} from '@/lib/schedule';
-import { toInstant } from '@/lib/time';
-import type { PublicClosure, PublicEvent, PublicSettings } from '@/lib/types';
+import { eventsForDate, gridHourRange, hoursForDate, layoutDayEvents } from '@/lib/schedule';
+import type { PublicEvent, PublicSettings } from '@/lib/types';
 import { EventBlock } from '@/components/schedule/event-block';
 import { NowMarker } from '@/components/schedule/now-marker';
 
@@ -36,12 +29,10 @@ import { NowMarker } from '@/components/schedule/now-marker';
 export function WeekGrid({
   weekStart,
   events,
-  closures,
   settings,
 }: {
   weekStart: LocalDate;
   events: PublicEvent[];
-  closures: PublicClosure[];
   settings: PublicSettings;
 }) {
   const days = localWeekDays(weekStart);
@@ -77,7 +68,6 @@ export function WeekGrid({
             dayIndex={dayIndex}
             isToday={date === today}
             events={eventsForDate(events, date)}
-            closures={closuresForDate(closures, date)}
             settings={settings}
             startMinute={startMinute}
             endMinute={endMinute}
@@ -181,7 +171,6 @@ function DayColumn({
   dayIndex,
   isToday,
   events,
-  closures,
   settings,
   startMinute,
   endMinute,
@@ -191,7 +180,6 @@ function DayColumn({
   dayIndex: number;
   isToday: boolean;
   events: PublicEvent[];
-  closures: PublicClosure[];
   settings: PublicSettings;
   startMinute: number;
   endMinute: number;
@@ -225,18 +213,6 @@ function DayColumn({
           </div>
         ) : null}
 
-        {/* FR-9: closures render as a hatch over the affected hours and suppress
-            the request affordance. */}
-        {closures.map((closure) => (
-          <ClosureOverlay
-            key={closure.id}
-            closure={closure}
-            date={date}
-            startMinute={startMinute}
-            endMinute={endMinute}
-          />
-        ))}
-
         {layoutDayEvents(events).map(({ event, col, cols }) => (
           <EventBlock
             key={event.id}
@@ -250,40 +226,6 @@ function DayColumn({
 
         <NowMarker date={date} startMinute={startMinute} endMinute={endMinute} />
       </div>
-    </div>
-  );
-}
-
-function ClosureOverlay({
-  closure,
-  date,
-  startMinute,
-  endMinute,
-}: {
-  closure: PublicClosure;
-  date: LocalDate;
-  startMinute: number;
-  endMinute: number;
-}) {
-  const span = endMinute - startMinute;
-  const dayStart = toInstant(date, '00:00').getTime();
-
-  const from = closure.allDay
-    ? startMinute
-    : Math.max(startMinute, (new Date(closure.startsAt).getTime() - dayStart) / 60_000);
-  const to = closure.allDay
-    ? endMinute
-    : Math.min(endMinute, (new Date(closure.endsAt).getTime() - dayStart) / 60_000);
-
-  if (to <= from) return null;
-
-  return (
-    <div
-      className="closure-hatch pointer-events-none absolute inset-x-0 z-[5] border-y border-danger/40"
-      style={{ top: `${((from - startMinute) / span) * 100}%`, height: `${((to - from) / span) * 100}%` }}
-      title={closure.reason}
-    >
-      <span className="sr-only">{t('schedule.closed_banner', { reason: closure.reason })}</span>
     </div>
   );
 }

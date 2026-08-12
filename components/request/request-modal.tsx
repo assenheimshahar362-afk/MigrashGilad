@@ -22,13 +22,7 @@ export function RequestModal({ settings }: { settings: PublicSettings }) {
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && closeRequestModal()}>
       <SheetContent title={t('request.title')} description={t('app.tagline')}>
-        {settings.requestsOpen ? (
-          <RequestForm settings={settings} prefill={prefill} />
-        ) : (
-          <p className="rounded-(--radius-input) border border-(--hairline) bg-(--surface-sunken) p-4 text-(--ink-muted)">
-            {settings.requestsClosedMsg ?? t('error.ERR_REQUESTS_CLOSED')}
-          </p>
-        )}
+        <RequestForm settings={settings} prefill={prefill} />
       </SheetContent>
     </Sheet>
   );

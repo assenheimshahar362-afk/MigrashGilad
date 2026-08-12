@@ -13,7 +13,6 @@ import {
   todayLocal,
   type LocalDate,
 } from '@/lib/time';
-import { closuresForDate } from '@/lib/schedule';
 import { WeekGrid } from '@/components/schedule/week-grid';
 import { WeekNav } from '@/components/schedule/week-nav';
 import { DayList } from '@/components/schedule/day-list';
@@ -72,7 +71,7 @@ export default async function HomePage({
   const weekStart = startOfLocalWeek(requested ?? todayLocal());
   const weekEnd = addLocalDays(weekStart, 6);
 
-  const [{ events, closures }, settings, trustees] = await Promise.all([
+  const [{ events }, settings, trustees] = await Promise.all([
     getSchedule(weekStart, weekEnd),
     getSettings(),
     getTrustees(),
@@ -81,14 +80,9 @@ export default async function HomePage({
   const days = localWeekDays(weekStart);
   const isEmpty = events.length === 0;
 
-  // FR-9: a closure covering any of the visible days gets a banner as well as
-  // the hatch on the grid, because the hatch alone is easy to miss on a phone.
-  const activeClosures = days.flatMap((date) => closuresForDate(closures, date));
-  const bannerClosure = activeClosures[0];
-
   return (
     <>
-      <Hero requestsOpen={settings.requestsOpen} closedMessage={settings.requestsClosedMsg} />
+      <Hero />
 
       <section id="schedule" className="scroll-mt-24 pb-28 lg:pb-16">
         <div className="shell pt-8 sm:pt-10 lg:pt-14">
@@ -105,21 +99,12 @@ export default async function HomePage({
 
           <WeekNav weekStart={weekStart} />
 
-          {bannerClosure ? (
-            <p
-              role="status"
-              className="closure-hatch animate-fade-in mb-3 rounded-(--radius-card-sm) border border-danger/30 bg-danger/8 px-4 py-3 text-sm font-semibold text-danger-ink"
-            >
-              {t('schedule.closed_banner', { reason: bannerClosure.reason })}
-            </p>
-          ) : null}
-
           {/* The same grid at every width — a phone gets the identical seven-
               day layout as a desktop, just narrower, rather than a
               different, simplified view. `WeekGrid` shrinks its own columns
               and axis to fit; nothing here scrolls sideways. */}
           <div>
-            <WeekGrid weekStart={weekStart} events={events} closures={closures} settings={settings} />
+            <WeekGrid weekStart={weekStart} events={events} settings={settings} />
 
             {/* A11Y-5: the screen-reader alternative to the grid — the grid
                 conveys time by absolute position, which a screen reader

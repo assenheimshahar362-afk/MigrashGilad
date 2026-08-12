@@ -18,9 +18,6 @@ import { RequestNavTrigger } from '@/components/request/request-nav-trigger';
  * past 24px of scroll it becomes the frosted white bar. The threshold is small
  * on purpose — the swap should happen as soon as the hero starts to leave, not
  * halfway down it, or the bar spends a long stretch unreadable over content.
- *
- * FR-39: the memorial mark is no longer carried in the header. It lives in the
- * footer, which links to the memorial section of /about.
  */
 /**
  * The schedule is deliberately absent: it IS the landing page, and the badge to

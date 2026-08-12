@@ -57,9 +57,6 @@ export default async function AdminDashboardPage() {
           <Button asChild size="sm" variant="secondary" className="ms-auto">
             <Link href="/admin/calendar">{t('admin.create_event')}</Link>
           </Button>
-          <Button asChild size="sm" variant="ghost">
-            <Link href="/admin/closures">{t('closures.title')}</Link>
-          </Button>
         </div>
 
         <div className="card px-4">
