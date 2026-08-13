@@ -13,6 +13,7 @@ import { Field, Input } from '@/components/ui/field';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Tooltip } from '@/components/ui/tooltip';
+import { IconButton } from '@/components/ui/icon-button';
 import { Ltr } from '@/components/ui/ltr';
 
 /**
@@ -291,42 +292,6 @@ export function TrusteeManager({ trustees }: { trustees: TrusteeRow[] }) {
         pending={pending}
       />
     </div>
-  );
-}
-
-/**
- * Every instance is icon-only, so `label` does double duty: the accessible
- * name (A11Y-2) AND, via `Tooltip`, the sighted-but-unsure answer to "what
- * does this button do" — the same text, on hover and on keyboard focus.
- */
-function IconButton({
-  label,
-  disabled,
-  onClick,
-  className,
-  children,
-}: {
-  label: string;
-  disabled?: boolean;
-  onClick: () => void;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <Tooltip content={label}>
-      <button
-        type="button"
-        aria-label={label}
-        disabled={disabled}
-        onClick={onClick}
-        className={cn(
-          'tap-target flex items-center justify-center rounded-(--radius-input) hover:bg-(--surface-sunken) disabled:opacity-40',
-          className,
-        )}
-      >
-        {children}
-      </button>
-    </Tooltip>
   );
 }
 

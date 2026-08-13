@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node scripts/verify-tooltip.tmp.mjs)",
+      "Bash(node scripts/gen-og-image.tmp.mjs \"C:/Users/Shahar.a/AppData/Local/Temp/claude/c--shahar-MigrashGilad/090cd40e-caf0-42e3-bdcc-3cf403fe9bd4/scratchpad/og-final-1x.jpg\" 1)"
+    ]
+  }
+}

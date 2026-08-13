@@ -60,9 +60,10 @@ export async function PATCH(
  * `DELETE /api/admin/events/[id]` (§8).
  *
  * An event created from a request is CANCELLED rather than deleted, so the
- * `booking_requests.id -> events.request_id` link survives and the requester's
- * status page keeps telling the truth (§5). A manually created event with no
- * request behind it is deleted outright — there is no history to protect.
+ * `booking_requests.id -> events.request_id` link survives and the request's
+ * own history (`/admin/requests`) keeps telling the truth (§5). A manually
+ * created event with no request behind it is deleted outright — there is no
+ * history to protect.
  */
 export async function DELETE(
   _request: Request,

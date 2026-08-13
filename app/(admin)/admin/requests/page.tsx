@@ -14,6 +14,7 @@ import { formatIsraeliPhone, telLink, cn } from '@/lib/utils';
 import { REQUEST_STATUSES, type BookingRequestRow, type RequestStatus } from '@/lib/types';
 import { StatusPill } from '@/components/ui/status-pill';
 import { TimeRange, Ltr } from '@/components/ui/ltr';
+import { DeleteRequestButton } from '@/components/admin/delete-request-button';
 
 export const metadata: Metadata = { title: t('admin.nav.requests') };
 export const dynamic = 'force-dynamic';
@@ -81,6 +82,7 @@ export default async function AdminRequestsPage({
                 <span className="ms-auto text-xs text-(--ink-muted)">
                   {formatRelative(request.created_at)}
                 </span>
+                <DeleteRequestButton id={request.id} name={request.requester_name} />
               </div>
 
               <p className="mt-1 text-xs text-(--ink-muted)">

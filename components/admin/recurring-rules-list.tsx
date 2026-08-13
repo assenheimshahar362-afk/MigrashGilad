@@ -9,6 +9,7 @@ import type { RecurringRuleRow } from '@/lib/types';
 import { usageTypeLabel } from '@/lib/usage-type';
 import { apiFetch, errorText } from '@/lib/client-api';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { IconButton } from '@/components/ui/icon-button';
 
 /**
  * FR-34 / §10.9. A recurring series is now CREATED from the "אירוע חוזר" toggle
@@ -75,14 +76,13 @@ export function RecurringRulesList({ rules }: { rules: RecurringRuleRow[] }) {
               </p>
             </div>
 
-            <button
-              type="button"
+            <IconButton
+              label={`${t('admin.delete_event')} — ${rule.title}`}
               onClick={() => setDeleting(rule)}
-              aria-label={`${t('admin.delete_event')} — ${rule.title}`}
-              className="tap-target flex items-center justify-center rounded-(--radius-input) text-danger-ink hover:bg-(--surface-sunken)"
+              className="text-danger-ink"
             >
               <Trash2 className="size-4" aria-hidden />
-            </button>
+            </IconButton>
           </li>
         ))}
       </ul>

@@ -18,6 +18,7 @@
     "db:push": "supabase db push",
     "db:types": "supabase gen types typescript --local > lib/database.types.ts",
     "icons": "node scripts/generate-icons.mjs",
+    "og-image": "node scripts/gen-og-image.mjs",
     "check:secrets": "node scripts/check-client-secrets.mjs",
     "check:responsive": "node scripts/check-responsive.mjs"
   },

@@ -64,6 +64,12 @@
   --color-success-ink: #15803d;
   --color-warning: #f59e0b;
   --color-warning-ink: #b25209;
+  /* Opaque, not `bg-warning/10`: the schedule grid's hour-line rulings sit
+     UNDER an event block in paint order, so a translucent fill lets them
+     bleed straight through the card and look like a stray line cutting
+     across it. This is `--color-warning` mixed 10% into white, computed
+     rather than eyeballed, so it reads as the same tint at full opacity. */
+  --color-warning-50: #fef5e7;
   --color-danger: #ef4444;
   --color-danger-ink: #b91c1c;
 

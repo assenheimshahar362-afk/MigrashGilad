@@ -35,7 +35,11 @@ const STYLES: Record<UsageType, Omit<UsageTypeStyle, 'label'>> = {
     patternClass: '',
   },
   association: {
-    block: 'bg-warning/10 border-s-[3px] border-s-warning text-warning-ink',
+    // Opaque `bg-warning-50`, not `bg-warning/10`: on the grid this card
+    // sits over the hour-line rulings, and a translucent fill let them show
+    // through as a stray line cutting across the card. The chip has no
+    // ruling behind it, so it stays translucent there.
+    block: 'bg-warning-50 border-s-[3px] border-s-warning text-warning-ink',
     chip: 'bg-warning/10 text-warning-ink border border-warning/30',
     bar: 'bg-warning',
     pattern: 'stripes',

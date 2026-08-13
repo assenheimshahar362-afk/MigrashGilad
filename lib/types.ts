@@ -115,6 +115,10 @@ export type RecurringRuleRow = {
 
 export type BookingRequestRow = {
   id: string;
+  /** Generated on insert; kept because it mirrors the database column, but
+   *  nothing public reads it any more — there is no requester-facing status
+   *  page (§ request flow revision). A trustee follows up by phone or
+   *  WhatsApp instead, using `requester_phone`. */
   public_token: string;
   requester_name: string;
   requester_phone: string;
@@ -133,28 +137,6 @@ export type BookingRequestRow = {
   submitted_ip_hash: string | null;
   anonymised_at: string | null;
   created_at: string;
-}
-
-/**
- * The status page (§10.4) shows the requester their own data and nothing else.
- * The token is not echoed back and neither is the phone number — the person
- * holding the link already knows both, and a screenshot of this page should not
- * leak either.
- */
-export type PublicRequestView = {
-  status: RequestStatus;
-  usageType: UsageType;
-  requesterName: string;
-  requestedStart: string;
-  requestedEnd: string;
-  finalStart: string | null;
-  finalEnd: string | null;
-  participants: number | null;
-  note: string | null;
-  decisionNote: string | null;
-  createdAt: string;
-  decidedAt: string | null;
-  cancellable: boolean;
 }
 
 /** `"0".."6"` = Sunday..Saturday. A `null` value means closed all day. */
@@ -275,24 +257,6 @@ export function toPublicEvent(row: EventRow): PublicEvent {
     source: row.source,
     contactName: row.contact_name,
     contactPhone: row.show_contact ? row.contact_phone : null,
-  };
-}
-
-export function toPublicRequestView(row: BookingRequestRow): PublicRequestView {
-  return {
-    status: row.status,
-    usageType: row.usage_type,
-    requesterName: row.requester_name,
-    requestedStart: row.requested_start,
-    requestedEnd: row.requested_end,
-    finalStart: row.final_start,
-    finalEnd: row.final_end,
-    participants: row.participants,
-    note: row.note,
-    decisionNote: row.decision_note,
-    createdAt: row.created_at,
-    decidedAt: row.decided_at,
-    cancellable: row.status === 'pending',
   };
 }
 

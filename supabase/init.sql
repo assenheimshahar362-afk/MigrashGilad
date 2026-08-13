@@ -724,6 +724,31 @@ begin
 end;
 $$;
 
+-- Housekeeping, not a decision: removes a row outright (spam, duplicates,
+-- test submissions), regardless of status — unlike reject/cancel, which
+-- record an outcome and keep the row. The FK on `events.request_id` is
+-- `on delete set null`, so if the request was ever approved, its event
+-- survives on the schedule with its link to this row cleared rather than
+-- being pulled down as a side effect of deleting the request.
+create or replace function delete_request(p_request_id uuid) returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  r booking_requests;
+begin
+  if not is_admin() then
+    raise exception 'ERR_NOT_AUTHORIZED';
+  end if;
+
+  select * into r from booking_requests where id = p_request_id for update;
+  if not found then raise exception 'ERR_NOT_FOUND'; end if;
+
+  delete from booking_requests where id = r.id;
+
+  insert into audit_log (actor_id, entity, entity_id, action, before, after)
+  values (auth.uid(), 'booking_request', r.id, 'delete', to_jsonb(r), null);
+end;
+$$;
+
 -- No auth: reached only through the server route handler, which has already
 -- resolved an unguessable token to this id. Valid only while `pending` (§5).
 create or replace function cancel_request_public(p_token text)
@@ -995,8 +1020,10 @@ create policy recurring_public_read on recurring_rules
   for select to anon, authenticated using (is_active);
 
 -- ---------------------------------------------------------------------------
--- Booking requests: NO anon access at all. Public reads/writes are proxied by
--- the server, which filters by public_token.
+-- Booking requests: NO anon access at all. The public submits through the
+-- server (service role) only; there is no requester-facing status page any
+-- more, so there is no public read path to this table (§ request flow
+-- revision).
 -- ---------------------------------------------------------------------------
 drop policy if exists requests_admin_all on booking_requests;
 create policy requests_admin_all on booking_requests

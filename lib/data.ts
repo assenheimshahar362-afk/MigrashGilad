@@ -2,7 +2,6 @@ import 'server-only';
 
 import { unstable_cache } from 'next/cache';
 import { createPublicClient } from '@/lib/supabase/public';
-import { createAdminClient } from '@/lib/supabase/admin';
 import { reportError } from '@/lib/errors';
 import {
   SITE_SETTINGS,
@@ -99,17 +98,3 @@ export async function getTrustees(): Promise<TrusteeRow[]> {
   }
 }
 
-/**
- * Public status page lookup. Goes through the service role because
- * `booking_requests` has no anon policy at all (§6.4) — the token, not the
- * database role, is the authorisation.
- */
-export async function getRequestByToken(token: string) {
-  const supabase = createAdminClient();
-  const { data } = await supabase
-    .from('booking_requests')
-    .select('*')
-    .eq('public_token', token)
-    .maybeSingle();
-  return data ?? null;
-}

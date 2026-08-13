@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ERROR_CODES, codeFromDbError, errorMessage } from '@/lib/errors';
-import { firstNameOnly, toPublicEvent, toPublicRequestView } from '@/lib/types';
+import { firstNameOnly, toPublicEvent } from '@/lib/types';
 import { formatIsraeliPhone, whatsappNumber } from '@/lib/utils';
-import type { BookingRequestRow, EventRow } from '@/lib/types';
+import type { EventRow } from '@/lib/types';
 
 /** §18.2: error-code mapping, and the projections that keep PII server-side. */
 describe('error code to Hebrew message (§8)', () => {
@@ -76,40 +76,6 @@ describe('public projections (§7 PII)', () => {
   it('reduces a full name to its first part', () => {
     expect(firstNameOnly('יעל בר-אילן')).toBe('יעל');
     expect(firstNameOnly('  אורי   כהן ')).toBe('אורי');
-  });
-
-  it('never echoes the phone number or the token on the status view', () => {
-    const row: BookingRequestRow = {
-      id: 'r1',
-      public_token: 'secret-token-value-24-bytes',
-      requester_name: 'יעל',
-      requester_phone: '+972541234567',
-      usage_type: 'community',
-      requested_start: '2026-08-05T14:00:00.000Z',
-      requested_end: '2026-08-05T16:00:00.000Z',
-      participants: 12,
-      note: null,
-      status: 'pending',
-      decided_by: null,
-      decided_at: null,
-      decision_note: null,
-      final_start: null,
-      final_end: null,
-      version: 1,
-      submitted_ip_hash: 'abc',
-      anonymised_at: null,
-      created_at: '2026-08-01T00:00:00.000Z',
-    };
-
-    const view = toPublicRequestView(row);
-    const serialised = JSON.stringify(view);
-
-    expect(serialised).not.toContain('+972541234567');
-    expect(serialised).not.toContain('secret-token-value');
-    expect(serialised).not.toContain('abc');
-    // §5: pending is the only state from which a requester may cancel.
-    expect(view.cancellable).toBe(true);
-    expect(toPublicRequestView({ ...row, status: 'approved' }).cancellable).toBe(false);
   });
 });
 

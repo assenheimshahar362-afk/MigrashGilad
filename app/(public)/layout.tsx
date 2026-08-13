@@ -7,6 +7,7 @@ import { InstallPrompt } from '@/components/pwa/install-prompt';
 import { RequestModalProvider } from '@/components/request/request-modal-context';
 import { RequestModal } from '@/components/request/request-modal';
 import { RequestModalUrlOpener } from '@/components/request/request-modal-url-opener';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 /**
  * §3 global chrome for the public site. The header, tab bar and footer are the
@@ -26,23 +27,30 @@ export default async function PublicLayout({ children }: { children: React.React
   const settings = await getSettings();
 
   return (
-    <RequestModalProvider>
-      <div className="flex min-h-dvh flex-col">
-        <SiteHeader pitchName={settings.pitchName} />
+    // TooltipProvider wraps the whole public tree, not just whichever screen
+    // opens a `<Sheet>` first — `<Sheet>`'s own close button carries one now
+    // (§ admin tooltip pass), and it is shared with the public booking modal
+    // and the trustee contact sheet, so this has to be here even though
+    // nothing on the public site opens a `<Tooltip>` directly.
+    <TooltipProvider delayDuration={300}>
+      <RequestModalProvider>
+        <div className="flex min-h-dvh flex-col">
+          <SiteHeader pitchName={settings.pitchName} />
 
-        <main id="main" className="flex-1">
-          {children}
-        </main>
+          <main id="main" className="flex-1">
+            {children}
+          </main>
 
-        <SiteFooter pitchName={settings.pitchName} />
-        <BottomNav />
-        <InstallPrompt />
-      </div>
+          <SiteFooter pitchName={settings.pitchName} />
+          <BottomNav />
+          <InstallPrompt />
+        </div>
 
-      <RequestModal settings={settings} />
-      <Suspense fallback={null}>
-        <RequestModalUrlOpener />
-      </Suspense>
-    </RequestModalProvider>
+        <RequestModal settings={settings} />
+        <Suspense fallback={null}>
+          <RequestModalUrlOpener />
+        </Suspense>
+      </RequestModalProvider>
+    </TooltipProvider>
   );
 }

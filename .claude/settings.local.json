@@ -46,7 +46,16 @@
       "Bash(node -e ' *)",
       "Bash(rm -rf .next)",
       "Bash(xargs grep -ln \"storage\\\\|bucket\")",
-      "Bash(npm view *)"
+      "Bash(npm view *)",
+      "Bash(powershell -Command \"Stop-Process -Id 15896 -Force -ErrorAction SilentlyContinue\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)",
+      "Bash(npx vitest *)",
+      "Bash(rm -f scripts/axis-check.tmp.mjs)",
+      "Bash(netstat -ano)",
+      "Bash(rm -f scripts/verify-request-flow.tmp.mjs AGENTS.md CLAUDE.md)",
+      "Bash(node -e \"require\\('dotenv'\\).config\\({path:'.env.local'}\\); console.log\\(new URL\\(process.env.NEXT_PUBLIC_SUPABASE_URL\\).hostname\\)\")",
+      "Bash(tail -n 80 /tmp/nextdev6.log)",
+      "Read(//tmp/**)"
     ],
     "additionalDirectories": [
       "c:\\shahar\\MigrashGilad\\app\\(public)",

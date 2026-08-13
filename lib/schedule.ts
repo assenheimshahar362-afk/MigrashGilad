@@ -56,7 +56,7 @@ export function gridHourRange(
 export function eventsForDate(events: PublicEvent[], date: LocalDate): PublicEvent[] {
   return events
     .filter((event) => localDate(event.startsAt) === date)
-    .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+    .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
 }
 
 export function conflictingEvents(events: PublicEvent[], start: Date, end: Date): PublicEvent[] {
@@ -77,40 +77,49 @@ export function conflictingEvents(events: PublicEvent[], start: Date, end: Date)
 export function layoutDayEvents<T extends { startsAt: string; endsAt: string }>(
   events: T[],
 ): Array<{ event: T; col: number; cols: number }> {
-  const sorted = [...events].sort(
-    (a, b) => a.startsAt.localeCompare(b.startsAt) || a.endsAt.localeCompare(b.endsAt),
-  );
+  // Timestamps are compared as instants, never as raw strings: a real event's
+  // `starts_at` comes back from Supabase as "...+00:00" while the synthesized
+  // community-time filler (§ week-grid.tsx) is built with `.toISOString()`,
+  // which produces "...000Z". Those two spellings of the same instant sort
+  // differently as strings — "+" < "." — which used to make a filler ending
+  // exactly when a real event starts look like it was still open, merging two
+  // back-to-back, non-overlapping events into one cluster and splitting both
+  // into half-width columns instead of stacking them full-width.
+  const startMs = (event: T) => new Date(event.startsAt).getTime();
+  const endMs = (event: T) => new Date(event.endsAt).getTime();
+
+  const sorted = [...events].sort((a, b) => startMs(a) - startMs(b) || endMs(a) - endMs(b));
 
   const layout: Array<{ event: T; col: number; cols: number }> = [];
   let cluster: T[] = [];
-  let clusterEnd = '';
+  let clusterEnd = -Infinity;
 
   const flush = () => {
     if (cluster.length === 0) return;
     // Greedy column assignment: each event takes the first column whose
     // previous occupant has already ended by the time it starts.
-    const columnEnds: string[] = [];
+    const columnEnds: number[] = [];
     const placed: Array<{ event: T; col: number }> = [];
     for (const event of cluster) {
-      const col = columnEnds.findIndex((end) => end <= event.startsAt);
+      const col = columnEnds.findIndex((end) => end <= startMs(event));
       if (col === -1) {
-        columnEnds.push(event.endsAt);
+        columnEnds.push(endMs(event));
         placed.push({ event, col: columnEnds.length - 1 });
       } else {
-        columnEnds[col] = event.endsAt;
+        columnEnds[col] = endMs(event);
         placed.push({ event, col });
       }
     }
     const cols = columnEnds.length;
     for (const p of placed) layout.push({ ...p, cols });
     cluster = [];
-    clusterEnd = '';
+    clusterEnd = -Infinity;
   };
 
   for (const event of sorted) {
-    if (cluster.length > 0 && event.startsAt >= clusterEnd) flush();
+    if (cluster.length > 0 && startMs(event) >= clusterEnd) flush();
     cluster.push(event);
-    if (cluster.length === 1 || event.endsAt > clusterEnd) clusterEnd = event.endsAt;
+    if (cluster.length === 1 || endMs(event) > clusterEnd) clusterEnd = endMs(event);
   }
   flush();
 

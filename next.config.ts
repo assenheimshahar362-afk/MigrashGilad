@@ -77,14 +77,18 @@ const nextConfig: NextConfig = {
   // app/(public)/accessibility) and need no redirect any more — Next serves
   // them directly. /about, /trustees, /contact are still anchors; these
   // redirects keep old bookmarks and any indexed links working rather than
-  // 404ing. `/request/:token` is a distinct dynamic route and is NOT covered
-  // by the `/request` source below — Next only matches the exact path, not
-  // its children.
+  // 404ing.
   async redirects() {
     return [
       // The booking form is a floating modal now (no #request section to
       // land on), so an old bookmark goes to the home page plain.
       { source: '/request', destination: '/', permanent: true },
+      // The per-request status page is gone: a requester no longer tracks
+      // their own booking, a trustee calls or WhatsApps them back instead
+      // (§ request flow revision). An old `/request/<token>` link — saved
+      // from a success screen, or sent to someone's own WhatsApp — now goes
+      // home rather than 404ing.
+      { source: '/request/:token', destination: '/', permanent: true },
       { source: '/about', destination: '/#about', permanent: true },
       { source: '/trustees', destination: '/#trustees', permanent: true },
       { source: '/contact', destination: '/#contact', permanent: true },

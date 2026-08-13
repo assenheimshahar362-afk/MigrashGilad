@@ -5,6 +5,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { t } from '@/lib/i18n';
+import { Tooltip } from '@/components/ui/tooltip';
 
 /**
  * The bottom sheet used for event detail (FR-4) and for confirmations. Radix
@@ -96,17 +97,19 @@ export function SheetContent({
           <DialogPrimitive.Title className="text-h2 font-bold text-balance">
             {title}
           </DialogPrimitive.Title>
-          <DialogPrimitive.Close
-            className={cn(
-              'press tap-target -me-2 -mt-2 flex items-center justify-center',
-              'rounded-(--radius-input) text-(--ink-muted)',
-              'transition-[background-color,color,transform] duration-(--duration-press) ease-(--ease-out-quiet)',
-              'hover:bg-(--surface-sunken) hover:text-(--ink)',
-            )}
-            aria-label={t('common.close')}
-          >
-            <X className="size-5" aria-hidden />
-          </DialogPrimitive.Close>
+          <Tooltip content={t('common.close')}>
+            <DialogPrimitive.Close
+              className={cn(
+                'press tap-target -me-2 -mt-2 flex items-center justify-center',
+                'rounded-(--radius-input) text-(--ink-muted)',
+                'transition-[background-color,color,transform] duration-(--duration-press) ease-(--ease-out-quiet)',
+                'hover:bg-(--surface-sunken) hover:text-(--ink)',
+              )}
+              aria-label={t('common.close')}
+            >
+              <X className="size-5" aria-hidden />
+            </DialogPrimitive.Close>
+          </Tooltip>
         </div>
 
         {description ? (

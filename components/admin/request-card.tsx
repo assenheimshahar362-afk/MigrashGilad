@@ -21,6 +21,7 @@ import type { BookingRequestRow, EventRow } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Field, Input, Textarea } from '@/components/ui/field';
+import { Tooltip } from '@/components/ui/tooltip';
 import { TimeRange, Ltr } from '@/components/ui/ltr';
 
 /**
@@ -175,24 +176,28 @@ export function RequestCard({
 
         {/* §7 PII: the phone is visible here and only here — inside the admin
             area, never on the public schedule. */}
-        <a
-          href={telLink(request.requester_phone)}
-          className="press tap-target flex items-center gap-2 rounded-(--radius-input) border border-(--hairline) px-3 text-sm font-semibold transition-[background-color,border-color,transform] duration-(--duration-press) ease-(--ease-out-quiet) hover:border-(--hairline-strong) hover:bg-(--surface-hover)"
-          aria-label={`${t('trustees.call')} — ${request.requester_name}`}
-        >
-          <Phone className="size-4" aria-hidden />
-          <Ltr>{formatIsraeliPhone(request.requester_phone)}</Ltr>
-        </a>
+        <Tooltip content={t('trustees.call')}>
+          <a
+            href={telLink(request.requester_phone)}
+            className="press tap-target flex items-center gap-2 rounded-(--radius-input) border border-(--hairline) px-3 text-sm font-semibold transition-[background-color,border-color,transform] duration-(--duration-press) ease-(--ease-out-quiet) hover:border-(--hairline-strong) hover:bg-(--surface-hover)"
+            aria-label={`${t('trustees.call')} — ${request.requester_name}`}
+          >
+            <Phone className="size-4" aria-hidden />
+            <Ltr>{formatIsraeliPhone(request.requester_phone)}</Ltr>
+          </a>
+        </Tooltip>
 
-        <a
-          href={whatsappLink(request.requester_phone, t('trustees.whatsapp_prefill'))}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="press tap-target flex items-center justify-center rounded-(--radius-input) border border-(--hairline) px-3 transition-[background-color,border-color,transform] duration-(--duration-press) ease-(--ease-out-quiet) hover:border-(--hairline-strong) hover:bg-(--surface-hover)"
-          aria-label={`${t('trustees.whatsapp')} — ${request.requester_name}`}
-        >
-          <MessageCircle className="size-4" aria-hidden />
-        </a>
+        <Tooltip content={t('trustees.whatsapp')}>
+          <a
+            href={whatsappLink(request.requester_phone, t('trustees.whatsapp_prefill'))}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="press tap-target flex items-center justify-center rounded-(--radius-input) border border-(--hairline) px-3 transition-[background-color,border-color,transform] duration-(--duration-press) ease-(--ease-out-quiet) hover:border-(--hairline-strong) hover:bg-(--surface-hover)"
+            aria-label={`${t('trustees.whatsapp')} — ${request.requester_name}`}
+          >
+            <MessageCircle className="size-4" aria-hidden />
+          </a>
+        </Tooltip>
       </div>
 
       <RejectSheet

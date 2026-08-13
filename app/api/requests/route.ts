@@ -8,11 +8,13 @@ import { assertRequestWindow } from '@/lib/schedule';
 import { verifyTurnstile } from '@/lib/turnstile';
 import { clientIp, consume, hashIp, IP_RULE, PHONE_RULE } from '@/lib/rate-limit';
 import { notifyAdminsOfNewRequest } from '@/lib/notifications/fan-out';
-import { absoluteUrl } from '@/lib/utils';
 import type { BookingRequestRow } from '@/lib/types';
 
 /**
- * `POST /api/requests` (§8) — one of exactly TWO public write surfaces (§7).
+ * `POST /api/requests` (§8) — the ONLY public write surface (§7). It used to
+ * share that role with `POST /api/requests/[token]/cancel`, which is gone
+ * now that a requester no longer tracks or cancels their own booking (§
+ * request flow revision) — a trustee handles both by phone or WhatsApp.
  *
  * It stays a route handler rather than a server action specifically so it can
  * be rate-limited and monitored independently (§8 closing note).
@@ -86,13 +88,10 @@ export async function POST(request: NextRequest) {
     // The pending badge on the dashboard is derived from the schedule cache tag.
     revalidateTag(SCHEDULE_TAG, 'max');
 
-    return NextResponse.json(
-      {
-        id: data.id,
-        publicToken: data.public_token,
-        statusUrl: absoluteUrl(`/request/${data.public_token}`),
-      },
-      { status: 201 },
-    );
+    // No status link: the requester's only continuity is a trustee calling or
+    // WhatsApping them back, using the number they just typed in — see
+    // `components/admin/request-card.tsx`. `public_token` still exists on the
+    // row (it mirrors the database) but nothing public reads it any more.
+    return NextResponse.json({ id: data.id }, { status: 201 });
   });
 }

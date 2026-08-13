@@ -47,8 +47,19 @@ export function WeekGrid({
   const { startMinute, endMinute } = gridHourRange(settings.openingHours, days);
   const today = todayLocal();
 
+  // Every TWO hours rather than every one: at an hourly cadence the axis and
+  // the hairlines it drives (§ DayColumn below) made the whole grid read as
+  // much taller than the day actually needs. Halving the mark count halves
+  // the ruling without touching where an event itself is positioned — a
+  // booking still lands at its exact minute, just against a coarser ruler.
+  //
+  // Anchored on the pitch's own opening hour rather than on a round clock
+  // number: opening is 07:00, so counting by two from there lands on
+  // 7‑9‑11‑…‑23 — every mark an odd hour, which reads as one continuous rule
+  // rather than the arbitrary 8‑10‑12‑… you'd get by rounding up to the
+  // nearest even hour first.
   const hourMarks: number[] = [];
-  for (let m = Math.ceil(startMinute / 60) * 60; m <= endMinute; m += 60) hourMarks.push(m);
+  for (let m = startMinute; m <= endMinute; m += 120) hourMarks.push(m);
 
   return (
     // The same seven-day grid at every width, with no scroll of its own at
@@ -133,11 +144,16 @@ function DayHeader({ days, today }: { days: LocalDate[]; today: LocalDate }) {
   );
 }
 
-/** The height every hour row gets, so a one-hour slot clears A11Y-1's 44px. */
-const MIN_HOUR_HEIGHT = 44;
+/** The height every hour row gets. An event here is `role="img"` — read-only
+ *  information, never a tap target — so this no longer has to clear A11Y-1's
+ *  44px the way the axis's OWN clickable rows would; it only has to stay tall
+ *  enough that the shortest bookable slot (one hour) keeps its title and time
+ *  legible. Lower than the old 44px on purpose: it is what actually shortens
+ *  the grid, now that the axis marks every two hours instead of one. */
+const MIN_HOUR_HEIGHT = 32;
 
 /** The grid's body height: 68vh, but never so short that an hour row falls
- *  below a comfortable tap target. */
+ *  below its minimum. */
 function bodyStyle(startMinute: number, endMinute: number) {
   const hours = (endMinute - startMinute) / 60;
   return { minHeight: `${Math.ceil(hours * MIN_HOUR_HEIGHT)}px` };

@@ -37,7 +37,7 @@ export function RequestForm({
   const [step, setStep] = useState<Step>('when');
   const [serverError, setServerError] = useState<string | null>(null);
   const [queuedOffline, setQueuedOffline] = useState(false);
-  const [result, setResult] = useState<{ statusUrl: string; token: string } | null>(null);
+  const [submitted, setSubmitted] = useState(false);
   const turnstileToken = useRef<string | null>(null);
 
   // FR-17: the pickers are bounded by lead time and horizon, so an impossible
@@ -75,14 +75,9 @@ export function RequestForm({
     turnstileToken.current = token;
   }, []);
 
-  if (result) {
+  if (submitted) {
     return (
-      <SuccessPanel
-        statusUrl={result.statusUrl}
-        date={values.date}
-        startTime={values.startTime}
-        endTime={values.endTime}
-      />
+      <SuccessPanel date={values.date} startTime={values.startTime} endTime={values.endTime} />
     );
   }
 
@@ -134,7 +129,7 @@ export function RequestForm({
       });
 
       const payload = (await response.json()) as
-        | { statusUrl: string; publicToken: string }
+        | { id: string }
         | { error: { code: string; message: string } };
 
       if (!response.ok || 'error' in payload) {
@@ -144,7 +139,7 @@ export function RequestForm({
         return;
       }
 
-      setResult({ statusUrl: payload.statusUrl, token: payload.publicToken });
+      setSubmitted(true);
     } catch {
       // §12: the service worker's Background Sync queue has taken the POST.
       // Telling the visitor it failed would be wrong — it will be delivered.

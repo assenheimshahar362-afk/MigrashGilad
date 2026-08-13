@@ -13,9 +13,9 @@ import type { Database } from '@/lib/database.types';
  *   2. an ESLint `no-restricted-imports` rule on components (eslint.config.mjs)
  *   3. `npm run check:secrets`, which greps the built client bundle in CI (NFR-6)
  *
- * Legitimate callers are the public write surface (§7): POST /api/requests and
- * POST /api/requests/[token]/cancel, which need to touch `booking_requests`
- * with no session, plus the cron routes and the notification fan-out.
+ * Legitimate callers are the public write surface (§7) — POST /api/requests,
+ * which needs to touch `booking_requests` with no session — plus the cron
+ * routes and the notification fan-out.
  */
 let cached: ReturnType<typeof createSupabaseClient<Database>> | null = null;
 

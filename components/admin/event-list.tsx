@@ -11,6 +11,7 @@ import { apiFetch, errorText } from '@/lib/client-api';
 import type { EventRow } from '@/lib/types';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { IconButton } from '@/components/ui/icon-button';
 import { EventEditor } from '@/components/admin/event-editor';
 import { TimeRange } from '@/components/ui/ltr';
 
@@ -77,23 +78,20 @@ export function EventList({ events }: { events: EventRow[] }) {
                 </p>
               </div>
 
-              <button
-                type="button"
+              <IconButton
+                label={`${t('admin.edit_event')} — ${event.title}`}
                 onClick={() => setEditing(event)}
-                aria-label={`${t('admin.edit_event')} — ${event.title}`}
-                className="tap-target flex items-center justify-center rounded-(--radius-input) hover:bg-(--surface-sunken)"
               >
                 <Pencil className="size-4" aria-hidden />
-              </button>
+              </IconButton>
 
-              <button
-                type="button"
+              <IconButton
+                label={`${t('admin.delete_event')} — ${event.title}`}
                 onClick={() => setDeleting(event)}
-                aria-label={`${t('admin.delete_event')} — ${event.title}`}
-                className="tap-target flex items-center justify-center rounded-(--radius-input) text-danger-ink hover:bg-(--surface-sunken)"
+                className="text-danger-ink"
               >
                 <Trash2 className="size-4" aria-hidden />
-              </button>
+              </IconButton>
             </li>
           );
         })}

@@ -136,14 +136,6 @@ test.describe('Scenario 2 — a request in under 60 seconds, no account', () => 
   });
 });
 
-test.describe('Scenario 7 — a status page for an unknown token', () => {
-  test('an unrecognised token explains itself and offers a trustee', async ({ page }) => {
-    await page.goto('/request/this-token-does-not-exist-000000');
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('לא נמצאה בקשה');
-    await expect(page.getByRole('link', { name: 'נאמני קהילה' }).first()).toBeVisible();
-  });
-});
-
 test.describe('The one-page merge — old routes redirect, not 404', () => {
   const OLD_ROUTES: Array<[string, string]> = [
     ['/about', '#about'],
@@ -163,6 +155,14 @@ test.describe('The one-page merge — old routes redirect, not 404', () => {
   // more, since the booking form is a floating modal (request-modal.tsx).
   test('/request redirects to / plain', async ({ page }) => {
     await page.goto('/request');
+    await expect(page).toHaveURL(/\/$/);
+  });
+
+  // The per-request status page is gone too (§ request flow revision): a
+  // requester no longer tracks their own booking, a trustee calls or
+  // WhatsApps them back instead. An old status link should not 404.
+  test('/request/:token redirects to / plain', async ({ page }) => {
+    await page.goto('/request/this-token-does-not-exist-000000');
     await expect(page).toHaveURL(/\/$/);
   });
 });

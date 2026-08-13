@@ -53,8 +53,10 @@ const MATRIX: Record<string, Record<Actor, Record<Verb, boolean>>> = {
     super_admin: { select: true, insert: true, update: true, delete: true },
   },
   booking_requests: {
-    // §6.4: NO anon access at all. Public reads and writes are proxied by the
-    // server, which filters by public_token.
+    // §6.4: NO anon access at all. The public submits through the server
+    // (service role), never directly — there is no requester-facing status
+    // page any more, so there is no public read path to this table at all
+    // (§ request flow revision).
     anon: { select: false, insert: false, update: false, delete: false },
     admin: { select: true, insert: true, update: true, delete: true },
     super_admin: { select: true, insert: true, update: true, delete: true },

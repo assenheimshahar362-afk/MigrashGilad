@@ -30,13 +30,30 @@ const A11Y_INIT_SCRIPT = `
 })();
 `;
 
+const SITE_TITLE = `${t('app.name')} — ${t('schedule.title')}`;
+const SITE_DESCRIPTION =
+  'לוח הזמנים של מגרש גלעד, מגרש הכדורגל הקהילתי. צפייה בשימושי המגרש והגשת בקשה.';
+
+// The card WhatsApp, iMessage, Slack etc. show for a shared link — a share
+// with no image or description reads as a bare, half-broken URL rather than
+// a real site. Built once as a real branded frame (the pitch photo + the
+// club crest + the wordmark, matching the Hero's own RTL layout) rather than
+// left to whatever a crawler happens to screenshot; see
+// `scripts/gen-og-image.mjs` for how it was generated.
+const OG_IMAGE = {
+  url: '/images/og-cover.jpg',
+  width: 1200,
+  height: 630,
+  alt: `${t('app.name')} — ${t('app.tagline')}`,
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
   title: {
-    default: `${t('app.name')} — ${t('schedule.title')}`,
+    default: SITE_TITLE,
     template: `%s · ${t('app.name')}`,
   },
-  description: 'לוח הזמנים של מגרש גלעד, מגרש הכדורגל הקהילתי. צפייה בשימושי המגרש והגשת בקשה.',
+  description: SITE_DESCRIPTION,
   applicationName: t('app.name'),
   manifest: '/manifest.webmanifest',
   appleWebApp: {
@@ -49,7 +66,15 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'he_IL',
     siteName: t('app.name'),
-    title: t('app.name'),
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: [OG_IMAGE],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: [OG_IMAGE],
   },
   robots: { index: true, follow: true },
 };
