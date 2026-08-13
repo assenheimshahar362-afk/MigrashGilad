@@ -15,6 +15,23 @@ export class ApiError extends Error {
   }
 }
 
+async function parseResponse<T>(response: Response): Promise<T> {
+  const payload = (await response.json().catch(() => null)) as
+    | T
+    | { error: { code: string; message: string } }
+    | null;
+
+  if (!response.ok || (payload && typeof payload === 'object' && 'error' in payload)) {
+    const error =
+      payload && typeof payload === 'object' && 'error' in payload
+        ? payload.error
+        : { code: 'ERR_INTERNAL', message: t('error.generic') };
+    throw new ApiError(error.code, error.message);
+  }
+
+  return payload as T;
+}
+
 export async function apiFetch<T>(
   path: string,
   init?: RequestInit & { json?: unknown },
@@ -30,20 +47,17 @@ export async function apiFetch<T>(
     body: json !== undefined ? JSON.stringify(json) : rest.body,
   });
 
-  const payload = (await response.json().catch(() => null)) as
-    | T
-    | { error: { code: string; message: string } }
-    | null;
+  return parseResponse<T>(response);
+}
 
-  if (!response.ok || (payload && typeof payload === 'object' && 'error' in payload)) {
-    const error =
-      payload && typeof payload === 'object' && 'error' in payload
-        ? payload.error
-        : { code: 'ERR_INTERNAL', message: t('error.generic') };
-    throw new ApiError(error.code, error.message);
-  }
-
-  return payload as T;
+/**
+ * Multipart upload. `apiFetch` always JSON-encodes its body, which a `File`
+ * can't survive — this sends the `FormData` as-is and shares the same error
+ * handling.
+ */
+export async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
+  const response = await fetch(path, { method: 'POST', body: formData });
+  return parseResponse<T>(response);
 }
 
 /** Reduce any thrown value to something safe to render. */

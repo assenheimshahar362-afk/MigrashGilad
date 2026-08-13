@@ -1075,6 +1075,32 @@ create policy notifications_super_read on notification_log
 
 -- ===========================================================================
 -- ===========================================================================
+-- PART 3B — STORAGE
+-- A trustee's photo (app/api/admin/trustees/[id]/photo). Public bucket: the
+-- photo is shown on the public site, so anon read is intentional — the same
+-- shape as `trustees_public_read` above. Only an admin may upload, replace or
+-- remove a file, reusing the same `is_admin()` predicate as every other
+-- admin-write policy in this file.
+-- ===========================================================================
+-- ===========================================================================
+insert into storage.buckets (id, name, public)
+values ('trustee-photos', 'trustee-photos', true)
+on conflict (id) do nothing;
+
+drop policy if exists trustee_photos_public_read on storage.objects;
+create policy trustee_photos_public_read on storage.objects
+  for select to anon, authenticated
+  using (bucket_id = 'trustee-photos');
+
+drop policy if exists trustee_photos_admin_write on storage.objects;
+create policy trustee_photos_admin_write on storage.objects
+  for all to authenticated
+  using (bucket_id = 'trustee-photos' and is_admin())
+  with check (bucket_id = 'trustee-photos' and is_admin());
+
+
+-- ===========================================================================
+-- ===========================================================================
 -- PART 4 — BOOTSTRAP
 --
 -- §2: the super admin tier is bootstrapped, not granted. The first row is

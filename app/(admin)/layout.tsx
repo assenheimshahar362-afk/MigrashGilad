@@ -8,6 +8,7 @@ import { SiteHeader } from '@/components/chrome/site-header';
 import { BottomNav } from '@/components/chrome/bottom-nav';
 import { RequestModalProvider } from '@/components/request/request-modal-context';
 import { RequestModal } from '@/components/request/request-modal';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 /**
  * §2: role is resolved server-side on EVERY request from `admin_allowlist`,
@@ -37,48 +38,52 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     // The header's "request" nav item opens the booking modal rather than
     // linking anywhere, so it needs the same provider the public layout gives
     // it — otherwise `useRequestModal` throws the moment the header renders.
-    <RequestModalProvider>
-      <div className="flex min-h-dvh flex-col">
-        <SiteHeader pitchName={settings.pitchName} />
+    // TooltipProvider is admin-wide rather than local to whichever screen
+    // uses it first, so a `<Tooltip>` never has to remember to bring its own.
+    <TooltipProvider delayDuration={300}>
+      <RequestModalProvider>
+        <div className="flex min-h-dvh flex-col">
+          <SiteHeader pitchName={settings.pitchName} />
 
-        {/* The admin band. Light, on the sunken surface, closed by a single
-            hairline: under a frosted white header a dark block would read as a
-            second header rather than as this one's continuation. It is
-            deliberately NOT sticky — the site header above it is, so the way
-            out stays on screen while scrolling without two bars stacking up and
-            eating a phone's viewport. */}
-        <div className="border-b border-(--hairline) bg-(--surface-sunken)">
-          <div className="mx-auto flex max-w-[960px] items-center gap-2 px-4 pt-3 pb-2">
-            <ShieldCheck className="size-4 shrink-0 text-primary-600" aria-hidden />
-            <span className="font-display text-sm font-bold text-(--ink)">{t('admin.title')}</span>
+          {/* The admin band. Light, on the sunken surface, closed by a single
+              hairline: under a frosted white header a dark block would read as a
+              second header rather than as this one's continuation. It is
+              deliberately NOT sticky — the site header above it is, so the way
+              out stays on screen while scrolling without two bars stacking up and
+              eating a phone's viewport. */}
+          <div className="border-b border-(--hairline) bg-(--surface-sunken)">
+            <div className="mx-auto flex max-w-[960px] items-center gap-2 px-4 pt-3 pb-2">
+              <ShieldCheck className="size-4 shrink-0 text-primary-600" aria-hidden />
+              <span className="font-display text-sm font-bold text-(--ink)">{t('admin.title')}</span>
 
-            {identity.role === 'super_admin' ? (
-              <span className="shrink-0 rounded-full border border-accent px-2 py-0.5 text-xs font-semibold text-accent-ink">
-                {t('managers.role.super_admin')}
+              {identity.role === 'super_admin' ? (
+                <span className="shrink-0 rounded-full border border-accent px-2 py-0.5 text-xs font-semibold text-accent-ink">
+                  {t('managers.role.super_admin')}
+                </span>
+              ) : null}
+
+              {/* Which account you are acting as. `ms-auto` parks it at the end of
+                  the line; it is the one thing here that can be long, so it is
+                  also the one thing allowed to truncate. */}
+              <span dir="ltr" className="ms-auto min-w-0 truncate text-xs text-(--ink-faint)">
+                {identity.email}
               </span>
-            ) : null}
+            </div>
 
-            {/* Which account you are acting as. `ms-auto` parks it at the end of
-                the line; it is the one thing here that can be long, so it is
-                also the one thing allowed to truncate. */}
-            <span dir="ltr" className="ms-auto min-w-0 truncate text-xs text-(--ink-faint)">
-              {identity.email}
-            </span>
+            <AdminNav role={identity.role} />
           </div>
 
-          <AdminNav role={identity.role} />
+          <main id="main" className="mx-auto w-full max-w-[960px] flex-1 px-4 py-8 pb-24">
+            {children}
+          </main>
+
+          {/* The phone's main menu. From `lg` it hides itself and the header's own
+              nav takes over, so the two are never both on screen. */}
+          <BottomNav />
         </div>
 
-        <main id="main" className="mx-auto w-full max-w-[960px] flex-1 px-4 py-8 pb-24">
-          {children}
-        </main>
-
-        {/* The phone's main menu. From `lg` it hides itself and the header's own
-            nav takes over, so the two are never both on screen. */}
-        <BottomNav />
-      </div>
-
-      <RequestModal settings={settings} />
-    </RequestModalProvider>
+        <RequestModal settings={settings} />
+      </RequestModalProvider>
+    </TooltipProvider>
   );
 }

@@ -80,7 +80,6 @@ async function fetchTrusteesUncached(): Promise<TrusteeRow[]> {
     .from('trustees')
     .select('*')
     .eq('is_archived', false)
-    .order('is_primary', { ascending: false })
     .order('display_order', { ascending: true });
 
   if (error) throw error;

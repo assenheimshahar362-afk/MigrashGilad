@@ -44,7 +44,9 @@
       "Bash(npm test *)",
       "Bash(git rm *)",
       "Bash(node -e ' *)",
-      "Bash(rm -rf .next)"
+      "Bash(rm -rf .next)",
+      "Bash(xargs grep -ln \"storage\\\\|bucket\")",
+      "Bash(npm view *)"
     ],
     "additionalDirectories": [
       "c:\\shahar\\MigrashGilad\\app\\(public)",

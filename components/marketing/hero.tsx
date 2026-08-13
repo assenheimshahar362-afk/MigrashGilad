@@ -98,7 +98,7 @@ export function Hero() {
           {t('hero.title')}
         </h1>
 
-        <p className="animate-rise-in mt-4 max-w-[46ch] text-base text-white/85 sm:text-lg [animation-delay:120ms]">
+        <p className="animate-rise-in mt-4 max-w-[60ch] whitespace-pre-line text-base text-white/85 sm:text-lg [animation-delay:120ms]">
           {t('hero.subtitle')}
         </p>
 

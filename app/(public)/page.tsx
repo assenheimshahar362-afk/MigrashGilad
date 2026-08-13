@@ -158,9 +158,10 @@ function AboutSection() {
         <Reveal className="order-2 lg:order-1">
           <p className="text-sm font-semibold text-primary-600">{t('about.eyebrow')}</p>
           <h2 className="mt-3 text-display">{t('about.title')}</h2>
-          <p className="mt-5 text-lg text-(--ink-muted)">{t('about.lead')}</p>
+          <p className="mt-5 text-(--ink-muted)">{t('about.lead')}</p>
           <p className="mt-5 text-(--ink-muted)">{t('about.body_1')}</p>
           <p className="mt-4 text-(--ink-muted)">{t('about.body_2')}</p>
+          <p className="mt-4 text-(--ink-muted)">{t('about.body_3')}</p>
         </Reveal>
 
         <Reveal className="order-1 lg:order-2">
