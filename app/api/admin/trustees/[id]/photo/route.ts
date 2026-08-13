@@ -25,6 +25,11 @@ const EXT_BY_TYPE: Record<string, string> = {
  * replaces it in place on a re-upload rather than accumulating an orphan file
  * per edit. Since the path is stable, `?v=` in the stored URL is what busts
  * the browser/CDN cache after a replace.
+ *
+ * `upsert` only replaces the file at that SAME path, though — a jpg→png
+ * re-upload lands at a different path and leaves the old jpg behind. The
+ * cleanup below removes whichever of the other extensions might exist, so a
+ * trustee never ends up with more than the one current file in the bucket.
  */
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return handleRoute(async () => {
@@ -67,6 +72,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       .single();
 
     if (error) return errorResponse(codeFromDbError(error));
+
+    // Only runs once the new file is safely uploaded and the row points at
+    // it — cleaning up first and having the upload fail would delete the
+    // trustee's only photo instead of replacing it. Best-effort: a leftover
+    // file from a previous extension is not worth failing the request over.
+    const staleExts = Object.values(EXT_BY_TYPE).filter((candidate) => candidate !== ext);
+    await supabase.storage
+      .from(BUCKET)
+      .remove(staleExts.map((candidate) => `${id}.${candidate}`));
 
     await supabase.from('audit_log').insert({
       actor_id: identity.userId,

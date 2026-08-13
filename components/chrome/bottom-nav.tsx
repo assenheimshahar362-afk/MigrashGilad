@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { CalendarDays, FilePlus2, Users, Info, Phone } from 'lucide-react';
@@ -21,10 +22,10 @@ import { useRequestModal } from '@/components/request/request-modal-context';
  * the press itself, which is feedback rather than decoration.
  */
 const TABS = [
-  { href: '/', label: t('nav.schedule'), Icon: CalendarDays },
-  { href: '/#about', label: t('nav.about'), Icon: Info },
-  { href: '/#trustees', label: t('nav.trustees'), Icon: Users },
-  { href: '/#contact', label: t('nav.contact'), Icon: Phone },
+  { href: '/', section: 'schedule', label: t('nav.schedule'), Icon: CalendarDays },
+  { href: '/#about', section: 'about', label: t('nav.about'), Icon: Info },
+  { href: '/#trustees', section: 'trustees', label: t('nav.trustees'), Icon: Users },
+  { href: '/#contact', section: 'contact', label: t('nav.contact'), Icon: Phone },
 ] as const;
 
 // The short label, not `nav.request`: five tabs on a 360px screen leave 72px
@@ -35,8 +36,72 @@ const REQUEST_TAB = { label: t('nav.request_short'), Icon: FilePlus2 };
 
 const tabClassName = 'press tap-target relative flex flex-col items-center justify-center gap-1 py-2 text-[0.6875rem] font-medium';
 
+/**
+ * `/`, `/#about`, `/#trustees` and `/#contact` are all the same route — the
+ * home page merged into one-page anchors (§ one-page merge) — so
+ * `usePathname()` alone cannot tell them apart, and the calendar tab (the
+ * only one whose href IS the bare pathname) ends up permanently "active"
+ * regardless of which section is actually on screen. This tracks which
+ * section's midpoint is currently crossing the vertical centre of the
+ * viewport instead, the same signal a visitor's own eye is using.
+ */
+function useActiveSection(enabled: boolean): string {
+  const [active, setActive] = useState<string>('schedule');
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    const sections = TABS.map((tab) => document.getElementById(tab.section)).filter(
+      (el): el is HTMLElement => el !== null,
+    );
+    if (sections.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Several sections can straddle the line at once on a short viewport;
+        // the one closest to the top wins, matching what a visitor would call
+        // "the section I'm looking at".
+        const crossing = entries.filter((entry) => entry.isIntersecting);
+        if (crossing.length === 0) return;
+        const topmost = crossing.reduce((a, b) =>
+          a.boundingClientRect.top <= b.boundingClientRect.top ? a : b,
+        );
+        setActive(topmost.target.id);
+      },
+      // A zero-height line near the top third of the viewport, rather than
+      // dead centre — a section only has to arrive, not be centred, to read
+      // as "current", which also gives a short trailing section (contact,
+      // shorter than the ones before it) more room to cross it at all.
+      { rootMargin: '-30% 0px -65% 0px', threshold: 0 },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+
+    // Safety net for that same short-last-section case: if it's too short to
+    // ever cross the line above, the page still runs out of room to scroll
+    // — reaching the bottom of the document is itself an unambiguous "the
+    // last section is what's on screen", independent of its height.
+    const lastSection = TABS.at(-1)?.section ?? 'contact';
+    const onScroll = () => {
+      const atBottom =
+        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+      if (atBottom) setActive(lastSection);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, [enabled]);
+
+  return active;
+}
+
 export function BottomNav() {
   const pathname = usePathname();
+  const onHome = pathname === '/';
+  const activeSection = useActiveSection(onHome);
   const { openRequestModal } = useRequestModal();
 
   return (
@@ -58,11 +123,8 @@ export function BottomNav() {
           </button>
         </li>
 
-        {TABS.map(({ href, label, Icon }) => {
-          // Only the calendar tab (a real route, `/`) can be "active"; the
-          // rest are anchors on that same page and pathname cannot tell them
-          // apart from one another.
-          const active = href === '/' && pathname === '/';
+        {TABS.map(({ href, section, label, Icon }) => {
+          const active = onHome && activeSection === section;
           return (
             <li key={href} className="flex-1">
               <Link

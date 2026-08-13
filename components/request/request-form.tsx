@@ -5,12 +5,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t, isMessageKey } from '@/lib/i18n';
 import { requestFormSchema, type RequestFormValues } from '@/lib/validation/request';
-import { REQUESTABLE_USAGE_TYPES, type PublicSettings } from '@/lib/types';
-import { usageTypeLabel } from '@/lib/usage-type';
+import { type PublicSettings } from '@/lib/types';
 import { addLocalDays, toInstant, todayLocal } from '@/lib/time';
 import { ArrowLeft, CircleAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Field, Input, Select, Textarea } from '@/components/ui/field';
+import { Field, Input, Textarea } from '@/components/ui/field';
 import { Button } from '@/components/ui/button';
 import { AvailabilityHint } from '@/components/request/availability-hint';
 import { Turnstile } from '@/components/request/turnstile';
@@ -90,7 +89,7 @@ export function RequestForm({
   const goNext = async () => {
     const fields: Record<Step, Array<keyof RequestFormValues>> = {
       when: ['date', 'startTime', 'endTime'],
-      what: ['usageType', 'participants', 'note'],
+      what: ['participants', 'note'],
       who: ['requesterName', 'requesterPhone', 'consent'],
     };
 
@@ -205,18 +204,10 @@ export function RequestForm({
         <fieldset className="space-y-4">
           <legend className="sr-only">{t('request.step.what')}</legend>
 
-          <Field id="usageType" label={t('request.field.usage')} required>
-            {(props) => (
-              <Select {...props} {...register('usageType')}>
-                {REQUESTABLE_USAGE_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {usageTypeLabel(type)}
-                  </option>
-                ))}
-              </Select>
-            )}
-          </Field>
-
+          {/* No usage-type picker here: a public request is always community
+              time (§ usage type is an admin-only distinction, set directly on
+              a calendar event for the association's own use) — `usageType`
+              stays 'community' from the form's defaultValues, unedited. */}
           <Field
             id="participants"
             label={t('request.field.participants')}

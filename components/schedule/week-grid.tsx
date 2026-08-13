@@ -5,11 +5,19 @@ import {
   dayOfMonth,
   formatWeekdayLong,
   localWeekDays,
+  minutesFromTime,
   timeFromMinutes,
+  toInstant,
   todayLocal,
   type LocalDate,
 } from '@/lib/time';
-import { eventsForDate, gridHourRange, hoursForDate, layoutDayEvents } from '@/lib/schedule';
+import {
+  communityFillRanges,
+  eventsForDate,
+  gridHourRange,
+  hoursForDate,
+  layoutDayEvents,
+} from '@/lib/schedule';
 import type { PublicEvent, PublicSettings } from '@/lib/types';
 import { EventBlock } from '@/components/schedule/event-block';
 import { NowMarker } from '@/components/schedule/now-marker';
@@ -188,6 +196,31 @@ function DayColumn({
   const span = endMinute - startMinute;
   const dayHours = hoursForDate(settings.openingHours, date);
 
+  // Every genuinely empty minute of the day's own opening hours is
+  // community time by default, whether or not it was ever booked — so a
+  // gap with nothing in it gets an actual "community time" card synthesized
+  // for it, the same way a real booking would render. It is placed BEFORE
+  // the real events in `layoutDayEvents`' input only for a stable sort; by
+  // construction it never overlaps one, so it always lands full-width.
+  const dayEvents = dayHours
+    ? [
+        ...communityFillRanges(events, minutesFromTime(dayHours[0]), minutesFromTime(dayHours[1])).map(
+          (range): PublicEvent => ({
+            id: `community-fill-${date}-${range.start}`,
+            title: t('usage.community'),
+            description: null,
+            usageType: 'community',
+            startsAt: toInstant(date, timeFromMinutes(range.start)).toISOString(),
+            endsAt: toInstant(date, timeFromMinutes(range.end)).toISOString(),
+            source: 'manual',
+            contactName: null,
+            contactPhone: null,
+          }),
+        ),
+        ...events,
+      ]
+    : events;
+
   return (
     <div
       className={cn('relative flex-1', dayIndex > 0 && 'pitch-daydivider', isToday && 'pitch-today')}
@@ -213,7 +246,7 @@ function DayColumn({
           </div>
         ) : null}
 
-        {layoutDayEvents(events).map(({ event, col, cols }) => (
+        {layoutDayEvents(dayEvents).map(({ event, col, cols }) => (
           <EventBlock
             key={event.id}
             event={event}

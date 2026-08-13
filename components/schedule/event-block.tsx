@@ -47,7 +47,11 @@ export function EventBlock({
 
   const range = formatTimeRange(event.startsAt, event.endsAt);
   const title = displayTitle(event);
-  const label = `${title}, ${range}, ${style.label}`;
+  // An unbooked stretch synthesized as a plain "community time" card (§
+  // week-grid.tsx) has nothing to say beyond its own usage type — its title
+  // IS the usage label, so the third line would just repeat the first.
+  const showTypeLabel = title !== style.label;
+  const label = showTypeLabel ? `${title}, ${range}, ${style.label}` : `${title}, ${range}`;
 
   return (
     <div
@@ -73,9 +77,11 @@ export function EventBlock({
         range={range}
         className="tnum block text-[0.5rem] font-medium leading-[1.3] sm:text-[0.6875rem]"
       />
-      <span className="block truncate text-[0.5rem] font-normal leading-[1.25] sm:text-[0.625rem]">
-        {style.label}
-      </span>
+      {showTypeLabel ? (
+        <span className="block truncate text-[0.5rem] font-normal leading-[1.25] sm:text-[0.625rem]">
+          {style.label}
+        </span>
+      ) : null}
     </div>
   );
 }

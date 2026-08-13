@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   assertRequestWindow,
   assertWithinOpeningHours,
+  communityFillRanges,
   conflictingEvents,
   gridHourRange,
   hoursForDate,
@@ -203,6 +204,55 @@ describe('layoutDayEvents — association and community sharing a slot', () => {
     // a and b overlap fully (cols: 2); c overlaps both but a ends before c
     // does not free a's column until 18:00, so all three share one cluster.
     expect(byId.get(a.id)!.cols).toBe(3);
+  });
+});
+
+describe('communityFillRanges — every genuinely empty minute is community time', () => {
+  const DAY_START = 7 * 60; // 07:00
+  const DAY_END = 23 * 60; // 23:00
+
+  it('fills the whole day when there are no events at all', () => {
+    expect(communityFillRanges([], DAY_START, DAY_END)).toEqual([
+      { start: DAY_START, end: DAY_END },
+    ]);
+  });
+
+  it('cuts a mid-day COMMUNITY event out too — it already speaks for its own slot', () => {
+    const community = event('17:00', '19:00');
+    expect(communityFillRanges([community], DAY_START, DAY_END)).toEqual([
+      { start: DAY_START, end: 17 * 60 },
+      { start: 19 * 60, end: DAY_END },
+    ]);
+  });
+
+  it('cuts a mid-day association event out, leaving fill before and after it', () => {
+    const association = { ...event('17:00', '19:00'), usageType: 'association' as const };
+    expect(communityFillRanges([association], DAY_START, DAY_END)).toEqual([
+      { start: DAY_START, end: 17 * 60 },
+      { start: 19 * 60, end: DAY_END },
+    ]);
+  });
+
+  it('leaves no fill when an association event spans the entire day', () => {
+    const association = { ...event('07:00', '23:00'), usageType: 'association' as const };
+    expect(communityFillRanges([association], DAY_START, DAY_END)).toEqual([]);
+  });
+
+  it('merges two overlapping events (any mix of usage types) into one gap', () => {
+    const a = { ...event('17:00', '19:00'), usageType: 'association' as const };
+    const b = { ...event('18:00', '20:00'), id: 'b' };
+    expect(communityFillRanges([a, b], DAY_START, DAY_END)).toEqual([
+      { start: DAY_START, end: 17 * 60 },
+      { start: 20 * 60, end: DAY_END },
+    ]);
+  });
+
+  it('clamps an event that runs outside the day bounds', () => {
+    // A community-fill query for a NARROWER window than the event's own
+    // start/end — e.g. the day's own opening hours are shorter than the
+    // shared grid axis — still only reports gaps inside that window.
+    const association = { ...event('06:00', '23:30'), usageType: 'association' as const };
+    expect(communityFillRanges([association], DAY_START, DAY_END)).toEqual([]);
   });
 });
 

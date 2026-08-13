@@ -3,6 +3,7 @@ import {
   localDate,
   localTime,
   minutesFromTime,
+  minutesSinceMidnight,
   overlaps,
   weekdayOfLocalDate,
   type LocalDate,
@@ -114,6 +115,38 @@ export function layoutDayEvents<T extends { startsAt: string; endsAt: string }>(
   flush();
 
   return layout;
+}
+
+/**
+ * Community time is the default, not something that has to be booked to
+ * exist: any minute of a day's opening hours with no event on it AT ALL —
+ * of either usage type — is community time by definition. This returns
+ * that complement, the gaps genuinely empty enough to synthesize a
+ * "community time" card for (§ week-grid.tsx), so the grid never simply
+ * reads as blank during open hours. An explicit event, community or
+ * association, already speaks for its own slot and is left alone.
+ */
+export function communityFillRanges(
+  events: PublicEvent[],
+  dayStart: number,
+  dayEnd: number,
+): Array<{ start: number; end: number }> {
+  const busyRanges = events
+    .map((event) => ({
+      start: Math.max(minutesSinceMidnight(event.startsAt), dayStart),
+      end: Math.min(minutesSinceMidnight(event.endsAt), dayEnd),
+    }))
+    .filter((range) => range.end > range.start)
+    .sort((a, b) => a.start - b.start);
+
+  const gaps: Array<{ start: number; end: number }> = [];
+  let cursor = dayStart;
+  for (const range of busyRanges) {
+    if (range.start > cursor) gaps.push({ start: cursor, end: range.start });
+    cursor = Math.max(cursor, range.end);
+  }
+  if (cursor < dayEnd) gaps.push({ start: cursor, end: dayEnd });
+  return gaps;
 }
 
 /**

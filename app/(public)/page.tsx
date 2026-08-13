@@ -226,29 +226,31 @@ function ContactSection({ trustees }: { trustees: TrusteeRow[] }) {
         <p className="mt-4 max-w-[52ch] text-lg text-(--ink-muted)">{t('contact.lead')}</p>
 
         <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_1.1fr] lg:gap-8">
-          <div className="space-y-6">
+          {/* Who to contact, where, and when — three answers to the same
+              question, so they used to live in three separate cards. One
+              border around all of them reads as a single answer instead of
+              three competing facts. */}
+          <div className="card p-6 sm:p-7">
             {/* One circle per trustee, so a tap reaches a person rather than
                 a page — the choice of call or WhatsApp happens in the sheet,
                 once a name is picked. */}
-            <div className="card p-6 sm:p-7">
-              <h3 className="text-h3">{t('contact.trustees_title')}</h3>
+            <h3 className="text-h3">{t('contact.trustees_title')}</h3>
 
-              {trustees.length > 0 ? (
-                <div className="mt-4">
-                  <TrusteeContactGrid trustees={trustees} />
-                </div>
-              ) : (
-                <p className="mt-3 text-(--ink-muted)">{t('contact.no_trustee')}</p>
-              )}
-            </div>
+            {trustees.length > 0 ? (
+              <div className="mt-4">
+                <TrusteeContactGrid trustees={trustees} />
+              </div>
+            ) : (
+              <p className="mt-3 text-(--ink-muted)">{t('contact.no_trustee')}</p>
+            )}
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <InfoCard icon={<MapPin className="size-5" />} label={t('contact.address')}>
+            <div className="mt-6 grid gap-5 border-t border-(--hairline) pt-6 sm:grid-cols-2">
+              <InfoRow icon={<MapPin className="size-5" />} label={t('contact.address')}>
                 {t('contact.address_value')}
-              </InfoCard>
-              <InfoCard icon={<Clock className="size-5" />} label={t('contact.hours')}>
+              </InfoRow>
+              <InfoRow icon={<Clock className="size-5" />} label={t('contact.hours')}>
                 {t('contact.hours_value')}
-              </InfoCard>
+              </InfoRow>
             </div>
           </div>
 
@@ -270,7 +272,13 @@ function ContactSection({ trustees }: { trustees: TrusteeRow[] }) {
   );
 }
 
-function InfoCard({
+/**
+ * A row rather than its own card — this now sits inside the unified contact
+ * card alongside the trustee grid, so a second border here would compete
+ * with the one already around it instead of reading as part of the same
+ * answer.
+ */
+function InfoRow({
   icon,
   label,
   children,
@@ -280,15 +288,17 @@ function InfoCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="card p-5">
+    <div className="flex items-center gap-3">
       <span
         aria-hidden
-        className="flex size-10 items-center justify-center rounded-(--radius-input) bg-primary-50 text-primary-600"
+        className="flex size-10 shrink-0 items-center justify-center rounded-(--radius-input) bg-primary-50 text-primary-600"
       >
         {icon}
       </span>
-      <h4 className="mt-3 text-sm font-semibold text-(--ink-muted)">{label}</h4>
-      <p className="mt-1 font-semibold">{children}</p>
+      <div className="min-w-0">
+        <h4 className="text-sm font-semibold text-(--ink-muted)">{label}</h4>
+        <p className="font-semibold">{children}</p>
+      </div>
     </div>
   );
 }
