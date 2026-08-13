@@ -63,8 +63,9 @@ drop function if exists create_closure(text, timestamptz, timestamptz, boolean, 
 drop function if exists materialize_recurring(int) cascade;
 drop function if exists anonymise_old_requests(int) cascade;
 drop function if exists expire_stale_requests() cascade;
-drop function if exists cancel_request_public(text) cascade;
 drop function if exists cancel_request_admin(uuid, int, text) cascade;
+drop function if exists delete_request(uuid, int) cascade;
+drop function if exists delete_request(uuid) cascade;
 drop function if exists reject_request(uuid, int, text) cascade;
 drop function if exists approve_request(uuid, int, timestamptz, timestamptz, text) cascade;
 drop function if exists decide_access_request(uuid, boolean, admin_role, text) cascade;
@@ -730,7 +731,12 @@ $$;
 -- `on delete set null`, so if the request was ever approved, its event
 -- survives on the schedule with its link to this row cleared rather than
 -- being pulled down as a side effect of deleting the request.
-create or replace function delete_request(p_request_id uuid) returns void
+--
+-- `p_version` still guards it, same as approve/reject/cancel_admin: without
+-- it, one admin could delete a row a second admin just decided a moment
+-- earlier with no signal that the state changed underneath them.
+create or replace function delete_request(p_request_id uuid, p_version int)
+returns void
 language plpgsql security definer set search_path = public as $$
 declare
   r booking_requests;
@@ -741,37 +747,12 @@ begin
 
   select * into r from booking_requests where id = p_request_id for update;
   if not found then raise exception 'ERR_NOT_FOUND'; end if;
+  if r.version <> p_version then raise exception 'ERR_STALE'; end if;
 
   delete from booking_requests where id = r.id;
 
   insert into audit_log (actor_id, entity, entity_id, action, before, after)
   values (auth.uid(), 'booking_request', r.id, 'delete', to_jsonb(r), null);
-end;
-$$;
-
--- No auth: reached only through the server route handler, which has already
--- resolved an unguessable token to this id. Valid only while `pending` (§5).
-create or replace function cancel_request_public(p_token text)
-returns booking_requests
-language plpgsql security definer set search_path = public as $$
-declare
-  r booking_requests;
-  updated booking_requests;
-begin
-  select * into r from booking_requests where public_token = p_token for update;
-  if not found then raise exception 'ERR_NOT_FOUND'; end if;
-  if r.status <> 'pending' then raise exception 'ERR_NOT_CANCELLABLE'; end if;
-
-  update booking_requests
-     set status = 'cancelled', version = version + 1
-   where id = r.id
-  returning * into updated;
-
-  insert into audit_log (actor_id, actor_label, entity, entity_id, action, before, after)
-  values (null, 'requester', 'booking_request', r.id, 'cancel_public',
-          to_jsonb(r), to_jsonb(updated));
-
-  return updated;
 end;
 $$;
 
@@ -952,7 +933,6 @@ $$;
 -- ---------------------------------------------------------------------------
 revoke all on function set_manager_role(uuid, admin_role, boolean) from public, anon;
 revoke all on function add_manager(citext, text, admin_role) from public, anon;
-revoke all on function cancel_request_public(text) from public, anon;
 revoke all on function expire_stale_requests() from public, anon;
 revoke all on function anonymise_old_requests(int) from public, anon;
 revoke all on function materialize_recurring(int) from public, anon;
@@ -961,10 +941,12 @@ revoke all on function preview_closure_conflicts(timestamptz, timestamptz) from 
 revoke all on function approve_request(uuid, int, timestamptz, timestamptz, text) from public, anon;
 revoke all on function reject_request(uuid, int, text) from public, anon;
 revoke all on function cancel_request_admin(uuid, int, text) from public, anon;
+revoke all on function delete_request(uuid, int) from public, anon;
 
 grant execute on function approve_request(uuid, int, timestamptz, timestamptz, text) to authenticated;
 grant execute on function reject_request(uuid, int, text) to authenticated;
 grant execute on function cancel_request_admin(uuid, int, text) to authenticated;
+grant execute on function delete_request(uuid, int) to authenticated;
 grant execute on function set_manager_role(uuid, admin_role, boolean) to authenticated;
 grant execute on function add_manager(citext, text, admin_role) to authenticated;
 grant execute on function create_closure(text, timestamptz, timestamptz, boolean, boolean) to authenticated;

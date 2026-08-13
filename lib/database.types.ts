@@ -288,8 +288,7 @@ export type Database = {
         Args: { p_request_id: string; p_version: number; p_note?: string | null };
         Returns: BookingRequestRow;
       };
-      cancel_request_public: { Args: { p_token: string }; Returns: BookingRequestRow };
-      delete_request: { Args: { p_request_id: string }; Returns: void };
+      delete_request: { Args: { p_request_id: string; p_version: number }; Returns: void };
       expire_stale_requests: { Args: Record<string, never>; Returns: number };
       anonymise_old_requests: { Args: { p_months?: number }; Returns: number };
       materialize_recurring: { Args: { p_horizon_days?: number }; Returns: number };

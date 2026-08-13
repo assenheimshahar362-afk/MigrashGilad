@@ -54,9 +54,13 @@ export function gridHourRange(
 }
 
 export function eventsForDate(events: PublicEvent[], date: LocalDate): PublicEvent[] {
+  // Each `startsAt` is parsed once up front rather than repeatedly inside the
+  // sort comparator, which a sort otherwise calls O(n log n) times.
   return events
     .filter((event) => localDate(event.startsAt) === date)
-    .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
+    .map((event) => ({ event, start: new Date(event.startsAt).getTime() }))
+    .sort((a, b) => a.start - b.start)
+    .map(({ event }) => event);
 }
 
 export function conflictingEvents(events: PublicEvent[], start: Date, end: Date): PublicEvent[] {
@@ -85,8 +89,21 @@ export function layoutDayEvents<T extends { startsAt: string; endsAt: string }>(
   // exactly when a real event starts look like it was still open, merging two
   // back-to-back, non-overlapping events into one cluster and splitting both
   // into half-width columns instead of stacking them full-width.
-  const startMs = (event: T) => new Date(event.startsAt).getTime();
-  const endMs = (event: T) => new Date(event.endsAt).getTime();
+  //
+  // Parsed once per event and cached, not re-parsed on every comparison —
+  // `startMs`/`endMs` are each read 3-4 times per event below (sort, column
+  // search, cluster bookkeeping) as this runs on every render of the week grid.
+  const cache = new Map<T, { start: number; end: number }>();
+  const parsed = (event: T) => {
+    let value = cache.get(event);
+    if (!value) {
+      value = { start: new Date(event.startsAt).getTime(), end: new Date(event.endsAt).getTime() };
+      cache.set(event, value);
+    }
+    return value;
+  };
+  const startMs = (event: T) => parsed(event).start;
+  const endMs = (event: T) => parsed(event).end;
 
   const sorted = [...events].sort((a, b) => startMs(a) - startMs(b) || endMs(a) - endMs(b));
 

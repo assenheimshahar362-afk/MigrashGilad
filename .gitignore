@@ -7,6 +7,10 @@ dist/
 .env
 .env.local
 .env.*.local
+# A local, secrets-bearing JSON dump of the same variables (e.g. left behind
+# by `vercel env pull` / editor tooling) — same sensitivity as .env.local,
+# same rule.
+.env*.json
 
 public/sw.js
 public/sw.js.map
@@ -31,5 +35,6 @@ supabase/.temp/
 
 .vercel
 
-.vercel
-.env*
+# Personal, per-developer permission grants — .claude/settings.json (no
+# "local") is the shared, committed one.
+.claude/settings.local.json

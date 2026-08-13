@@ -12,6 +12,12 @@ export const decisionInput = z
   })
   .strict();
 
+export const deleteRequestInput = z
+  .object({
+    version: z.number().int().min(1),
+  })
+  .strict();
+
 export const approveInput = z
   .object({
     version: z.number().int().min(1),
