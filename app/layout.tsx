@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import { fontVariables } from '@/app/fonts';
 import { t } from '@/lib/i18n';
+import { siteUrl } from '@/lib/utils';
 import { SkipLink } from '@/components/chrome/skip-link';
 import { ServiceWorkerBridge } from '@/components/pwa/service-worker-bridge';
 import { AccessibilityMenu } from '@/components/a11y/accessibility-menu';
@@ -32,7 +33,7 @@ const A11Y_INIT_SCRIPT = `
 
 const SITE_TITLE = `${t('app.name')} — ${t('schedule.title')}`;
 const SITE_DESCRIPTION =
-  'לוח הזמנים של מגרש גלעד, מגרש הכדורגל הקהילתי. צפייה בשימושי המגרש והגשת בקשה.';
+  'לוח הזמנים של מגרש גלעד. צפייה בשימושי המגרש והגשת בקשה.';
 
 // The card WhatsApp, iMessage, Slack etc. show for a shared link — a share
 // with no image or description reads as a bare, half-broken URL rather than
@@ -48,7 +49,10 @@ const OG_IMAGE = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
+  // Resolves `/images/og-cover.jpg` below into the absolute URL a crawler can
+  // actually fetch. See `siteUrl()` for why this is not read straight off
+  // `NEXT_PUBLIC_SITE_URL`.
+  metadataBase: new URL(siteUrl()),
   title: {
     default: SITE_TITLE,
     template: `%s · ${t('app.name')}`,

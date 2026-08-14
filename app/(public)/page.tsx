@@ -16,6 +16,9 @@ import {
 import { WeekGrid } from '@/components/schedule/week-grid';
 import { WeekNav } from '@/components/schedule/week-nav';
 import { DayList } from '@/components/schedule/day-list';
+import { DayStrip } from '@/components/schedule/day-strip';
+import { DayView } from '@/components/schedule/day-view';
+import { ViewToggle } from '@/components/schedule/view-toggle';
 import { Legend } from '@/components/schedule/legend';
 import { OfflineBanner } from '@/components/pwa/offline-banner';
 import { Hero } from '@/components/marketing/hero';
@@ -60,14 +63,14 @@ export const revalidate = 300;
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ week?: string }>;
+  searchParams: Promise<{ week?: string; view?: string; date?: string }>;
 }) {
   const params = await searchParams;
 
   // FR-6: the week lives in the URL so it can be shared. An unparseable value
   // falls back to this week rather than erroring — a bad link should still show
   // the visitor something useful.
-  const requested = parseWeek(params.week);
+  const requested = parseLocalDate(params.week);
   const weekStart = startOfLocalWeek(requested ?? todayLocal());
   const weekEnd = addLocalDays(weekStart, 6);
 
@@ -79,6 +82,17 @@ export default async function HomePage({
 
   const days = localWeekDays(weekStart);
   const isEmpty = events.length === 0;
+
+  // Day view's own state: which of the two shapes of this same week's data to
+  // show, and — for the day shape — which single day. `date` falls back to
+  // today when this week contains it, otherwise the week's first day, which
+  // is the same default `<DayStrip>` highlights.
+  const view = params.view === 'day' ? 'day' : 'week';
+  const today = todayLocal();
+  const requestedDate = parseLocalDate(params.date);
+  const selectedDate = requestedDate && days.includes(requestedDate)
+    ? requestedDate
+    : (days.includes(today) ? today : weekStart);
 
   return (
     <>
@@ -97,20 +111,36 @@ export default async function HomePage({
 
           <OfflineBanner />
 
-          <WeekNav weekStart={weekStart} />
+          <WeekNav weekStart={weekStart} view={view} date={selectedDate} />
 
-          {/* The same grid at every width — a phone gets the identical seven-
-              day layout as a desktop, just narrower, rather than a
-              different, simplified view. `WeekGrid` shrinks its own columns
-              and axis to fit; nothing here scrolls sideways. */}
-          <div>
-            <WeekGrid weekStart={weekStart} events={events} settings={settings} />
-
-            {/* A11Y-5: the screen-reader alternative to the grid — the grid
-                conveys time by absolute position, which a screen reader
-                cannot narrate. */}
-            <DayList dates={days} events={events} headingId="week-sr-list" />
+          <div className="mb-4 flex justify-center">
+            <ViewToggle view={view} week={weekStart} date={selectedDate} />
           </div>
+
+          {view === 'week' ? (
+            /* The same grid at every width — a phone gets the identical
+               seven-day layout as a desktop, just narrower, rather than a
+               different, simplified view. `WeekGrid` shrinks its own columns
+               and axis to fit; nothing here scrolls sideways. */
+            <div>
+              <WeekGrid weekStart={weekStart} events={events} settings={settings} />
+
+              {/* A11Y-5: the screen-reader alternative to the grid — the grid
+                  conveys time by absolute position, which a screen reader
+                  cannot narrate. */}
+              <DayList dates={days} events={events} headingId="week-sr-list" />
+            </div>
+          ) : (
+            /* Day view's cards are ordinary flowed text, not absolutely
+               positioned like the grid's blocks — they need no separate
+               screen-reader list the way the grid does. */
+            <div>
+              <DayStrip days={days} selectedDate={selectedDate} weekStart={weekStart} />
+              <div className="mt-4">
+                <DayView date={selectedDate} events={events} settings={settings} />
+              </div>
+            </div>
+          )}
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <Legend />
@@ -130,7 +160,7 @@ export default async function HomePage({
             </Link>
           </div>
 
-          {isEmpty ? <p className="empty-state mt-4">{t('schedule.empty')}</p> : null}
+          {isEmpty && view === 'week' ? <p className="empty-state mt-4">{t('schedule.empty')}</p> : null}
         </div>
       </section>
 
@@ -141,7 +171,10 @@ export default async function HomePage({
   );
 }
 
-function parseWeek(value: string | undefined): LocalDate | null {
+/** Shared by the `week` and `date` search params — both are plain local
+ *  dates. An unparseable value returns `null` rather than throwing: a bad
+ *  link should still show the visitor something useful (§ HomePage above). */
+function parseLocalDate(value: string | undefined): LocalDate | null {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
   return Number.isNaN(Date.parse(`${value}T12:00:00Z`)) ? null : value;
 }

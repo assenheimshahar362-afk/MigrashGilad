@@ -57,7 +57,7 @@ export function SiteHeader({ pitchName }: { pitchName: string }) {
   }, [overHero]);
 
   const navItemClassName = cn(
-    'press flex h-9 items-center rounded-full px-4 text-sm font-medium whitespace-nowrap',
+    'press tap-target-coarse flex h-9 items-center rounded-full px-4 text-sm font-medium whitespace-nowrap',
     'transition-[background-color,color,box-shadow] duration-(--duration-tip)',
     'ease-(--ease-out-quiet)',
     solid ? 'text-(--ink-muted) hover:text-(--ink)' : 'text-white/85 hover:text-white',
@@ -90,7 +90,11 @@ export function SiteHeader({ pitchName }: { pitchName: string }) {
       <div className="shell flex items-center gap-4 py-3 sm:py-4 lg:grid lg:grid-cols-[1fr_auto_1fr]">
         <Link
           href="/"
-          className="press-sm flex min-w-0 shrink-0 items-center gap-2.5 rounded-(--radius-input) py-0.5"
+          // Shrinkable on purpose: the wordmark beside the badge already
+          // truncates, but a `shrink-0` here would stop that from ever
+          // engaging and push the whole bar wider than a 320px phone once the
+          // accessibility font scale enlarges the name.
+          className="press-sm tap-target-coarse flex min-w-0 items-center gap-2.5 rounded-(--radius-input) py-0.5"
           aria-label={pitchName}
         >
           {/* The badge is decorative here: the name it carries is set beside it

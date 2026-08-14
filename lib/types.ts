@@ -265,6 +265,15 @@ export function firstNameOnly(fullName: string): string {
   return fullName.trim().split(/\s+/)[0] ?? fullName;
 }
 
+/**
+ * The title shown for an event anywhere on the public schedule — the grid
+ * block, the screen-reader day list, and the day-view cards all need exactly
+ * this rule, so it lives once here rather than being re-derived per view.
+ */
+export function eventDisplayTitle(event: PublicEvent): string {
+  return event.source === 'request' ? firstNameOnly(event.title) : event.title;
+}
+
 /** The same range every day of the week — no per-day exceptions any more. */
 export const DEFAULT_OPENING_HOURS: OpeningHours = {
   '0': ['07:00', '23:00'],

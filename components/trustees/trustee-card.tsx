@@ -19,7 +19,10 @@ export function TrusteeCard({ trustee }: { trustee: TrusteeRow }) {
   return (
     <li
       className={cn(
-        'card relative flex flex-col p-6 text-center',
+        // `min-w-0`: a grid item defaults to `min-width: auto`, so without it
+        // the card refuses to shrink below the intrinsic width of the two
+        // action buttons below and spills out of its own column.
+        'card relative flex min-w-0 flex-col p-6 text-center',
         // Muted, not removed. The saturation drop does more of the work than
         // opacity alone, which on a white card just looks like a render glitch.
         muted && 'opacity-75 saturate-50',
@@ -48,7 +51,11 @@ export function TrusteeCard({ trustee }: { trustee: TrusteeRow }) {
         <p className="mt-2 text-sm font-semibold text-danger-ink">{t('trustees.unavailable')}</p>
       ) : null}
 
-      <div className="mt-5 flex gap-2 pt-1">
+      {/* Call and WhatsApp sit side by side whenever they fit and stack when
+          they do not — two full-width targets on a narrow phone read better
+          than two cramped half-width ones, and it is what keeps the card
+          inside its column at the largest accessibility font scale. */}
+      <div className="mt-5 flex flex-wrap gap-2 pt-1">
         <Action
           href={telLink(trustee.phone_e164)}
           disabled={muted}
@@ -90,8 +97,11 @@ function Action({
   children: React.ReactNode;
 }) {
   const className = cn(
-    'press tap-target flex flex-1 items-center justify-center gap-2 rounded-(--radius-input)',
-    'border border-(--hairline) bg-(--surface-raised) px-4 text-sm font-semibold',
+    // `basis-28` is the wrap threshold rather than a fixed width: the pair
+    // shares one row while each half can hold ~7rem, and drops to a stack
+    // below that instead of overflowing the card.
+    'press tap-target flex min-w-0 flex-1 basis-28 items-center justify-center gap-2 rounded-(--radius-input)',
+    'border border-(--hairline) bg-(--surface-raised) px-3 text-sm font-semibold sm:px-4',
     'transition-[background-color,border-color,color,transform] duration-(--duration-press)',
     'ease-(--ease-out-quiet)',
     disabled

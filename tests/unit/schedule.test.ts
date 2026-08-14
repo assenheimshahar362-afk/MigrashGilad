@@ -2,14 +2,16 @@ import { describe, expect, it } from 'vitest';
 import {
   assertRequestWindow,
   assertWithinOpeningHours,
+  clusterOverlappingEvents,
   communityFillRanges,
   conflictingEvents,
+  eventsWithCommunityFill,
   gridHourRange,
   hoursForDate,
   isDayClosed,
   layoutDayEvents,
 } from '@/lib/schedule';
-import { toInstant } from '@/lib/time';
+import { minutesSinceMidnight, toInstant } from '@/lib/time';
 import { AppError } from '@/lib/errors';
 import { DEFAULT_OPENING_HOURS, SITE_SETTINGS, type PublicEvent } from '@/lib/types';
 
@@ -253,6 +255,83 @@ describe('communityFillRanges — every genuinely empty minute is community time
     // shared grid axis — still only reports gaps inside that window.
     const association = { ...event('06:00', '23:30'), usageType: 'association' as const };
     expect(communityFillRanges([association], DAY_START, DAY_END)).toEqual([]);
+  });
+});
+
+describe('clusterOverlappingEvents — the grouping day view\'s combined card relies on', () => {
+  it('gives a lone event its own single-item cluster', () => {
+    const clusters = clusterOverlappingEvents([event('17:00', '18:00')]);
+    expect(clusters).toHaveLength(1);
+    expect(clusters[0]).toHaveLength(1);
+  });
+
+  it('groups a community and an association event sharing the exact same slot', () => {
+    const a = event('16:00', '19:00');
+    const b = { ...event('16:00', '19:00'), id: 'b', usageType: 'association' as const };
+    const clusters = clusterOverlappingEvents([a, b]);
+
+    expect(clusters).toHaveLength(1);
+    expect(clusters[0]).toHaveLength(2);
+    // This is exactly the pair `<DayView>`'s combined card renders as one
+    // merged "half field each" card instead of two stacked ones.
+    expect(new Set(clusters[0]!.map((e) => e.usageType))).toEqual(
+      new Set(['community', 'association']),
+    );
+  });
+
+  it('keeps back-to-back, non-overlapping events in separate clusters', () => {
+    const a = event('17:00', '18:00');
+    const b = { ...event('18:00', '19:00'), id: 'b' };
+    expect(clusterOverlappingEvents([a, b])).toHaveLength(2);
+  });
+});
+
+describe('eventsWithCommunityFill — the day view and week grid must agree on this', () => {
+  it('returns null for a day the pitch is closed', () => {
+    const openingHours = { ...DEFAULT_OPENING_HOURS, '3': null };
+    expect(eventsWithCommunityFill([], '2026-08-05', openingHours)).toBeNull();
+  });
+
+  it('fills a whole open day with community time when nothing is booked', () => {
+    const result = eventsWithCommunityFill([], '2026-08-05', DEFAULT_OPENING_HOURS);
+    expect(result).toHaveLength(1);
+    expect(result![0]).toMatchObject({ usageType: 'community', description: null });
+  });
+
+  it('leaves a real booking alone and fills only the gaps around it', () => {
+    const booking = event('17:00', '18:00');
+    const result = eventsWithCommunityFill([booking], '2026-08-05', DEFAULT_OPENING_HOURS)!;
+
+    expect(result).toContainEqual(booking);
+    // The booking plus a fill before and a fill after its 07:00–23:00 day.
+    expect(result).toHaveLength(3);
+  });
+
+  // `getSchedule` widens its query by a day on each side, so the list handed
+  // to this function routinely carries neighbouring days' events. They must
+  // not appear on this day, and — because `communityFillRanges` compares by
+  // minutes-since-midnight — must not punch a hole in its coverage either.
+  it('ignores events belonging to an adjacent day', () => {
+    const neighbour = { ...event('16:00', '19:00', '2026-08-06'), id: 'neighbour' };
+    const result = eventsWithCommunityFill([neighbour], '2026-08-05', DEFAULT_OPENING_HOURS)!;
+
+    expect(result).not.toContainEqual(neighbour);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ usageType: 'community' });
+  });
+
+  it('covers the full opening hours with no gap when the day is unbooked', () => {
+    const result = eventsWithCommunityFill([], '2026-08-05', DEFAULT_OPENING_HOURS)!;
+    const covered = result
+      .map((e) => [minutesSinceMidnight(e.startsAt), minutesSinceMidnight(e.endsAt)])
+      .sort((a, b) => a[0]! - b[0]!);
+
+    expect(covered[0]![0]).toBe(7 * 60);
+    expect(covered.at(-1)![1]).toBe(23 * 60);
+    // Contiguous: each range starts exactly where the previous one ended.
+    for (let i = 1; i < covered.length; i += 1) {
+      expect(covered[i]![0]).toBe(covered[i - 1]![1]);
+    }
   });
 });
 

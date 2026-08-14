@@ -111,7 +111,7 @@ export function RegisterForm({ next }: { next: string }) {
           }}
           aria-invalid={showAckError || undefined}
           aria-describedby={showAckError ? `${id}-ack-error` : undefined}
-          className="mt-1 size-4 shrink-0 cursor-pointer accent-primary"
+          className="mt-0.5 size-5 shrink-0 cursor-pointer accent-primary"
         />
         <span className="text-sm leading-relaxed text-(--ink-muted)">
           {t('register.approval_checkbox')}

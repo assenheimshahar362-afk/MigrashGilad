@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 import { formatTimeRange, minutesSinceMidnight } from '@/lib/time';
 import { usageTypeStyle } from '@/lib/usage-type';
-import { firstNameOnly, type PublicEvent } from '@/lib/types';
+import { eventDisplayTitle, type PublicEvent } from '@/lib/types';
 import { TimeRange } from '@/components/ui/ltr';
 
 /**
@@ -46,7 +46,7 @@ export function EventBlock({
   const insetInlineStart = `calc(${(col / cols) * 100}% + 1px)`;
 
   const range = formatTimeRange(event.startsAt, event.endsAt);
-  const title = displayTitle(event);
+  const title = eventDisplayTitle(event);
   // An unbooked stretch synthesized as a plain "community time" card (§
   // week-grid.tsx) has nothing to say beyond its own usage type — its title
   // IS the usage label, so the third line would just repeat the first.
@@ -84,13 +84,4 @@ export function EventBlock({
       ) : null}
     </div>
   );
-}
-
-/**
- * FR-4: for approved public requests, the requester's FIRST NAME only. The
- * `events` row created by approve_request() stores the full name as the title,
- * so the trimming happens at render.
- */
-function displayTitle(event: PublicEvent): string {
-  return event.source === 'request' ? firstNameOnly(event.title) : event.title;
 }

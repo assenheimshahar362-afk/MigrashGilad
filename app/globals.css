@@ -684,6 +684,24 @@
   font-size: 125%;
 }
 
+/* The week nav packs five controls onto one line (§ week-nav.tsx). Its own
+   `min-[360px]` breakpoint cannot catch this case: `rem` inside a media query
+   resolves against the INITIAL root font size, never the scaled one, so an
+   enlarged font never widens the breakpoint. Handled here instead — the range
+   takes its own line again, exactly as it does on the narrowest phones,
+   because an ellipsised date is worse than a second line for the very readers
+   who turned this scale on. */
+:root[data-a11y-font-scale='lg'] .week-nav,
+:root[data-a11y-font-scale='xl'] .week-nav {
+  flex-wrap: wrap;
+}
+
+:root[data-a11y-font-scale='lg'] .week-nav > .week-nav-range,
+:root[data-a11y-font-scale='xl'] .week-nav > .week-nav-range {
+  order: -1;
+  width: 100%;
+}
+
 :root[data-a11y-contrast='true'] {
   --hairline: currentColor;
   --hairline-strong: currentColor;
@@ -769,6 +787,19 @@
 .tap-target {
   min-inline-size: 44px;
   min-block-size: 44px;
+}
+
+/* The same 44px floor, but only where a finger is doing the pointing.
+   Some chrome is drawn deliberately compact on desktop — the header nav
+   pills, the hero's scroll cue — and 44px there would coarsen proportions
+   for a mouse that does not need it. The catch is that `lg` is not the same
+   thing as "desktop": a tablet in landscape is 1024px wide AND touch, so it
+   gets the compact desktop layout with no way to hit it accurately. Keyed to
+   the input device rather than the viewport, which is the actual question. */
+@media (pointer: coarse) {
+  .tap-target-coarse {
+    min-block-size: 44px;
+  }
 }
 
 .safe-bottom {

@@ -25,7 +25,12 @@ import { cn } from '@/lib/utils';
 const buttonVariants = cva(
   cn(
     'relative isolate inline-flex select-none items-center justify-center gap-2',
-    'rounded-(--radius-input) font-semibold whitespace-nowrap',
+    // `max-w-full` + a wrapping label rather than `whitespace-nowrap`: the
+    // long Hebrew calls to action here ("הגשת בקשה לשימוש במגרש") cannot fit
+    // one line on a 320px phone, and a button that refuses to wrap does not
+    // shrink — it widens the page and takes the whole layout with it. Short
+    // labels are unaffected, since they never reach the wrap point.
+    'max-w-full rounded-(--radius-input) text-center font-semibold text-balance',
     'transition-[translate,scale,background-color,border-color,color,box-shadow,opacity]',
     'duration-(--duration-press) ease-(--ease-out-quiet)',
     'active:scale-[0.97]',
@@ -114,7 +119,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
           that is still resting on the screen. */}
       <span
         className={cn(
-          'inline-flex items-center gap-2 transition-opacity duration-(--duration-tip)',
+          'inline-flex min-w-0 items-center justify-center gap-2',
+          'transition-opacity duration-(--duration-tip)',
           loading && 'opacity-0',
         )}
       >

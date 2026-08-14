@@ -141,6 +141,13 @@ export function AccessibilityMenu() {
           className={cn(
             'fixed end-4 z-50 w-72 max-w-[calc(100vw-2rem)]',
             'bottom-[8.75rem] lg:bottom-[5.25rem]',
+            // A popover anchored to a bottom corner grows UPWARDS, so on a
+            // short viewport — a phone held in landscape is barely 375px tall
+            // — its full natural height runs off the top of the screen and
+            // takes the controls with it. Capped to whatever room is actually
+            // left above the launcher, scrolling inside past that point.
+            'max-h-[calc(100dvh-9.75rem)] overflow-y-auto overscroll-contain',
+            'lg:max-h-[calc(100dvh-6.25rem)]',
             'origin-bottom rounded-(--radius-card) border border-(--hairline)',
             'bg-(--surface-raised) p-4 shadow-(--shadow-lg)',
             'data-[state=open]:animate-[anchored-menu-in_180ms_var(--ease-out-quiet)_both]',

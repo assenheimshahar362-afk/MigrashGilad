@@ -5,12 +5,15 @@ import {
   minutesFromTime,
   minutesSinceMidnight,
   overlaps,
+  timeFromMinutes,
+  toInstant,
   weekdayOfLocalDate,
   type LocalDate,
   type LocalTime,
 } from '@/lib/time';
 import type { OpeningHours, PublicEvent, PublicSettings } from '@/lib/types';
 import { AppError } from '@/lib/errors';
+import { t } from '@/lib/i18n';
 
 /**
  * Opening hours for one local date. All seven weekdays are looked up the same
@@ -69,30 +72,28 @@ export function conflictingEvents(events: PublicEvent[], start: Date, end: Date)
 
 /**
  * Association and community time may now share a slot (the events table only
- * forbids two events of the SAME category overlapping), so the grid can no
- * longer assume one event ever fully owns its time range. This assigns each
- * event a column and a column count within its overlap cluster, the classic
- * calendar side-by-side layout: events that never overlap anything else get
- * the full width (`cols: 1`), and events sharing a slot split it evenly.
- *
- * Generic rather than hardcoded to two columns — nothing here assumes the
- * cluster size, so it keeps working if a third category is ever added.
+ * forbids two events of the SAME category overlapping), so neither the grid
+ * nor the day view can assume one event ever fully owns its time range. This
+ * groups events into overlap clusters — chronological runs of events that
+ * chain-overlap each other — without deciding what a cluster of more than one
+ * event should look like; `layoutDayEvents` (side-by-side columns, for the
+ * grid) and the day view's combined card are two different answers to that
+ * built on top of the same grouping.
  */
-export function layoutDayEvents<T extends { startsAt: string; endsAt: string }>(
+export function clusterOverlappingEvents<T extends { startsAt: string; endsAt: string }>(
   events: T[],
-): Array<{ event: T; col: number; cols: number }> {
+): T[][] {
   // Timestamps are compared as instants, never as raw strings: a real event's
   // `starts_at` comes back from Supabase as "...+00:00" while the synthesized
-  // community-time filler (§ week-grid.tsx) is built with `.toISOString()`,
-  // which produces "...000Z". Those two spellings of the same instant sort
-  // differently as strings — "+" < "." — which used to make a filler ending
-  // exactly when a real event starts look like it was still open, merging two
-  // back-to-back, non-overlapping events into one cluster and splitting both
-  // into half-width columns instead of stacking them full-width.
+  // community-time filler (§ eventsWithCommunityFill) is built with
+  // `.toISOString()`, which produces "...000Z". Those two spellings of the
+  // same instant sort differently as strings — "+" < "." — which used to make
+  // a filler ending exactly when a real event starts look like it was still
+  // open, merging two back-to-back, non-overlapping events into one cluster.
   //
   // Parsed once per event and cached, not re-parsed on every comparison —
-  // `startMs`/`endMs` are each read 3-4 times per event below (sort, column
-  // search, cluster bookkeeping) as this runs on every render of the week grid.
+  // `startMs`/`endMs` are each read a few times per event below (sort,
+  // clustering) as this runs on every render of the week grid.
   const cache = new Map<T, { start: number; end: number }>();
   const parsed = (event: T) => {
     let value = cache.get(event);
@@ -107,12 +108,41 @@ export function layoutDayEvents<T extends { startsAt: string; endsAt: string }>(
 
   const sorted = [...events].sort((a, b) => startMs(a) - startMs(b) || endMs(a) - endMs(b));
 
-  const layout: Array<{ event: T; col: number; cols: number }> = [];
+  const clusters: T[][] = [];
   let cluster: T[] = [];
   let clusterEnd = -Infinity;
 
   const flush = () => {
-    if (cluster.length === 0) return;
+    if (cluster.length > 0) clusters.push(cluster);
+    cluster = [];
+    clusterEnd = -Infinity;
+  };
+
+  for (const event of sorted) {
+    if (cluster.length > 0 && startMs(event) >= clusterEnd) flush();
+    cluster.push(event);
+    if (cluster.length === 1 || endMs(event) > clusterEnd) clusterEnd = endMs(event);
+  }
+  flush();
+
+  return clusters;
+}
+
+/**
+ * The classic calendar side-by-side layout, built on `clusterOverlappingEvents`:
+ * events that never overlap anything else get the full width (`cols: 1`), and
+ * events sharing a slot split it evenly. Generic rather than hardcoded to two
+ * columns — nothing here assumes the cluster size, so it keeps working if a
+ * third category is ever added.
+ */
+export function layoutDayEvents<T extends { startsAt: string; endsAt: string }>(
+  events: T[],
+): Array<{ event: T; col: number; cols: number }> {
+  const startMs = (event: T) => new Date(event.startsAt).getTime();
+  const endMs = (event: T) => new Date(event.endsAt).getTime();
+
+  const layout: Array<{ event: T; col: number; cols: number }> = [];
+  for (const cluster of clusterOverlappingEvents(events)) {
     // Greedy column assignment: each event takes the first column whose
     // previous occupant has already ended by the time it starts.
     const columnEnds: number[] = [];
@@ -129,17 +159,7 @@ export function layoutDayEvents<T extends { startsAt: string; endsAt: string }>(
     }
     const cols = columnEnds.length;
     for (const p of placed) layout.push({ ...p, cols });
-    cluster = [];
-    clusterEnd = -Infinity;
-  };
-
-  for (const event of sorted) {
-    if (cluster.length > 0 && startMs(event) >= clusterEnd) flush();
-    cluster.push(event);
-    if (cluster.length === 1 || endMs(event) > clusterEnd) clusterEnd = endMs(event);
   }
-  flush();
-
   return layout;
 }
 
@@ -173,6 +193,53 @@ export function communityFillRanges(
   }
   if (cursor < dayEnd) gaps.push({ start: cursor, end: dayEnd });
   return gaps;
+}
+
+/**
+ * One local date's events, with every genuinely empty stretch of its opening
+ * hours synthesized into a "community time" filler event — so a day never
+ * simply reads as blank during open hours. Shared by the week grid and the
+ * day view, which each render this list differently but must agree on what
+ * it contains. `null` when the day is closed (§FR-37a) — there is nothing to
+ * fill and no opening hours to fill it against.
+ *
+ * The filler is placed BEFORE the real events, only for a stable sort; by
+ * construction it never overlaps one, so `clusterOverlappingEvents` always
+ * gives it its own cluster.
+ */
+export function eventsWithCommunityFill(
+  events: PublicEvent[],
+  date: LocalDate,
+  openingHours: OpeningHours,
+): PublicEvent[] | null {
+  const dayHours = hoursForDate(openingHours, date);
+  if (!dayHours) return null;
+
+  // Narrowed to `date` FIRST, and deliberately so: `getSchedule` widens its
+  // query by a day on each side (§ lib/data.ts) so an event straddling
+  // midnight is not lost, which means the list handed in here routinely
+  // carries events belonging to the neighbouring days. `communityFillRanges`
+  // compares by minutes-since-midnight and cannot tell them apart, so an
+  // unfiltered list would let yesterday's 16:00–19:00 booking both appear as
+  // a phantom card on today and punch a matching hole in today's community
+  // coverage.
+  const dayEvents = eventsForDate(events, date);
+
+  const fill = communityFillRanges(dayEvents, minutesFromTime(dayHours[0]), minutesFromTime(dayHours[1])).map(
+    (range): PublicEvent => ({
+      id: `community-fill-${date}-${range.start}`,
+      title: t('usage.community'),
+      description: null,
+      usageType: 'community',
+      startsAt: toInstant(date, timeFromMinutes(range.start)).toISOString(),
+      endsAt: toInstant(date, timeFromMinutes(range.end)).toISOString(),
+      source: 'manual',
+      contactName: null,
+      contactPhone: null,
+    }),
+  );
+
+  return [...fill, ...dayEvents];
 }
 
 /**

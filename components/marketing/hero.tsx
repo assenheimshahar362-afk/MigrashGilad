@@ -111,7 +111,7 @@ export function Hero() {
       <a
         href="#schedule"
         className={cn(
-          'absolute inset-x-0 bottom-4 mx-auto hidden w-fit items-center gap-1.5 rounded-(--radius-chip)',
+          'tap-target-coarse absolute inset-x-0 bottom-4 mx-auto hidden w-fit items-center gap-1.5 rounded-(--radius-chip)',
           'bg-primary-800 px-3.5 py-2 text-xs font-medium text-white lg:flex',
           'border border-white/15 shadow-(--shadow-md)',
           'transition-colors duration-(--duration-tip) hover:bg-primary-700',

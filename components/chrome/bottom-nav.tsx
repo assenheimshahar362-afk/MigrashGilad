@@ -112,21 +112,21 @@ export function BottomNav() {
       )}
     >
       <ul className="mx-auto flex max-w-[560px]">
-        <li className="flex-1">
+        <li className="min-w-0 flex-1">
           <button
             type="button"
             onClick={() => openRequestModal()}
             className={cn(tabClassName, 'w-full text-(--ink-muted)')}
           >
             <REQUEST_TAB.Icon className="relative size-[22px]" aria-hidden strokeWidth={1.75} />
-            <span className="relative">{REQUEST_TAB.label}</span>
+            <span className="relative max-w-full text-center">{REQUEST_TAB.label}</span>
           </button>
         </li>
 
         {TABS.map(({ href, section, label, Icon }) => {
           const active = onHome && activeSection === section;
           return (
-            <li key={href} className="flex-1">
+            <li key={href} className="min-w-0 flex-1">
               <Link
                 href={href}
                 aria-current={active ? 'page' : undefined}
@@ -141,7 +141,10 @@ export function BottomNav() {
                 <span
                   aria-hidden
                   className={cn(
-                    'absolute top-1 h-8 w-14 rounded-(--radius-chip)',
+                    // `max-w-full`: five tabs on a 320px phone leave 64px each,
+                    // which is narrower than this pill's own 3.5rem once the
+                    // accessibility font scale is raised.
+                    'absolute top-1 h-8 w-14 max-w-full rounded-(--radius-chip)',
                     active ? 'bg-primary-50' : 'bg-transparent',
                   )}
                 />
@@ -150,7 +153,7 @@ export function BottomNav() {
                   aria-hidden
                   strokeWidth={active ? 2.25 : 1.75}
                 />
-                <span className="relative">{label}</span>
+                <span className="relative max-w-full text-center">{label}</span>
               </Link>
             </li>
           );
