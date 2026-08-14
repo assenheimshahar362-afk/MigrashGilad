@@ -12,7 +12,13 @@ import { cn } from '@/lib/utils';
  */
 export function PitchWordmark({ name, className }: { name: string; className?: string }) {
   return (
-    <span className={cn('inline-flex min-w-0 items-center gap-1.5', className)}>
+    // `max-w-full` as well as `min-w-0`: the two answer different questions.
+    // `min-w-0` lets this shrink when it IS a flex item; `max-w-full` caps it
+    // when it is not, so the truncate below still engages under a parent that
+    // never constrained it — an inline wrapper, say (§ site-header.tsx). The
+    // name is the one string on the page long enough to push the whole layout
+    // sideways when the reader has scaled their text up.
+    <span className={cn('inline-flex min-w-0 max-w-full items-center gap-1.5', className)}>
       <Dot />
       <span className="min-w-0 truncate">{name}</span>
       <Dot />

@@ -114,7 +114,14 @@ export function SiteHeader({ pitchName }: { pitchName: string }) {
             )}
           />
 
-          <span className="min-w-0">
+          {/* `flex`, not a bare span: `min-width` does not apply to a
+              non-replaced INLINE box, so as a plain <span> this wrapper
+              silently did nothing. Nothing then constrained the inline-flex
+              wordmark inside it, its `truncate` could never engage, and the
+              name sized to its own content — which is fine at 100% text and
+              blows the header (and with it the page) past the viewport once
+              Chrome's text-size setting scales the type up. */}
+          <span className="flex min-w-0">
             <PitchWordmark
               name={pitchName}
               className={cn(
