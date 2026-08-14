@@ -108,7 +108,7 @@ export function BottomNav() {
     <nav
       aria-label={t('nav.primary')}
       className={cn(
-        'chrome-blur sticky bottom-0 z-30 border-t border-(--hairline) safe-bottom lg:hidden',
+        'chrome-blur fixed inset-x-0 bottom-0 z-30 border-t border-(--hairline) safe-bottom lg:hidden',
       )}
     >
       <ul className="mx-auto flex max-w-[560px]">

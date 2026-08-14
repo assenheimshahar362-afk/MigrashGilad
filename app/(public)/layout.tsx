@@ -34,7 +34,7 @@ export default async function PublicLayout({ children }: { children: React.React
     // nothing on the public site opens a `<Tooltip>` directly.
     <TooltipProvider delayDuration={300}>
       <RequestModalProvider>
-        <div className="flex min-h-dvh flex-col">
+        <div className="flex min-h-dvh flex-col pb-20 lg:pb-0">
           <SiteHeader pitchName={settings.pitchName} />
 
           <main id="main" className="flex-1">
