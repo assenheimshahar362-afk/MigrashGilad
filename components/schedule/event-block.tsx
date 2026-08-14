@@ -68,24 +68,14 @@ export function EventBlock({
       )}
       style={{ top: `${top}%`, height: `${height}%`, insetInlineStart, width }}
     >
-      {/* Text starts at `sm`, and deliberately not below it. Seven columns on
-          a 390px phone leaves each day about 45px, which at the size this
-          used to shrink to fits roughly six characters — so every block on
-          the week rendered the same truncated stub ("זמן ק…") regardless of
-          what it actually was. That is not smaller information, it is none:
-          the fill, the leading rule and the pattern already say which
-          category a band is, and the legend under the grid names them.
-          Nothing is lost that a phone could read in the first place, and the
-          block keeps its full `aria-label` at every width, so the accessible
-          name and <DayList> are untouched. */}
-      <div className="hidden sm:block">
-        <span className="block truncate leading-[1.25]">{title}</span>
+      <div>
+        <span className="block break-words leading-[1.15] sm:truncate sm:leading-[1.25]">{title}</span>
         <TimeRange
           range={range}
-          className="tnum block text-[0.5rem] font-medium leading-[1.3] sm:text-[0.6875rem]"
+          className="tnum hidden text-[0.5rem] font-medium leading-[1.3] sm:block sm:text-[0.6875rem]"
         />
         {showTypeLabel ? (
-          <span className="block truncate text-[0.5rem] font-normal leading-[1.25] sm:text-[0.625rem]">
+          <span className="hidden truncate text-[0.5rem] font-normal leading-[1.25] sm:block sm:text-[0.625rem]">
             {style.label}
           </span>
         ) : null}

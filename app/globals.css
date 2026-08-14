@@ -221,6 +221,7 @@
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
     background: var(--surface);
+    overflow-x: clip;
   }
 
   body {
@@ -780,7 +781,6 @@
 .ltr-run {
   direction: ltr;
   unicode-bidi: isolate;
-  display: inline-block;
 }
 
 /* A11Y-1: every interactive element is at least 44×44. */
