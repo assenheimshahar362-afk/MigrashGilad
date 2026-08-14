@@ -60,11 +60,16 @@ export function WeekGrid({
   for (let m = startMinute; m <= endMinute; m += 120) hourMarks.push(m);
 
   return (
-    // The same seven-day grid at every width, with no scroll of its own at
-    // any width — the seven columns SHRINK to fit the shell instead of
-    // overflowing it. The hour axis narrows and the day-name text drops a
-    // size below `sm` so a 320px phone still holds all seven without a
-    // scrollbar; nothing is cropped, just smaller.
+    // All seven days at every width, with no scroll of its own — the columns
+    // SHRINK to fit the shell instead of overflowing it.
+    //
+    // What changes below `sm` is what a column carries, not how many there
+    // are: at ~45px per day there is no room for text, so a block drops to a
+    // bare tinted band (§ event-block.tsx) and the grid reads as "when is the
+    // pitch busy this week" rather than as a table with every cell elided to
+    // the same truncated stub. The day strip, the hour axis and the legend
+    // still carry names and times, and the accessible name on each block is
+    // identical at every width.
     <div className="pitch-field overflow-clip rounded-(--radius-card) border border-(--hairline) shadow-(--shadow-sm)">
       <DayHeader days={days} today={today} />
 
@@ -150,12 +155,26 @@ function DayHeader({ days, today }: { days: LocalDate[]; today: LocalDate }) {
  *  the grid, now that the axis marks every two hours instead of one. */
 const MIN_HOUR_HEIGHT = 32;
 
-/** The grid's body height: 68vh, but never so short that an hour row falls
- *  below its minimum. */
+/** Phones carry no text inside a block (§ event-block.tsx), so an hour row
+ *  only has to stay tall enough to read as a band rather than a line. Holding
+ *  the desktop 32px there cost roughly 160px of scroll on a 16-hour day for
+ *  height nothing was using. */
+const MIN_HOUR_HEIGHT_MOBILE = 22;
+
+/** The grid's body height, as CSS custom properties the class list below
+ *  consumes — one floor per breakpoint, since a media query cannot be
+ *  expressed in an inline style. Never so short that an hour row falls below
+ *  its minimum for that width. */
 function bodyStyle(startMinute: number, endMinute: number) {
   const hours = (endMinute - startMinute) / 60;
-  return { minHeight: `${Math.ceil(hours * MIN_HOUR_HEIGHT)}px` };
+  return {
+    '--grid-min-h': `${Math.ceil(hours * MIN_HOUR_HEIGHT_MOBILE)}px`,
+    '--grid-min-h-sm': `${Math.ceil(hours * MIN_HOUR_HEIGHT)}px`,
+  } as React.CSSProperties;
 }
+
+/** Shared by the axis and every day column so the two can never drift apart. */
+const BODY_CLASS = 'relative h-[54vh] min-h-(--grid-min-h) sm:h-[68vh] sm:min-h-(--grid-min-h-sm)';
 
 /** The touchline: the hour axis, on the right in RTL. */
 function HourAxis({
@@ -171,14 +190,14 @@ function HourAxis({
 
   return (
     <div className="relative w-10 shrink-0 pitch-touchline sm:w-14" aria-hidden>
-      <div className="relative h-[68vh]" style={bodyStyle(startMinute, endMinute)}>
+      <div className={BODY_CLASS} style={bodyStyle(startMinute, endMinute)}>
         {hourMarks.map((minute) => (
           <div
             key={minute}
             className="absolute inset-x-0 -translate-y-1/2 pe-1 text-end sm:pe-2"
             style={{ top: `${((minute - startMinute) / span) * 100}%` }}
           >
-            <span className="tnum text-[0.5625rem] font-medium text-(--ink-faint) sm:text-[0.6875rem]">
+            <span className="tnum text-[0.625rem] font-medium text-(--ink-faint) sm:text-[0.6875rem]">
               {timeFromMinutes(minute)}
             </span>
           </div>
@@ -220,7 +239,7 @@ function DayColumn({
     <div
       className={cn('relative flex-1', dayIndex > 0 && 'pitch-daydivider', isToday && 'pitch-today')}
     >
-      <div className="relative h-[68vh]" style={bodyStyle(startMinute, endMinute)}>
+      <div className={BODY_CLASS} style={bodyStyle(startMinute, endMinute)}>
         {/* Hour hairlines. */}
         {hourMarks.map((minute) => (
           <div

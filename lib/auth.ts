@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { AppError } from '@/lib/errors';
@@ -74,11 +75,23 @@ export async function touchAdminProfile(identity: AdminIdentity): Promise<void> 
   );
 }
 
-/** §16 cron routes are protected by a shared secret, not a session. */
+/**
+ * §16 cron routes are protected by a shared secret, not a session.
+ *
+ * Compared with `timingSafeEqual` rather than `!==`: a plain string compare
+ * returns on the first differing byte, so how long it takes leaks how much of
+ * the prefix was right, and this secret is a bearer token guarding
+ * `anonymise_old_requests` — a destructive job. The digest step is what makes
+ * the comparison safe on unequal lengths, which `timingSafeEqual` itself
+ * rejects by throwing.
+ */
 export function assertCronSecret(request: Request): void {
   const expected = process.env.CRON_SECRET;
   if (!expected) throw new AppError('ERR_NOT_AUTHORIZED');
 
-  const header = request.headers.get('authorization');
-  if (header !== `Bearer ${expected}`) throw new AppError('ERR_NOT_AUTHORIZED');
+  const header = request.headers.get('authorization') ?? '';
+  const a = createHash('sha256').update(header).digest();
+  const b = createHash('sha256').update(`Bearer ${expected}`).digest();
+
+  if (!timingSafeEqual(a, b)) throw new AppError('ERR_NOT_AUTHORIZED');
 }

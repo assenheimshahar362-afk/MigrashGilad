@@ -430,6 +430,27 @@ language sql stable security definer set search_path = public as $$
   );
 $$;
 
+-- Is this call coming from the service role (the cron routes and the public
+-- write surface), rather than from a signed-in person?
+--
+-- Needed because `is_admin()` resolves `auth.uid()` against the allowlist, and
+-- the service role has no `auth.uid()` at all — so a plain `is_admin()` guard
+-- on a maintenance function would lock out the very cron job that is supposed
+-- to run it. Reads the JWT role claim PostgREST sets, so it is true only for a
+-- caller presenting the service-role key, which never reaches the browser
+-- (§7, lib/supabase/admin.ts).
+-- `nullif(..., '')` before the cast is load-bearing: current_setting's
+-- missing_ok form yields NULL when the GUC was never set, but an empty STRING
+-- when it was set and cleared, and `''::jsonb` raises rather than returning
+-- null — which would turn every call into an error instead of a false.
+create or replace function is_service_role() returns boolean
+language sql stable set search_path = public as $$
+  select coalesce(
+    nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role',
+    ''
+  ) = 'service_role';
+$$;
+
 -- The row belonging to the caller, used to block self-demotion.
 create or replace function my_allowlist_id() returns uuid
 language sql stable security definer set search_path = public as $$
@@ -763,6 +784,15 @@ language plpgsql security definer set search_path = public as $$
 declare
   n int;
 begin
+  -- `security definer` bypasses RLS, and EXECUTE reaches every signed-in
+  -- user — and signing up is open to the public (§ /api/auth/sign-up), so
+  -- "authenticated" is not a trusted set. Without this, any stranger who
+  -- confirmed an email address could expire the pending queue by calling
+  -- the RPC straight against PostgREST.
+  if not (is_admin() or is_service_role()) then
+    raise exception 'ERR_NOT_AUTHORIZED';
+  end if;
+
   with expired as (
     update booking_requests
        set status = 'expired', version = version + 1
@@ -787,6 +817,21 @@ language plpgsql security definer set search_path = public as $$
 declare
   n int;
 begin
+  -- Same exposure as expire_stale_requests() above, but destructive and
+  -- irreversible: this overwrites requester name, phone and note in place.
+  if not (is_admin() or is_service_role()) then
+    raise exception 'ERR_NOT_AUTHORIZED';
+  end if;
+
+  -- The retention window is a caller-supplied parameter, so it is also the
+  -- payload. `p_months => 0` (or a negative value) turns "anonymise records
+  -- older than two years" into "anonymise every terminal record there has
+  -- ever been" in a single call. Clamped to a floor rather than trusted:
+  -- there is no legitimate reason to scrub anything younger than a month.
+  if p_months is null or p_months < 1 then
+    raise exception 'ERR_VALIDATION';
+  end if;
+
   with scrubbed as (
     update booking_requests
        set requester_name = 'משתמש שהוסר',
@@ -833,6 +878,23 @@ declare
   v_end   timestamptz;
   created int := 0;
 begin
+  -- Unlike the two functions above this one IS called with a signed-in
+  -- session (the admin recurring-rules screen), so `authenticated` keeps its
+  -- EXECUTE grant and the check has to live here.
+  if not (is_admin() or is_service_role()) then
+    raise exception 'ERR_NOT_AUTHORIZED';
+  end if;
+
+  -- The horizon drives the week-stepping loop below, once per active rule.
+  -- Left unbounded it is a cheap denial of service — a single call with a
+  -- horizon of a few hundred thousand days spins the loop tens of thousands
+  -- of times per rule, each iteration attempting an INSERT — and it would
+  -- also flood the public calendar. 400 days comfortably covers the 120-day
+  -- horizon the callers actually pass.
+  if p_horizon_days is null or p_horizon_days < 1 or p_horizon_days > 400 then
+    raise exception 'ERR_VALIDATION';
+  end if;
+
   for rule in
     select * from recurring_rules where is_active
   loop
@@ -916,13 +978,20 @@ $$;
 
 -- Which events would a proposed closure cancel? Used to populate the
 -- confirmation dialog before anything is written.
+-- Admin-gated even though it only reads: `returns setof events` hands back the
+-- WHOLE row, and `security definer` means RLS never trims it. That includes
+-- `contact_phone` and `contact_name`, which the public schedule deliberately
+-- withholds unless `show_contact` is set (§7 PII, `toPublicEvent` in
+-- lib/types.ts). Without this guard, widening the range to a century turns a
+-- confirmation-dialog helper into a dump of every contact number on file.
 create or replace function preview_closure_conflicts(
   p_starts_at timestamptz,
   p_ends_at   timestamptz
 ) returns setof events
 language sql stable security definer set search_path = public as $$
   select * from events
-   where status = 'scheduled'
+   where (select is_admin() or is_service_role())
+     and status = 'scheduled'
      and tstzrange(starts_at, ends_at, '[)') && tstzrange(p_starts_at, p_ends_at, '[)')
    order by starts_at;
 $$;
@@ -951,11 +1020,24 @@ grant execute on function set_manager_role(uuid, admin_role, boolean) to authent
 grant execute on function add_manager(citext, text, admin_role) to authenticated;
 grant execute on function create_closure(text, timestamptz, timestamptz, boolean, boolean) to authenticated;
 grant execute on function preview_closure_conflicts(timestamptz, timestamptz) to authenticated;
+-- Called from the admin recurring-rules screen with a signed-in session, so
+-- this one keeps its `authenticated` grant; the guard is inside the function.
 grant execute on function materialize_recurring(int) to authenticated;
-grant execute on function anonymise_old_requests(int) to authenticated;
-grant execute on function expire_stale_requests() to authenticated;
+
+-- Maintenance, invoked ONLY by the cron routes with the service-role key
+-- (app/api/cron/*). Nothing in the product calls them with a user session, so
+-- `authenticated` has no business holding EXECUTE — the internal guards added
+-- above are the belt, this is the braces. Signing up is open to the public,
+-- which makes `authenticated` an untrusted set (§ /api/auth/sign-up).
+revoke execute on function anonymise_old_requests(int) from authenticated;
+revoke execute on function expire_stale_requests() from authenticated;
+grant execute on function anonymise_old_requests(int) to service_role;
+grant execute on function expire_stale_requests() to service_role;
+grant execute on function materialize_recurring(int) to service_role;
+
 grant execute on function is_admin() to authenticated, anon;
 grant execute on function is_super_admin() to authenticated, anon;
+grant execute on function is_service_role() to authenticated, anon;
 
 
 -- ===========================================================================
