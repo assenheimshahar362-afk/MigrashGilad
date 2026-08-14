@@ -86,11 +86,10 @@ const HTML = `<!doctype html>
     font-family: 'Rubik', sans-serif; font-weight: 900; font-size: 92px; line-height: 1;
     color: #ffffff; letter-spacing: -0.01em; text-shadow: 0 4px 24px rgba(0,0,0,0.35);
   }
-  .tagline {
-    margin-top: 22px; font-family: 'Heebo', sans-serif; font-weight: 500; font-size: 36px;
-    color: rgba(255,255,255,0.88);
-  }
-  .rule { margin-top: 30px; display: flex; align-items: center; gap: 14px; }
+  /* The rule carries the gap the tagline used to sit in. Without it the
+     title and the rule would close to 30px and read as crowded, where the
+     card previously had ~88px of air between the name and the meta line. */
+  .rule { margin-top: 42px; display: flex; align-items: center; gap: 14px; }
   .dot { width: 10px; height: 10px; border-radius: 999px; background: #d63b2b; }
   .meta { font-family: 'Heebo', sans-serif; font-weight: 500; font-size: 27px; color: rgba(255,255,255,0.72); }
 </style>
@@ -103,7 +102,6 @@ const HTML = `<!doctype html>
     <div class="content">
       <img class="badge" src="${fileUrl('public/images/logo.png')}" />
       <div class="title">מגרש גלעד</div>
-      <div class="tagline">מגרש הכדורגל הקהילתי</div>
       <div class="rule">
         <span class="dot"></span>
         <span class="meta">לוח זמנים · הגשת בקשה למגרש</span>
