@@ -70,7 +70,7 @@ export function WeekGrid({
     // the same truncated stub. The day strip, the hour axis and the legend
     // still carry names and times, and the accessible name on each block is
     // identical at every width.
-    <div className="pitch-field overflow-clip rounded-(--radius-card) border border-(--hairline) shadow-(--shadow-sm)">
+    <div className="pitch-field max-w-full overflow-clip rounded-(--radius-card) border border-(--hairline) shadow-(--shadow-sm)">
       <DayHeader days={days} today={today} />
 
       {/* The grid is read-only: nothing in it is a control, so there is no
@@ -109,14 +109,14 @@ function DayHeader({ days, today }: { days: LocalDate[]; today: LocalDate }) {
     <div className="sticky top-(--header-h) z-20 flex border-b border-(--grid-line-strong) bg-(--surface-raised)">
       {/* Spacer matching the hour axis width — narrower on a phone, see
           <HourAxis>. */}
-      <div className="w-10 shrink-0 pitch-touchline sm:w-14" aria-hidden />
+      <div className="w-[clamp(1.75rem,9%,3.5rem)] shrink-0 pitch-touchline sm:w-14" aria-hidden />
 
       {days.map((date, index) => {
         const isToday = date === today;
         return (
           <div
             key={date}
-            className={cn('relative flex-1 py-2 text-center sm:py-2.5', index > 0 && 'pitch-daydivider')}
+            className={cn('relative min-w-0 flex-1 py-2 text-center sm:py-2.5', index > 0 && 'pitch-daydivider')}
           >
             <div
               className={cn(
@@ -131,7 +131,13 @@ function DayHeader({ days, today }: { days: LocalDate[]; today: LocalDate }) {
                 eye finds it before it has read anything. */}
             <div
               className={cn(
-                'tnum mx-auto mt-1 flex size-6 items-center justify-center rounded-full text-xs sm:size-7 sm:text-sm',
+                // A capped square rather than a fixed `size-6`: that width is
+                // in rem, so seven of them grow with the reader's text-size
+                // setting and set a floor the seven columns cannot go below —
+                // at 250% they alone demand more than a 320px phone has, and
+                // the grid starts pushing the page sideways. Capped, each disc
+                // shrinks with its own column instead.
+                'tnum mx-auto mt-1 flex aspect-square w-full max-w-6 items-center justify-center rounded-full text-xs sm:max-w-7 sm:text-sm',
                 isToday
                   ? 'bg-primary font-bold text-white shadow-(--shadow-xs)'
                   : 'font-medium text-(--ink)',
@@ -189,12 +195,16 @@ function HourAxis({
   const span = endMinute - startMinute;
 
   return (
-    <div className="relative w-10 shrink-0 pitch-touchline sm:w-14" aria-hidden>
+    <div className="relative w-[clamp(1.75rem,9%,3.5rem)] shrink-0 pitch-touchline sm:w-14" aria-hidden>
       <div className={BODY_CLASS} style={bodyStyle(startMinute, endMinute)}>
         {hourMarks.map((minute) => (
           <div
             key={minute}
-            className="absolute inset-x-0 -translate-y-1/2 pe-1 text-end sm:pe-2"
+            // `overflow-hidden`: the label is rem-sized, so at a large
+            // text-size setting "07:00" grows wider than the touchline it sits
+            // in and escapes sideways. Contained here rather than allowed to
+            // widen the grid — the ruling it labels is still exact.
+            className="absolute inset-x-0 -translate-y-1/2 overflow-hidden pe-1 text-end sm:pe-2"
             style={{ top: `${((minute - startMinute) / span) * 100}%` }}
           >
             <span className="tnum text-[0.625rem] font-medium text-(--ink-faint) sm:text-[0.6875rem]">
@@ -237,7 +247,7 @@ function DayColumn({
 
   return (
     <div
-      className={cn('relative flex-1', dayIndex > 0 && 'pitch-daydivider', isToday && 'pitch-today')}
+      className={cn('relative min-w-0 flex-1', dayIndex > 0 && 'pitch-daydivider', isToday && 'pitch-today')}
     >
       <div className={BODY_CLASS} style={bodyStyle(startMinute, endMinute)}>
         {/* Hour hairlines. */}
