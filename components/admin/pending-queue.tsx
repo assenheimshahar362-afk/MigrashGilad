@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import type { BookingRequestRow } from '@/lib/types';
 import { RequestCard } from '@/components/admin/request-card';
+import { AppBadgeSync } from '@/components/admin/app-badge-sync';
 
 /**
  * §10.7 pending queue, sorted by requested start time ascending (FR-32).
@@ -78,6 +79,9 @@ export function PendingQueue({ initial }: { initial: BookingRequestRow[] }) {
   if (requests.length === 0) {
     return (
       <div className="empty-state">
+        {/* Mounted on this branch too, and deliberately: an empty queue is
+            precisely when the app icon's badge has to be cleared. */}
+        <AppBadgeSync count={0} />
         <p className="font-semibold">{t('admin.pending_empty')}</p>
         <p className="mt-1 text-sm text-(--ink-muted)">{t('admin.pending_empty_help')}</p>
       </div>
@@ -86,6 +90,8 @@ export function PendingQueue({ initial }: { initial: BookingRequestRow[] }) {
 
   return (
     <>
+      <AppBadgeSync count={requests.length} />
+
       {/* The queue is the first thing an admin sees on opening the dashboard, so
           the cards cascade in. It happens once per session, which is the only
           frequency at which a stagger is worth its 240ms. */}

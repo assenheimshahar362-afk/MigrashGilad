@@ -4,6 +4,7 @@ import { after } from 'next/server';
 import { t } from '@/lib/i18n';
 import { formatDateShort, formatTimeRange, formatWeekdayLong, localDate } from '@/lib/time';
 import { reportError } from '@/lib/errors';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { pushToAdmins } from '@/lib/notifications/push';
 import { emailAdminsNewRequest } from '@/lib/notifications/email';
 import type { BookingRequestRow } from '@/lib/types';
@@ -26,6 +27,10 @@ export function notifyAdminsOfNewRequest(request: BookingRequestRow): void {
       url: `/admin?request=${request.id}`,
       tag: `request-${request.id}`,
       requestId: request.id,
+      // The whole queue, not "+1": two requests arriving close together must
+      // not race to both claim they are the first, and an admin who already
+      // cleared some elsewhere should see what is actually left.
+      badgeCount: await countPendingRequests(),
     };
 
     // Channels are independent: a broken Gmail credential must not stop web push.
@@ -54,5 +59,32 @@ export function notifyAdminsOfNewRequest(request: BookingRequestRow): void {
   } catch (error) {
     reportError(error, { where: 'notifyAdminsOfNewRequest.after', requestId: request.id });
     void run();
+  }
+}
+
+/**
+ * How many requests are waiting on a decision — the number the app icon badge
+ * shows. Counted with `head: true` so Postgres returns the count and no rows.
+ *
+ * Read with the service role: this runs in `after()`, detached from the
+ * visitor's request, and the visitor who just submitted is anonymous — there is
+ * no admin session here for RLS to resolve.
+ *
+ * Falls back to `undefined` rather than 0 on failure. A zero would tell every
+ * admin's phone to CLEAR its badge (§ lib/app-badge.ts), quietly hiding a queue
+ * that is not empty; `undefined` leaves whatever the badge already said.
+ */
+async function countPendingRequests(): Promise<number | undefined> {
+  try {
+    const { count, error } = await createAdminClient()
+      .from('booking_requests')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'pending');
+
+    if (error) throw error;
+    return count ?? undefined;
+  } catch (error) {
+    reportError(error, { where: 'countPendingRequests' });
+    return undefined;
   }
 }

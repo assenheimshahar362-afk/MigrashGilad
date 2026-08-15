@@ -29,6 +29,13 @@ export interface PushPayload {
   url: string;
   tag?: string;
   requestId?: string;
+  /**
+   * How many requests are waiting, for the number on the app icon
+   * (§ lib/app-badge.ts). Carried in the payload rather than fetched by the
+   * service worker: at push time the app is closed and the worker holds no
+   * session, so it cannot ask the API for a count of its own.
+   */
+  badgeCount?: number;
 }
 
 /**

@@ -10,6 +10,7 @@ import {
   type PrecacheEntry,
   type SerwistGlobalConfig,
 } from 'serwist';
+import { setAppBadgeCount } from '@/lib/app-badge';
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -111,28 +112,42 @@ self.addEventListener('push', (event) => {
     body: string;
     url: string;
     tag?: string;
+    badgeCount?: number;
   };
 
   event.waitUntil(
-    self.registration.showNotification(payload.title, {
-      body: payload.body,
-      tag: payload.tag,
-      icon: '/icons/icon-192.png',
-      badge: '/icons/badge-72.png',
-      dir: 'rtl',
-      lang: 'he',
-      data: { url: payload.url },
-      // `actions` is part of the Notifications API for service workers but is
-      // absent from TypeScript's DOM `NotificationOptions`, which describes the
-      // window-context constructor. G3 needs the approve action ON the
-      // notification, so the cast stays.
-      actions: [
-        { action: 'approve', title: 'לאישור' },
-        { action: 'open', title: 'פתיחה' },
-      ],
-    } as NotificationOptions & {
-      actions: Array<{ action: string; title: string }>;
-    }),
+    Promise.all([
+      // The number on the app icon. Set from HERE rather than from the page,
+      // because this is the moment that matters: the phone is in a pocket and
+      // the app is not running. Awaited inside `waitUntil` so the worker is not
+      // killed before the platform has applied it.
+      //
+      // Omitted from the payload (the count could not be read) means "leave the
+      // badge alone" — see `countPendingRequests` in lib/notifications/fan-out.
+      typeof payload.badgeCount === 'number'
+        ? setAppBadgeCount(payload.badgeCount, self.navigator)
+        : Promise.resolve(),
+
+      self.registration.showNotification(payload.title, {
+        body: payload.body,
+        tag: payload.tag,
+        icon: '/icons/icon-192.png',
+        badge: '/icons/badge-72.png',
+        dir: 'rtl',
+        lang: 'he',
+        data: { url: payload.url },
+        // `actions` is part of the Notifications API for service workers but is
+        // absent from TypeScript's DOM `NotificationOptions`, which describes
+        // the window-context constructor. G3 needs the approve action ON the
+        // notification, so the cast stays.
+        actions: [
+          { action: 'approve', title: 'לאישור' },
+          { action: 'open', title: 'פתיחה' },
+        ],
+      } as NotificationOptions & {
+        actions: Array<{ action: string; title: string }>;
+      }),
+    ]),
   );
 });
 
