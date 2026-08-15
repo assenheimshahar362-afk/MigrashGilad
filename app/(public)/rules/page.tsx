@@ -56,11 +56,22 @@ export default async function RulesPage() {
           <h2 className="text-h2">כללי שימוש</h2>
           <ul className="list-disc space-y-2 ps-5">
             <li>המגרש פתוח לכל חברי הקהילה בשעות הפעילות המופיעות למעלה, בכל שבעת ימות השבוע.</li>
+            {/* The minimum-notice clause appears only when there IS one. At
+                `minLeadHours: 0` this used to read "לפחות 0 שעות לפני המועד",
+                which states a rule the site no longer enforces. */}
             <li>
-              שימוש מאורגן מחייב בקשה מראש — לפחות {settings.minLeadHours} שעות לפני המועד, ועד{' '}
-              {settings.maxHorizonDays} ימים קדימה.
+              שימוש מאורגן מחייב בקשה מראש —{' '}
+              {settings.minLeadHours > 0
+                ? `לפחות ${settings.minLeadHours} שעות לפני המועד, ועד ${settings.maxHorizonDays} ימים קדימה.`
+                : `אפשר להגיש גם למועד קרוב, ועד ${settings.maxHorizonDays} ימים קדימה.`}
             </li>
-            <li>משך מקסימלי לבקשה: {settings.maxDurationMin} דקות.</li>
+            <li>
+              משך מקסימלי לבקשה: {settings.maxDurationMin} דקות
+              {settings.maxDurationMin % 60 === 0
+                ? ` (${settings.maxDurationMin / 60 === 2 ? 'שעתיים' : `${settings.maxDurationMin / 60} שעות`})`
+                : ''}
+              .
+            </li>
             <li>יש לפנות את המגרש בשעה שנקבעה, כדי לא לפגוע בקבוצה שאחריכם.</li>
             <li>אין להשאיר ציוד, אשפה או בקבוקים במגרש בסוף השימוש.</li>
             <li>נעלי פקקים מתכת אסורות לשימוש על הדשא.</li>

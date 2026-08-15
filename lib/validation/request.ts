@@ -54,6 +54,31 @@ export const requestFormSchema = z
 
 export type RequestFormValues = z.infer<typeof requestFormSchema>;
 
+/**
+ * The form schema plus the booking-length cap, which the base schema cannot
+ * carry because it is a setting (`PublicSettings.maxDurationMin`), not a
+ * constant. Built per-render from the same settings object the route handler
+ * validates against, so the inline error and the server's answer can never
+ * disagree about where the limit is.
+ *
+ * The error lands on `endTime` because that is the field the visitor changes to
+ * fix it — the start time is the one they actually wanted.
+ */
+export function requestFormSchemaWithLimits(maxDurationMin: number) {
+  return requestFormSchema.refine(
+    (v) => minutesBetween(v.startTime, v.endTime) <= maxDurationMin,
+    { path: ['endTime'], message: 'ERR_DURATION' },
+  );
+}
+
+/** Both are `HH:MM` on the same local day — the schema already rejects a form
+ *  where they are not, and a request may not cross midnight (§ schedule.ts). */
+function minutesBetween(startTime: string, endTime: string): number {
+  const [sh = 0, sm = 0] = startTime.split(':').map(Number);
+  const [eh = 0, em = 0] = endTime.split(':').map(Number);
+  return eh * 60 + em - (sh * 60 + sm);
+}
+
 export const scheduleRangeInput = z
   .object({
     from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

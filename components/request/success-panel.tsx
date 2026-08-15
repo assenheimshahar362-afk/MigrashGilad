@@ -1,8 +1,6 @@
-import Link from 'next/link';
 import { PartyPopper } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import { formatDateLong, formatWeekdayLong, timeFromMinutes, minutesFromTime } from '@/lib/time';
-import { Button } from '@/components/ui/button';
 import { TimeRange } from '@/components/ui/ltr';
 
 /**
@@ -14,6 +12,11 @@ import { TimeRange } from '@/components/ui/ltr';
  * screen's only job is to say that plainly and hand the visitor their own
  * slot back for confirmation — there is nothing here to save, copy, or come
  * back to later.
+ *
+ * It carries no action either. This is a dialog over the schedule, not a page
+ * the visitor navigated away to, so "back to the schedule" was offering to take
+ * them somewhere they already were — the close affordances (the X, the
+ * backdrop, Escape) are the whole of it.
  */
 export function SuccessPanel({
   date,
@@ -51,12 +54,6 @@ export function SuccessPanel({
           className="mt-1 block text-h3"
         />
       </section>
-
-      <div className="flex flex-wrap gap-2">
-        <Button asChild size="lg">
-          <Link href="/">{t('common.back_home')}</Link>
-        </Button>
-      </div>
     </div>
   );
 }

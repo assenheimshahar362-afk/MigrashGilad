@@ -15,6 +15,7 @@ import {
 } from '@/lib/time';
 import { WeekGrid } from '@/components/schedule/week-grid';
 import { WeekNav } from '@/components/schedule/week-nav';
+import { WeekSwipe } from '@/components/schedule/week-swipe';
 import { DayList } from '@/components/schedule/day-list';
 import { DayStrip } from '@/components/schedule/day-strip';
 import { DayView } from '@/components/schedule/day-view';
@@ -94,6 +95,12 @@ export default async function HomePage({
     ? requestedDate
     : (days.includes(today) ? today : weekStart);
 
+  // The two weeks a swipe can reach (§ week-swipe.tsx). Built exactly the way
+  // `<WeekNav>` builds its chevrons' hrefs — a swipe and a tap on the arrow it
+  // stands in for must land on the same URL, including staying in day view.
+  const weekHref = (target: LocalDate) =>
+    view === 'day' ? `/?view=day&week=${target}` : `/?week=${target}`;
+
   return (
     <>
       <Hero />
@@ -111,36 +118,46 @@ export default async function HomePage({
 
           <OfflineBanner />
 
-          <WeekNav weekStart={weekStart} view={view} date={selectedDate} />
+          {/* FR-6: swipe left/right anywhere on the calendar — the nav strip
+              and the grid or day cards below it — to change the week. The
+              chevrons inside `<WeekNav>` do the same thing for anyone not on a
+              touch device. */}
+          <WeekSwipe
+            weekStart={weekStart}
+            prevHref={weekHref(addLocalDays(weekStart, -7))}
+            nextHref={weekHref(addLocalDays(weekStart, 7))}
+          >
+            <WeekNav weekStart={weekStart} view={view} date={selectedDate} />
 
-          <div className="mb-4 flex justify-center">
-            <ViewToggle view={view} week={weekStart} date={selectedDate} />
-          </div>
-
-          {view === 'week' ? (
-            /* The same grid at every width — a phone gets the identical
-               seven-day layout as a desktop, just narrower, rather than a
-               different, simplified view. `WeekGrid` shrinks its own columns
-               and axis to fit; nothing here scrolls sideways. */
-            <div>
-              <WeekGrid weekStart={weekStart} events={events} settings={settings} />
-
-              {/* A11Y-5: the screen-reader alternative to the grid — the grid
-                  conveys time by absolute position, which a screen reader
-                  cannot narrate. */}
-              <DayList dates={days} events={events} headingId="week-sr-list" />
+            <div className="mb-4 flex justify-center">
+              <ViewToggle view={view} week={weekStart} date={selectedDate} />
             </div>
-          ) : (
-            /* Day view's cards are ordinary flowed text, not absolutely
-               positioned like the grid's blocks — they need no separate
-               screen-reader list the way the grid does. */
-            <div>
-              <DayStrip days={days} selectedDate={selectedDate} weekStart={weekStart} />
-              <div className="mt-4">
-                <DayView date={selectedDate} events={events} settings={settings} />
+
+            {view === 'week' ? (
+              /* The same grid at every width — a phone gets the identical
+                 seven-day layout as a desktop, just narrower, rather than a
+                 different, simplified view. `WeekGrid` shrinks its own columns
+                 and axis to fit; nothing here scrolls sideways. */
+              <div>
+                <WeekGrid weekStart={weekStart} events={events} settings={settings} />
+
+                {/* A11Y-5: the screen-reader alternative to the grid — the grid
+                    conveys time by absolute position, which a screen reader
+                    cannot narrate. */}
+                <DayList dates={days} events={events} headingId="week-sr-list" />
               </div>
-            </div>
-          )}
+            ) : (
+              /* Day view's cards are ordinary flowed text, not absolutely
+                 positioned like the grid's blocks — they need no separate
+                 screen-reader list the way the grid does. */
+              <div>
+                <DayStrip days={days} selectedDate={selectedDate} weekStart={weekStart} />
+                <div className="mt-4">
+                  <DayView date={selectedDate} events={events} settings={settings} />
+                </div>
+              </div>
+            )}
+          </WeekSwipe>
 
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <Legend />

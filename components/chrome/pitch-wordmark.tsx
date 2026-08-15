@@ -2,7 +2,7 @@ import { cn } from '@/lib/utils';
 
 /**
  * The pitch name, bracketed by the two red dots the crest itself uses — one
- * before "מגרש", one after "גלעד". The badge draws them as part of the
+ * before "מגרש", one after "גילעד". The badge draws them as part of the
  * illustration; everywhere the name appears as plain text instead (the header,
  * the footer) it carries the same two dots, so the wordmark reads as the same
  * mark whether it is the raster crest or a line of type.

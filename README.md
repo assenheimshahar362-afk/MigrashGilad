@@ -1,4 +1,4 @@
-# מגרש גלעד — Migrash Gilad
+# מגרש גילעד — Migrash Gilad
 
 Community football pitch management PWA. Hebrew, RTL-only, mobile-first.
 

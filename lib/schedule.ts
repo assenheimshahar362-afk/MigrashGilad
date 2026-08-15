@@ -261,8 +261,17 @@ export function assertRequestWindow(
     throw new AppError('ERR_DURATION', { minutes: settings.maxDurationMin });
   }
 
+  // A slot that has already begun is refused whatever the lead time is. This is
+  // its own check rather than the `leadMs` one below with a zero threshold,
+  // because ERR_LEAD_TIME's message names a number of hours — at
+  // `minLeadHours: 0` that would read "יש להגיש בקשה לפחות 0 שעות מראש", which
+  // states a rule that no longer exists.
+  if (start.getTime() < now.getTime()) throw new AppError('ERR_PAST');
+
+  // FR-17's minimum notice, skipped entirely when it is switched off. Keeping
+  // the branch means re-enabling it is a settings change, not a code change.
   const leadMs = settings.minLeadHours * 60 * 60 * 1000;
-  if (start.getTime() - now.getTime() < leadMs) {
+  if (leadMs > 0 && start.getTime() - now.getTime() < leadMs) {
     throw new AppError('ERR_LEAD_TIME', { hours: settings.minLeadHours });
   }
 

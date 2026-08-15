@@ -570,8 +570,15 @@ begin
     raise exception 'ERR_ALREADY_DECIDED';
   end if;
 
+  -- The cast is load-bearing. A `case` whose branches are all bare literals
+  -- resolves to `text`, and Postgres has no implicit text -> enum assignment
+  -- cast, so without it this raises 42804 ("column is of type
+  -- access_request_status but expression is of type text") and every approval
+  -- fails. A single bare literal (`set status = 'rejected'`) is fine — that one
+  -- stays `unknown` and is coerced to the column's type — which is why only the
+  -- two `case` assignments in this file need it.
   update access_requests
-     set status       = case when p_approve then 'approved' else 'rejected' end,
+     set status       = (case when p_approve then 'approved' else 'rejected' end)::access_request_status,
          decided_at   = now(),
          decided_by   = auth.uid(),
          decided_note = p_note
@@ -656,8 +663,11 @@ begin
           r.requester_name, r.requester_phone, auth.uid())
   returning * into v_event;   -- exclusion constraint raises 23P01 => ERR_SLOT_CONFLICT
 
+  -- `::request_status` for the same reason as in decide_access_request() above:
+  -- an all-literal `case` is `text`, and assigning text to an enum column is
+  -- error 42804.
   update booking_requests
-     set status = case when v_modified then 'approved_modified' else 'approved' end,
+     set status = (case when v_modified then 'approved_modified' else 'approved' end)::request_status,
          decided_by = auth.uid(), decided_at = now(), decision_note = p_note,
          final_start = v_start, final_end = v_end, version = version + 1
    where id = r.id;

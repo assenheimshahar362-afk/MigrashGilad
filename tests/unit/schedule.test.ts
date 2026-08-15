@@ -113,10 +113,37 @@ describe('assertRequestWindow (FR-17, FR-18)', () => {
     ).not.toThrow();
   });
 
-  it('rejects a request inside the minimum lead time', () => {
+  // FR-17's minimum notice is switched OFF (`minLeadHours: 0`): a resident
+  // standing at the gate may ask for the next hour.
+  it('accepts a request for later today, with no minimum notice', () => {
+    expect(() =>
+      assertRequestWindow(
+        settings,
+        toInstant('2026-08-01', '13:00'), // one hour away
+        toInstant('2026-08-01', '14:00'),
+        now,
+      ),
+    ).not.toThrow();
+  });
+
+  it('still refuses a slot that has already started', () => {
+    // "No minimum notice" is not "any time at all" — and this must not surface
+    // as ERR_LEAD_TIME, whose message names a number of hours.
     const error = captureError(() =>
       assertRequestWindow(
         settings,
+        toInstant('2026-08-01', '10:00'),
+        toInstant('2026-08-01', '11:00'),
+        now,
+      ),
+    );
+    expect(error?.code).toBe('ERR_PAST');
+  });
+
+  it('enforces the minimum lead time again if it is switched back on', () => {
+    const error = captureError(() =>
+      assertRequestWindow(
+        { ...settings, minLeadHours: 12 },
         toInstant('2026-08-01', '18:00'), // 6 hours away, lead time is 12
         toInstant('2026-08-01', '19:00'),
         now,
@@ -142,7 +169,33 @@ describe('assertRequestWindow (FR-17, FR-18)', () => {
       assertRequestWindow(
         settings,
         toInstant('2026-08-05', '10:00'),
-        toInstant('2026-08-05', '15:00'), // 5h, max is 180 min
+        toInstant('2026-08-05', '15:00'), // 5h, max is two hours
+        now,
+      ),
+    );
+    expect(error?.code).toBe('ERR_DURATION');
+  });
+
+  // The cap is two hours of activity. Checked on both sides of the boundary,
+  // since an off-by-one here is exactly the kind of thing that only shows up as
+  // a resident being refused the slot they were told they could have.
+  it('accepts exactly two hours and refuses a minute more', () => {
+    expect(settings.maxDurationMin).toBe(120);
+
+    expect(() =>
+      assertRequestWindow(
+        settings,
+        toInstant('2026-08-05', '17:00'),
+        toInstant('2026-08-05', '19:00'),
+        now,
+      ),
+    ).not.toThrow();
+
+    const error = captureError(() =>
+      assertRequestWindow(
+        settings,
+        toInstant('2026-08-05', '17:00'),
+        toInstant('2026-08-05', '19:01'),
         now,
       ),
     );

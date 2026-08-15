@@ -287,9 +287,13 @@ export const DEFAULT_OPENING_HOURS: OpeningHours = {
 
 /** The fixed values `getSettings()` returns — see the note on `PublicSettings`. */
 export const SITE_SETTINGS: PublicSettings = {
-  pitchName: 'מגרש גלעד',
+  pitchName: 'מגרש גילעד',
   openingHours: DEFAULT_OPENING_HOURS,
-  minLeadHours: 12,
+  // No lead time: a request may be made for right now. Past starts are still
+  // refused (ERR_PAST in `assertRequestWindow`) — "no minimum notice" is not
+  // "any time at all".
+  minLeadHours: 0,
   maxHorizonDays: 90,
-  maxDurationMin: 180,
+  // Two hours, the longest single booking anyone may hold the pitch for.
+  maxDurationMin: 120,
 };

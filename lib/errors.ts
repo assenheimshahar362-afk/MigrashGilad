@@ -10,6 +10,7 @@ export const ERROR_CODES = [
   'ERR_PHONE',
   'ERR_RATE_LIMITED',
   'ERR_LEAD_TIME',
+  'ERR_PAST',
   'ERR_HORIZON',
   'ERR_DURATION',
   'ERR_OUTSIDE_HOURS',
@@ -40,6 +41,7 @@ const STATUS: Record<ErrorCode, number> = {
   ERR_PHONE: 400,
   ERR_RATE_LIMITED: 429,
   ERR_LEAD_TIME: 400,
+  ERR_PAST: 400,
   ERR_HORIZON: 400,
   ERR_DURATION: 400,
   ERR_OUTSIDE_HOURS: 400,
@@ -107,6 +109,15 @@ export function codeFromDbError(error: unknown): ErrorCode {
     if (match && isErrorCode(match[0])) return match[0];
   }
   if (error instanceof AppError) return error.code;
+
+  // Nothing recognised it, so the caller is about to answer 500 with a generic
+  // Hebrew message that says nothing about what actually broke. Logged HERE
+  // rather than at each of the ~20 `errorResponse(codeFromDbError(error))` call
+  // sites, because those all shared one blind spot: an unmapped Postgres
+  // failure — a function that does not exist in the live database, a bad cast,
+  // a missing grant — is precisely the class of error that leaves no trace in
+  // the response, and it was being dropped on the floor at every one of them.
+  reportError(error, { where: 'codeFromDbError' });
   return 'ERR_INTERNAL';
 }
 
@@ -122,12 +133,9 @@ export async function handleRoute(fn: () => Promise<Response>): Promise<Response
     if (error instanceof AppError) {
       return errorResponse(error.code, error.vars);
     }
-    const code = codeFromDbError(error);
-    if (code !== 'ERR_INTERNAL') {
-      return errorResponse(code);
-    }
-    reportError(error);
-    return errorResponse('ERR_INTERNAL');
+    // `codeFromDbError` reports anything it cannot map, so there is no second
+    // `reportError` here — that would log every internal error twice.
+    return errorResponse(codeFromDbError(error));
   }
 }
 

@@ -1,12 +1,12 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t, isMessageKey } from '@/lib/i18n';
-import { requestFormSchema, type RequestFormValues } from '@/lib/validation/request';
+import { requestFormSchemaWithLimits, type RequestFormValues } from '@/lib/validation/request';
 import { type PublicSettings } from '@/lib/types';
-import { addLocalDays, toInstant, todayLocal } from '@/lib/time';
+import { addLocalDays, localDate, toInstant, todayLocal } from '@/lib/time';
 import { ArrowLeft, CircleAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Field, Input, Textarea } from '@/components/ui/field';
@@ -45,8 +45,27 @@ export function RequestForm({
   const minDate = leadTimeDate(settings.minLeadHours);
   const maxDate = addLocalDays(todayLocal(), settings.maxHorizonDays);
 
+  // Memoised because `zodResolver` builds a new resolver from it: a fresh
+  // schema object on every keystroke would swap the resolver mid-edit.
+  const schema = useMemo(
+    () => requestFormSchemaWithLimits(settings.maxDurationMin),
+    [settings.maxDurationMin],
+  );
+
+  // Every number a field-level error message can name, in one place — see
+  // `fieldError` on why this is passed unconditionally rather than only to the
+  // field that currently needs it.
+  const errorVars = useMemo(
+    () => ({
+      minutes: settings.maxDurationMin,
+      hours: settings.minLeadHours,
+      days: settings.maxHorizonDays,
+    }),
+    [settings.maxDurationMin, settings.minLeadHours, settings.maxHorizonDays],
+  );
+
   const form = useForm<RequestFormValues>({
-    resolver: zodResolver(requestFormSchema),
+    resolver: zodResolver(schema),
     mode: 'onTouched',
     defaultValues: {
       date: prefill.date ?? minDate,
@@ -161,7 +180,12 @@ export function RequestForm({
         <fieldset className="space-y-4">
           <legend className="sr-only">{t('request.step.when')}</legend>
 
-          <Field id="date" label={t('request.field.date')} required error={fieldError(errors.date?.message)}>
+          <Field
+            id="date"
+            label={t('request.field.date')}
+            required
+            error={fieldError(errors.date?.message, errorVars)}
+          >
             {(props) => (
               <Input type="date" min={minDate} max={maxDate} {...props} {...register('date')} />
             )}
@@ -172,7 +196,7 @@ export function RequestForm({
               id="startTime"
               label={t('request.field.start')}
               required
-              error={fieldError(errors.startTime?.message)}
+              error={fieldError(errors.startTime?.message, errorVars)}
             >
               {(props) => <Input type="time" step={900} {...props} {...register('startTime')} />}
             </Field>
@@ -181,7 +205,7 @@ export function RequestForm({
               id="endTime"
               label={t('request.field.end')}
               required
-              error={fieldError(errors.endTime?.message)}
+              error={fieldError(errors.endTime?.message, errorVars)}
             >
               {(props) => <Input type="time" step={900} {...props} {...register('endTime')} />}
             </Field>
@@ -206,14 +230,14 @@ export function RequestForm({
           <Field
             id="participants"
             label={t('request.field.participants')}
-            error={fieldError(errors.participants?.message)}
+            error={fieldError(errors.participants?.message, errorVars)}
           >
             {(props) => (
               <Input type="number" inputMode="numeric" min={1} max={200} {...props} {...register('participants')} />
             )}
           </Field>
 
-          <Field id="note" label={t('request.field.note')} error={fieldError(errors.note?.message)}>
+          <Field id="note" label={t('request.field.note')} error={fieldError(errors.note?.message, errorVars)}>
             {(props) => <Textarea maxLength={500} {...props} {...register('note')} />}
           </Field>
         </fieldset>
@@ -227,7 +251,7 @@ export function RequestForm({
             id="requesterName"
             label={t('request.field.name')}
             required
-            error={fieldError(errors.requesterName?.message)}
+            error={fieldError(errors.requesterName?.message, errorVars)}
           >
             {(props) => (
               <Input
@@ -245,7 +269,7 @@ export function RequestForm({
             label={t('request.field.phone')}
             required
             hint="05X-XXXXXXX"
-            error={fieldError(errors.requesterPhone?.message)}
+            error={fieldError(errors.requesterPhone?.message, errorVars)}
           >
             {(props) => (
               <Input
@@ -369,15 +393,35 @@ function StepIndicator({ step }: { step: Step }) {
  * Zod messages carry error CODES, not sentences, so that the same schema can be
  * reused on the server where the response format is `{ code, message }`. This
  * maps a code back to its Hebrew string at the point of render.
+ *
+ * `vars` is not optional. Several of these messages are parameterised —
+ * ERR_DURATION names the cap in minutes, ERR_LEAD_TIME in hours, ERR_HORIZON in
+ * days — and `t()` leaves an unfilled `{placeholder}` in the string verbatim
+ * rather than failing, so a caller that forgets them renders the literal text
+ * "משך הבקשה חורג מהמותר ({minutes} דקות)" to the visitor. Requiring the
+ * argument is what stops that being a silent mistake: the numbers all come from
+ * one settings object the form already holds, so there is never a reason not to
+ * pass them.
  */
-function fieldError(message: string | undefined): string | undefined {
+function fieldError(
+  message: string | undefined,
+  vars: Record<string, string | number>,
+): string | undefined {
   if (!message) return undefined;
   const key = `error.${message}`;
-  return isMessageKey(key) ? t(key) : t('error.ERR_VALIDATION');
+  return isMessageKey(key) ? t(key, vars) : t('error.ERR_VALIDATION', vars);
 }
 
-/** The earliest local date that satisfies the minimum lead time (FR-17). */
+/**
+ * The earliest local date that satisfies the minimum lead time (FR-17), which
+ * at `minLeadHours: 0` is simply today.
+ *
+ * Read through `localDate` rather than `toISOString().slice(0, 10)`: the latter
+ * is the UTC date, so between midnight and 03:00 Israel time it names the
+ * previous day and the picker would offer a date already in the past. That was
+ * always wrong; a 12-hour lead just kept the boundary far enough away to hide
+ * it.
+ */
 function leadTimeDate(minLeadHours: number): string {
-  const earliest = new Date(Date.now() + minLeadHours * 60 * 60 * 1000);
-  return earliest.toISOString().slice(0, 10);
+  return localDate(new Date(Date.now() + minLeadHours * 60 * 60 * 1000));
 }

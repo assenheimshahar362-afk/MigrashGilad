@@ -51,6 +51,9 @@ export default async function MonthSchedulePage({
         {/* §11.4: chevrons mirror. In RTL the previous month is to the right. */}
         <Link
           href={`/schedule/month?month=${prev.slice(0, 7)}`}
+          // Same month page, a different month in it — see `week-swipe.tsx` for
+          // why paging a calendar must not scroll the reader back to the top.
+          scroll={false}
           aria-label={t('schedule.prev_month')}
           className="press tap-target flex items-center justify-center rounded-(--radius-input) border border-(--hairline) bg-(--surface-raised) transition-[background-color,border-color,transform] duration-(--duration-press) ease-(--ease-out-quiet) hover:border-(--hairline-strong) hover:bg-(--surface-hover)"
         >
@@ -61,6 +64,7 @@ export default async function MonthSchedulePage({
 
         <Link
           href={`/schedule/month?month=${next.slice(0, 7)}`}
+          scroll={false}
           aria-label={t('schedule.next_month')}
           className="press tap-target flex items-center justify-center rounded-(--radius-input) border border-(--hairline) bg-(--surface-raised) transition-[background-color,border-color,transform] duration-(--duration-press) ease-(--ease-out-quiet) hover:border-(--hairline-strong) hover:bg-(--surface-hover)"
         >

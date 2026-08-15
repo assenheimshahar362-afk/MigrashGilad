@@ -9,9 +9,13 @@ import { addLocalDays, formatWeekRange, startOfLocalWeek, todayLocal, type Local
 import { cn } from '@/lib/utils';
 
 /**
- * FR-6: previous/next week, a "today" reset, and a date picker. Navigation must
- * be swipeable on touch devices and must update the URL so a week can be
- * shared.
+ * FR-6: previous/next week, a "today" reset, and a date picker. Every control
+ * here is a link, so the week is always in the URL and can be shared.
+ *
+ * FR-6's swipe lives in `week-swipe.tsx`, which wraps this component along with
+ * the calendar below it. It used to be bound to this strip alone, which meant
+ * the gesture only worked on the one row that already had two arrows on it —
+ * the grid, which is where a thumb actually is, ignored it.
  *
  * §11.4: chevrons imply direction, so they mirror. In RTL the *next* week is to
  * the LEFT, which is why ChevronLeft carries the "next" label — this pairing
@@ -33,9 +37,6 @@ export function WeekNav({
   view?: 'week' | 'day';
   date?: LocalDate;
 }) {
-  const router = useRouter();
-  const touchStart = useRef<{ x: number; y: number } | null>(null);
-
   const prev = addLocalDays(weekStart, -7);
   const next = addLocalDays(weekStart, 7);
   const today = todayLocal();
@@ -46,37 +47,12 @@ export function WeekNav({
   const todayHref =
     view === 'day' ? `/?view=day&week=${startOfLocalWeek(today)}&date=${today}` : '/';
 
-  const onTouchStart = (event: React.TouchEvent) => {
-    const touch = event.touches[0];
-    if (touch) touchStart.current = { x: touch.clientX, y: touch.clientY };
-  };
-
-  const onTouchEnd = (event: React.TouchEvent) => {
-    const start = touchStart.current;
-    const touch = event.changedTouches[0];
-    touchStart.current = null;
-    if (!start || !touch) return;
-
-    const dx = touch.clientX - start.x;
-    const dy = touch.clientY - start.y;
-
-    // A vertical scroll must never be read as a week change; the grid is taller
-    // than the viewport and scrolling is the common gesture.
-    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-
-    // RTL: dragging the content to the right reveals what is to its left, which
-    // is the next week.
-    router.push(dx > 0 ? weekHref(next) : weekHref(prev));
-  };
-
   return (
     <div
       className={cn(
         'week-nav flex flex-wrap items-center justify-center gap-1 px-1 pb-3',
         'min-[360px]:flex-nowrap sm:gap-1.5',
       )}
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
     >
       <NavLink href={weekHref(prev)} label={t('schedule.prev_week')}>
         <ChevronRight className="size-5" aria-hidden />
@@ -101,6 +77,7 @@ export function WeekNav({
           the week you are actually looking at. */}
       <Link
         href={todayHref}
+        scroll={false}
         aria-current={isToday ? 'page' : undefined}
         className={cn(
           'press tap-target flex shrink-0 items-center justify-center rounded-(--radius-input) px-3 sm:px-4',
@@ -136,6 +113,10 @@ function NavLink({
   return (
     <Link
       href={href}
+      // Every control on this strip changes which week the calendar shows, not
+      // which page you are on — see `week-swipe.tsx` for why that has to opt out
+      // of Next's default scroll-to-top.
+      scroll={false}
       aria-label={label}
       className={cn(
         'press tap-target flex shrink-0 items-center justify-center rounded-(--radius-input)',
@@ -208,6 +189,7 @@ function DatePicker({ weekStart, view }: { weekStart: LocalDate; view: 'week' | 
             view === 'day'
               ? `/?view=day&week=${startOfLocalWeek(value)}&date=${value}`
               : `/?week=${startOfLocalWeek(value)}`,
+            { scroll: false },
           );
         }}
         className="pointer-events-none absolute inset-0 opacity-0"

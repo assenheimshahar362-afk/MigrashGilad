@@ -54,6 +54,23 @@ export function SheetContent({
       />
       <DialogPrimitive.Content
         dir="rtl"
+        // Focus the panel itself on open rather than letting Radix fall on the
+        // first focusable child, which here is the close X.
+        //
+        // That default cost a keypress: the X is wrapped in a <Tooltip>, and a
+        // Radix tooltip opens on FOCUS as well as hover, so opening any sheet
+        // immediately put a tooltip layer on top of the dialog — and the first
+        // Escape dismissed the tooltip instead of the sheet. Every sheet in the
+        // app needed Escape twice.
+        //
+        // Landing on the panel is also the better behaviour on its own terms: a
+        // screen reader reads the title and description, and the first Tab goes
+        // to the first real field instead of to "close". Declared before
+        // `{...props}` so an individual sheet can still override it.
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          (event.currentTarget as HTMLElement | null)?.focus();
+        }}
         className={cn(
           'fixed inset-x-0 bottom-0 z-50',
           'max-h-[85dvh] overflow-y-auto overscroll-contain',

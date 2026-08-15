@@ -101,7 +101,7 @@ const HTML = `<!doctype html>
     <div class="scrim-h"></div>
     <div class="content">
       <img class="badge" src="${fileUrl('public/images/logo.png')}" />
-      <div class="title">מגרש גלעד</div>
+      <div class="title">מגרש גילעד</div>
       <div class="rule">
         <span class="dot"></span>
         <span class="meta">לוח זמנים · הגשת בקשה למגרש</span>

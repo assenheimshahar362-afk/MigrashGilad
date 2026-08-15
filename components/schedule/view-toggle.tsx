@@ -50,6 +50,9 @@ function ToggleOption({
   return (
     <Link
       href={href}
+      // Two renderings of one week, so switching between them must leave the
+      // reader exactly where they were standing (§ week-swipe.tsx).
+      scroll={false}
       aria-current={active ? 'page' : undefined}
       className={cn(
         'press tap-target flex items-center justify-center rounded-(--radius-input) px-5',

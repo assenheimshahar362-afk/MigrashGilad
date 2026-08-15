@@ -30,6 +30,10 @@ export function DayStrip({
           <Link
             key={date}
             href={`/?view=day&week=${weekStart}&date=${date}`}
+            // Picking a day swaps the cards below this strip; the strip itself
+            // must not move out from under the finger that tapped it
+            // (§ week-swipe.tsx).
+            scroll={false}
             aria-current={isSelected ? 'date' : undefined}
             className={cn(
               'press flex min-w-0 flex-1 flex-col items-center gap-1 rounded-(--radius-input) py-1.5',

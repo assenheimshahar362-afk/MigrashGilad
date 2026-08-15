@@ -33,7 +33,7 @@ const A11Y_INIT_SCRIPT = `
 
 const SITE_TITLE = `${t('app.name')} — ${t('schedule.title')}`;
 const SITE_DESCRIPTION =
-  'לוח הזמנים של מגרש גלעד. צפייה בשימושי המגרש והגשת בקשה.';
+  'לוח הזמנים של מגרש גילעד. צפייה בשימושי המגרש והגשת בקשה.';
 
 // The card WhatsApp, iMessage, Slack etc. show for a shared link — a share
 // with no image or description reads as a bare, half-broken URL rather than
