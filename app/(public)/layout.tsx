@@ -4,6 +4,7 @@ import { SiteHeader } from '@/components/chrome/site-header';
 import { BottomNav } from '@/components/chrome/bottom-nav';
 import { SiteFooter } from '@/components/chrome/site-footer';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
+import { InstallProvider } from '@/components/pwa/install-context';
 import { RequestModalProvider } from '@/components/request/request-modal-context';
 import { RequestModal } from '@/components/request/request-modal';
 import { RequestModalUrlOpener } from '@/components/request/request-modal-url-opener';
@@ -35,30 +36,35 @@ export default async function PublicLayout({ children }: { children: React.React
     // nothing on the public site opens a `<Tooltip>` directly.
     <TooltipProvider delayDuration={300}>
       <RequestModalProvider>
-        {/* FR-4: the calendar's event-detail sheet. Mounted beside the booking
-            modal rather than inside the schedule page, so the week grid and the
-            day view — and anything else that ever draws an event — all open the
-            same single sheet. */}
-        <EventDetailProvider>
-          <div className="flex min-h-dvh flex-col pb-20 lg:pb-0">
-            <SiteHeader pitchName={settings.pitchName} />
+        {/* §12 install state, shared by the one-time banner and the footer's
+            own install button — `beforeinstallprompt` fires once per load and
+            only a listener that is already attached can catch it. */}
+        <InstallProvider>
+          {/* FR-4: the calendar's event-detail sheet. Mounted beside the
+              booking modal rather than inside the schedule page, so the week
+              grid and the day view — and anything else that ever draws an
+              event — all open the same single sheet. */}
+          <EventDetailProvider>
+            <div className="flex min-h-dvh flex-col pb-20 lg:pb-0">
+              <SiteHeader pitchName={settings.pitchName} />
 
-            {/* `tabIndex={-1}`: without it, activating the skip link only moves
-                the browser's sequential-focus starting point — `document.
-                activeElement` stays on <body>, so a screen reader announces
-                nothing and Safari drops the jump altogether. With it, focus
-                actually lands here and the next Tab continues from the content
-                (WCAG 2.4.1). It never enters the tab order — -1 is reachable
-                by script and by fragment, not by Tab. */}
-            <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
-              {children}
-            </main>
+              {/* `tabIndex={-1}`: without it, activating the skip link only
+                  moves the browser's sequential-focus starting point —
+                  `document.activeElement` stays on <body>, so a screen reader
+                  announces nothing and Safari drops the jump altogether. With
+                  it, focus actually lands here and the next Tab continues from
+                  the content (WCAG 2.4.1). It never enters the tab order — -1
+                  is reachable by script and by fragment, not by Tab. */}
+              <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
+                {children}
+              </main>
 
-            <SiteFooter pitchName={settings.pitchName} />
-            <BottomNav />
-            <InstallPrompt />
-          </div>
-        </EventDetailProvider>
+              <SiteFooter pitchName={settings.pitchName} />
+              <BottomNav />
+              <InstallPrompt />
+            </div>
+          </EventDetailProvider>
+        </InstallProvider>
 
         <RequestModal settings={settings} />
         <Suspense fallback={null}>

@@ -4,11 +4,7 @@ import { useEffect, useState } from 'react';
 import { Download, X } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
+import { useInstall } from '@/components/pwa/install-context';
 
 const VISIT_KEY = 'mg.visits';
 const DISMISS_KEY = 'mg.install-dismissed';
@@ -19,45 +15,34 @@ const DISMISS_KEY = 'mg.install-dismissed';
  * Not the first: a visitor who arrived from a WhatsApp link to check one week's
  * schedule has not yet earned an install prompt, and interrupting them costs
  * more than the install is worth.
+ *
+ * Whether the browser CAN install now is `<InstallProvider>`'s business (the
+ * `beforeinstallprompt` event has to be captured on every visit, not only the
+ * ones this banner shows on); what is left here is the nagging policy — visit
+ * count and dismissal — plus the banner itself.
  */
 export function InstallPrompt() {
-  const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
-  const [visible, setVisible] = useState(false);
+  const { canInstall, isStandalone, isIos, promptInstall } = useInstall();
+  const [earned, setEarned] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const standalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as { standalone?: boolean }).standalone === true;
-
-    if (standalone || localStorage.getItem(DISMISS_KEY) === '1') return;
-
+    if (localStorage.getItem(DISMISS_KEY) === '1') {
+      setDismissed(true);
+      return;
+    }
     const visits = Number(localStorage.getItem(VISIT_KEY) ?? '0') + 1;
     localStorage.setItem(VISIT_KEY, String(visits));
-    if (visits < 2) return;
-
-    const onPrompt = (event: Event) => {
-      event.preventDefault();
-      setDeferred(event as BeforeInstallPromptEvent);
-      setVisible(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', onPrompt);
-
-    // iOS never fires beforeinstallprompt, so the banner there is instructions
-    // rather than a button (§12).
-    if (isIos()) setVisible(true);
-
-    return () => window.removeEventListener('beforeinstallprompt', onPrompt);
+    setEarned(visits >= 2);
   }, []);
-
-  if (!visible) return null;
 
   const dismiss = () => {
     localStorage.setItem(DISMISS_KEY, '1');
-    setVisible(false);
+    setDismissed(true);
   };
+
+  // On iOS there is no event to wait for — the banner IS the instructions.
+  if (isStandalone || dismissed || !earned || (!canInstall && !isIos)) return null;
 
   return (
     <div
@@ -73,16 +58,15 @@ export function InstallPrompt() {
         <div className="min-w-0 flex-1">
           <p className="font-bold">{t('pwa.install_title')}</p>
           <p className="mt-0.5 text-sm text-(--ink-muted)">
-            {deferred ? t('pwa.install_body') : t('pwa.install_ios')}
+            {canInstall ? t('pwa.install_body') : t('pwa.install_ios')}
           </p>
 
-          {deferred ? (
+          {canInstall ? (
             <Button
               size="sm"
               className="mt-3"
               onClick={async () => {
-                await deferred.prompt();
-                await deferred.userChoice;
+                await promptInstall();
                 dismiss();
               }}
             >
@@ -102,8 +86,4 @@ export function InstallPrompt() {
       </div>
     </div>
   );
-}
-
-function isIos(): boolean {
-  return /iphone|ipad|ipod/i.test(navigator.userAgent);
 }

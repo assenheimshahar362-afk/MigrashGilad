@@ -5,6 +5,7 @@ import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import logoMark from '@/public/images/logo-mark.webp';
 import { PitchWordmark } from '@/components/chrome/pitch-wordmark';
+import { InstallAppButton } from '@/components/pwa/install-app-button';
 
 /**
  * The dark footer. It is the only large dark surface left in the product, which
@@ -74,6 +75,13 @@ export function SiteFooter({ pitchName }: { pitchName: string }) {
               {t('contact.hours_value')}
             </li>
           </ul>
+
+          {/* The considered route to installing, as against `<InstallPrompt>`,
+              which interrupts once and can be dismissed for good. The footer is
+              where someone ends up when they are already looking for what else
+              this site can do, and it renders nothing at all on a browser (or a
+              session) where there is nothing to install. */}
+          <InstallAppButton className="mt-6" />
 
           {socials.length > 0 ? (
             <ul className="mt-6 flex items-center gap-2">
