@@ -19,6 +19,7 @@ import {
 import type { PublicEvent, PublicSettings } from '@/lib/types';
 import { EventBlock } from '@/components/schedule/event-block';
 import { NowMarker } from '@/components/schedule/now-marker';
+import { DayOpenLink } from '@/components/schedule/day-open-link';
 
 /**
  * §10.1 time grid. The signature element (§11.3): pitch line-markings drawn as
@@ -87,6 +88,7 @@ export function WeekGrid({
           <DayColumn
             key={date}
             date={date}
+            weekStart={weekStart}
             dayIndex={dayIndex}
             isToday={date === today}
             events={eventsForDate(events, date)}
@@ -219,6 +221,7 @@ function HourAxis({
 
 function DayColumn({
   date,
+  weekStart,
   dayIndex,
   isToday,
   events,
@@ -228,6 +231,7 @@ function DayColumn({
   hourMarks,
 }: {
   date: LocalDate;
+  weekStart: LocalDate;
   dayIndex: number;
   isToday: boolean;
   events: PublicEvent[];
@@ -282,6 +286,15 @@ function DayColumn({
         ))}
 
         <NowMarker date={date} startMinute={startMinute} endMinute={endMinute} />
+
+        {/* Phone-only: the column itself is the tap target, since the blocks
+            inside it are far too narrow to be one (§ day-open-link.tsx). It is
+            the LAST child so it sits above the blocks, and it disappears from
+            `sm` up, where each block opens its own sheet instead. */}
+        <DayOpenLink
+          href={`/?view=day&week=${weekStart}&date=${date}`}
+          label={t('schedule.open_day', { day: formatWeekdayLong(date) })}
+        />
       </div>
     </div>
   );

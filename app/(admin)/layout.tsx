@@ -73,7 +73,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <AdminNav role={identity.role} />
           </div>
 
-          <main id="main" className="mx-auto w-full max-w-[960px] flex-1 px-4 py-8 pb-24">
+          <main
+            id="main"
+            tabIndex={-1}
+            className="mx-auto w-full max-w-[960px] flex-1 px-4 py-8 pb-24 focus:outline-none"
+          >
             {children}
           </main>
 

@@ -26,10 +26,13 @@ export function EventDetailSheet({
   event,
   open,
   onOpenChange,
+  onCloseAutoFocus,
 }: {
   event: PublicEvent | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Returns focus to the block that opened this (§ ui/return-focus.ts). */
+  onCloseAutoFocus?: (event: Event) => void;
 }) {
   // Null only before the first open: the provider deliberately keeps the last
   // event after closing, so the sheet still has something to render while its
@@ -53,6 +56,7 @@ export function EventDetailSheet({
       <SheetContent
         title={heading}
         description={`${formatWeekdayLong(date)}, ${formatDateLong(date)}`}
+        onCloseAutoFocus={onCloseAutoFocus}
       >
         <dl className="space-y-4">
           <DetailRow icon={Clock} label={t('event.time')}>
@@ -116,8 +120,18 @@ export function EventDetailSheet({
   );
 }
 
-/** One labelled fact. The icon is decorative — the `<dt>` beside it already
- *  names the row, so an icon-only label would be the only copy of that name. */
+/**
+ * One labelled fact. The icon is decorative — the `<dt>` it sits in already
+ * names the row, so an icon-only label would be the only copy of that name.
+ *
+ * It lives INSIDE the `<dt>` rather than beside it, and `<dt>`/`<dd>` are the
+ * only children of the row: a description list's content model allows
+ * `dl > div > (dt, dd)` and nothing deeper, and burying the pair one level
+ * further down (the shape this had at first) breaks the association a screen
+ * reader announces — axe reports it as `dlitem`/`definition-list`. Same row
+ * rhythm as the accessibility statement's coordinator card, so the two
+ * label/value blocks in the product read the same way.
+ */
 function DetailRow({
   icon: Icon,
   label,
@@ -129,16 +143,16 @@ function DetailRow({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <span
-        className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-(--surface-sunken) text-(--ink-muted)"
-        aria-hidden
-      >
-        <Icon className="size-4" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <dt className="text-xs font-semibold text-(--ink-faint)">{label}</dt>
-        <dd className="mt-0.5">{children}</dd>
-      </div>
+      <dt className="flex w-28 shrink-0 items-center gap-2.5 pt-1.5 text-xs font-semibold text-(--ink-faint)">
+        <span
+          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-(--surface-sunken) text-(--ink-muted)"
+          aria-hidden
+        >
+          <Icon className="size-4" />
+        </span>
+        {label}
+      </dt>
+      <dd className="min-w-0 flex-1 pt-1.5">{children}</dd>
     </div>
   );
 }

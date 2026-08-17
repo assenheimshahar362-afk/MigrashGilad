@@ -17,11 +17,15 @@ import type { PublicSettings } from '@/lib/types';
  * so the booking flow doesn't introduce a second dialog language.
  */
 export function RequestModal({ settings }: { settings: PublicSettings }) {
-  const { isOpen, prefill, closeRequestModal } = useRequestModal();
+  const { isOpen, prefill, closeRequestModal, onCloseAutoFocus } = useRequestModal();
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && closeRequestModal()}>
-      <SheetContent title={t('request.title')} description={t('app.tagline')}>
+      <SheetContent
+        title={t('request.title')}
+        description={t('app.tagline')}
+        onCloseAutoFocus={onCloseAutoFocus}
+      >
         <RequestForm settings={settings} prefill={prefill} />
       </SheetContent>
     </Sheet>

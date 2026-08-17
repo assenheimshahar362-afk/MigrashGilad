@@ -54,38 +54,60 @@ export function EventBlock({
   const showTypeLabel = title !== style.label;
   const label = showTypeLabel ? `${title}, ${range}, ${style.label}` : `${title}, ${range}`;
 
+  /* A tinted card with a solid rule on its leading edge, in the manner of
+     Google Calendar. The rule is `border-inline-start`, so it lands on the
+     correct side under dir="rtl" without a second declaration. */
+  const blockClass = cn(
+    'absolute z-10 overflow-hidden rounded-[6px] px-1 py-0.5 text-start sm:px-2 sm:py-1',
+    'text-[0.5625rem] font-semibold leading-tight sm:text-xs',
+    style.block,
+    style.patternClass,
+  );
+  const position = { top: `${top}%`, height: `${height}%`, insetInlineStart, width };
+
+  const content = (
+    <div>
+      <span className="block break-words leading-[1.15] sm:truncate sm:leading-[1.25]">{title}</span>
+      <TimeRange
+        range={range}
+        className="tnum hidden text-[0.5rem] font-medium leading-[1.3] sm:block sm:text-[0.6875rem]"
+      />
+      {showTypeLabel ? (
+        <span className="hidden truncate text-[0.5rem] font-normal leading-[1.25] sm:block sm:text-[0.625rem]">
+          {style.label}
+        </span>
+      ) : null}
+    </div>
+  );
+
   return (
-    <EventDetailTrigger
-      event={event}
-      aria-label={label}
-      /* A tinted card with a solid rule on its leading edge, in the manner
-         of Google Calendar. The rule is `border-inline-start`, so it lands on
-         the correct side under dir="rtl" without a second declaration. */
-      className={cn(
-        'press-sm absolute z-10 cursor-pointer overflow-hidden rounded-[6px] px-1 py-0.5 text-start sm:px-2 sm:py-1',
-        'text-[0.5625rem] font-semibold leading-tight sm:text-xs',
-        // The block is already a filled card, so "tappable" is signalled by
-        // depth rather than by another fill: a hairline ring and a small lift
-        // of the shadow, nothing that changes the colour the legend keyed.
-        'transition-[box-shadow,transform] duration-(--duration-press) ease-(--ease-out-quiet)',
-        'hover:shadow-(--shadow-sm) focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary',
-        style.block,
-        style.patternClass,
-      )}
-      style={{ top: `${top}%`, height: `${height}%`, insetInlineStart, width }}
-    >
-      <div>
-        <span className="block break-words leading-[1.15] sm:truncate sm:leading-[1.25]">{title}</span>
-        <TimeRange
-          range={range}
-          className="tnum hidden text-[0.5rem] font-medium leading-[1.3] sm:block sm:text-[0.6875rem]"
-        />
-        {showTypeLabel ? (
-          <span className="hidden truncate text-[0.5rem] font-normal leading-[1.25] sm:block sm:text-[0.625rem]">
-            {style.label}
-          </span>
-        ) : null}
+    <>
+      {/* Phone: information, not a control. A column is ~45px wide here and a
+          shared slot halves that, so a per-event button would be a ~19px
+          target — under WCAG 2.5.8's 24px minimum and unhittable in practice.
+          The day column carries the tap instead (§ day-open-link.tsx).
+          `display:none` from `sm` up, so this is out of the accessibility tree
+          entirely rather than a second copy of the same event. */}
+      <div role="img" aria-label={label} className={cn(blockClass, 'sm:hidden')} style={position}>
+        {content}
       </div>
-    </EventDetailTrigger>
+
+      {/* From `sm` up the block is wide enough to aim at, so it opens the
+          event's own detail sheet. Depth, not another fill, signals that it is
+          tappable — nothing here may change the colour the legend keyed. */}
+      <EventDetailTrigger
+        event={event}
+        aria-label={label}
+        className={cn(
+          blockClass,
+          'press-sm hidden cursor-pointer sm:block',
+          'transition-[box-shadow,transform] duration-(--duration-press) ease-(--ease-out-quiet)',
+          'hover:shadow-(--shadow-sm) focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary',
+        )}
+        style={position}
+      >
+        {content}
+      </EventDetailTrigger>
+    </>
   );
 }

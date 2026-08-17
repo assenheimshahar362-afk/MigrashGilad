@@ -7,7 +7,8 @@ export default function NotFound() {
   return (
     <main
       id="main"
-      className="mx-auto flex min-h-dvh max-w-[720px] flex-col items-center justify-center px-6 text-center"
+      tabIndex={-1}
+      className="mx-auto flex min-h-dvh max-w-[720px] flex-col items-center justify-center px-6 text-center focus:outline-none"
     >
       <span
         aria-hidden

@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { useReturnFocus } from '@/components/ui/return-focus';
 
 export interface RequestModalPrefill {
   date?: string;
@@ -13,6 +14,9 @@ interface RequestModalContextValue {
   prefill: RequestModalPrefill;
   openRequestModal: (prefill?: RequestModalPrefill) => void;
   closeRequestModal: () => void;
+  /** Hand to the modal's content so closing returns focus to whichever of the
+   *  four triggers opened it (§ components/ui/return-focus.ts). */
+  onCloseAutoFocus: (event: Event) => void;
 }
 
 const RequestModalContext = createContext<RequestModalContextValue | null>(null);
@@ -34,16 +38,22 @@ export function RequestModalProvider({ children }: { children: React.ReactNode }
   const [isOpen, setIsOpen] = useState(false);
   const [prefill, setPrefill] = useState<RequestModalPrefill>({});
 
-  const openRequestModal = useCallback((next: RequestModalPrefill = {}) => {
-    setPrefill(next);
-    setIsOpen(true);
-  }, []);
+  const { remember, onCloseAutoFocus } = useReturnFocus();
+
+  const openRequestModal = useCallback(
+    (next: RequestModalPrefill = {}) => {
+      remember();
+      setPrefill(next);
+      setIsOpen(true);
+    },
+    [remember],
+  );
 
   const closeRequestModal = useCallback(() => setIsOpen(false), []);
 
   const value = useMemo(
-    () => ({ isOpen, prefill, openRequestModal, closeRequestModal }),
-    [isOpen, prefill, openRequestModal, closeRequestModal],
+    () => ({ isOpen, prefill, openRequestModal, closeRequestModal, onCloseAutoFocus }),
+    [isOpen, prefill, openRequestModal, closeRequestModal, onCloseAutoFocus],
   );
 
   return <RequestModalContext.Provider value={value}>{children}</RequestModalContext.Provider>;

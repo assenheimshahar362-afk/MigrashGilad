@@ -50,7 +50,12 @@ export const requestFormSchema = z
     requesterPhone: z.string().refine((s) => /^(?:\+972|0)5\d{8}$/.test(s.replace(/[\s-]/g, '')), 'ERR_PHONE'),
     consent: z.literal(true),
   })
-  .refine((v) => v.endTime > v.startTime, { path: ['endTime'], message: 'ERR_VALIDATION' });
+  // Its own code, not the generic one: WCAG 3.3.3 asks that an error say what
+  // is actually wrong when we know, and "יש למלא את כל השדות הנדרשים" on a
+  // field the visitor HAS filled in tells them to do something they already
+  // did. The error lands on `endTime` because that is the field they will
+  // change to fix it.
+  .refine((v) => v.endTime > v.startTime, { path: ['endTime'], message: 'ERR_END_BEFORE_START' });
 
 export type RequestFormValues = z.infer<typeof requestFormSchema>;
 

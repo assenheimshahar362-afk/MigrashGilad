@@ -295,7 +295,10 @@ export function assertRequestWindow(
 ): void {
   const durationMin = (end.getTime() - start.getTime()) / 60_000;
 
-  if (durationMin <= 0) throw new AppError('ERR_VALIDATION');
+  // The same specific message the form shows for this (§ validation/request.ts)
+  // — a generic "fill in the required fields" would describe a different
+  // problem entirely.
+  if (durationMin <= 0) throw new AppError('ERR_END_BEFORE_START');
 
   if (durationMin > settings.maxDurationMin) {
     throw new AppError('ERR_DURATION', { minutes: settings.maxDurationMin });

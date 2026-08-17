@@ -5,7 +5,6 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { t } from '@/lib/i18n';
-import { Tooltip } from '@/components/ui/tooltip';
 
 /**
  * The bottom sheet used for event detail (FR-4) and for confirmations. Radix
@@ -114,19 +113,27 @@ export function SheetContent({
           <DialogPrimitive.Title className="text-h2 font-bold text-balance">
             {title}
           </DialogPrimitive.Title>
-          <Tooltip content={t('common.close')}>
-            <DialogPrimitive.Close
-              className={cn(
-                'press tap-target -me-2 -mt-2 flex items-center justify-center',
-                'rounded-(--radius-input) text-(--ink-muted)',
-                'transition-[background-color,color,transform] duration-(--duration-press) ease-(--ease-out-quiet)',
-                'hover:bg-(--surface-sunken) hover:text-(--ink)',
-              )}
-              aria-label={t('common.close')}
-            >
-              <X className="size-5" aria-hidden />
-            </DialogPrimitive.Close>
-          </Tooltip>
+          {/* No <Tooltip> on this one, deliberately. A Radix tooltip opens on
+              FOCUS as well as hover, and it takes the first Escape with it —
+              so a keyboard user who tabbed to this X had to press Escape twice
+              to close the dialog, which reads as the dialog ignoring them.
+              Focusing the panel on open (see `onOpenAutoFocus` above) fixed
+              that only for the case where nobody had tabbed here yet.
+
+              Nothing is lost: the button already carries `aria-label`, so its
+              name reaches assistive tech, and an X in the corner of a dialog
+              is the most conventional control in the product. */}
+          <DialogPrimitive.Close
+            className={cn(
+              'press tap-target -me-2 -mt-2 flex items-center justify-center',
+              'rounded-(--radius-input) text-(--ink-muted)',
+              'transition-[background-color,color,transform] duration-(--duration-press) ease-(--ease-out-quiet)',
+              'hover:bg-(--surface-sunken) hover:text-(--ink)',
+            )}
+            aria-label={t('common.close')}
+          >
+            <X className="size-5" aria-hidden />
+          </DialogPrimitive.Close>
         </div>
 
         {description ? (

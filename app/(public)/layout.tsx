@@ -43,7 +43,14 @@ export default async function PublicLayout({ children }: { children: React.React
           <div className="flex min-h-dvh flex-col pb-20 lg:pb-0">
             <SiteHeader pitchName={settings.pitchName} />
 
-            <main id="main" className="flex-1">
+            {/* `tabIndex={-1}`: without it, activating the skip link only moves
+                the browser's sequential-focus starting point — `document.
+                activeElement` stays on <body>, so a screen reader announces
+                nothing and Safari drops the jump altogether. With it, focus
+                actually lands here and the next Tab continues from the content
+                (WCAG 2.4.1). It never enters the tab order — -1 is reachable
+                by script and by fragment, not by Tab. */}
+            <main id="main" tabIndex={-1} className="flex-1 focus:outline-none">
               {children}
             </main>
 

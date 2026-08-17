@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import type { PublicEvent } from '@/lib/types';
 import { EventDetailSheet } from '@/components/schedule/event-detail-sheet';
+import { useReturnFocus } from '@/components/ui/return-focus';
 
 interface EventDetailContextValue {
   openEventDetail: (event: PublicEvent) => void;
@@ -24,11 +25,18 @@ const EventDetailContext = createContext<EventDetailContextValue | null>(null);
 export function EventDetailProvider({ children }: { children: React.ReactNode }) {
   const [event, setEvent] = useState<PublicEvent | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  // Opened from a context rather than a Radix <Trigger>, so returning focus to
+  // the block that was tapped is on us (§ return-focus.ts).
+  const { remember, onCloseAutoFocus } = useReturnFocus();
 
-  const openEventDetail = useCallback((next: PublicEvent) => {
-    setEvent(next);
-    setIsOpen(true);
-  }, []);
+  const openEventDetail = useCallback(
+    (next: PublicEvent) => {
+      remember();
+      setEvent(next);
+      setIsOpen(true);
+    },
+    [remember],
+  );
 
   // The event is deliberately NOT cleared here — the sheet's exit animation is
   // still playing, and emptying it first would blank the panel on the way out.
@@ -42,7 +50,12 @@ export function EventDetailProvider({ children }: { children: React.ReactNode })
   return (
     <EventDetailContext.Provider value={value}>
       {children}
-      <EventDetailSheet event={event} open={isOpen} onOpenChange={setIsOpen} />
+      <EventDetailSheet
+        event={event}
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        onCloseAutoFocus={onCloseAutoFocus}
+      />
     </EventDetailContext.Provider>
   );
 }

@@ -14,7 +14,15 @@ export const metadata: Metadata = { title: t('offline.title') };
  */
 export default function OfflinePage() {
   return (
-    <div className="mx-auto flex min-h-dvh max-w-[720px] flex-col items-center justify-center px-6 text-center">
+    // `<main id="main">`, like every other route: this one sits OUTSIDE the
+    // `(public)` group, so it does not inherit that layout's <main> — without
+    // one, the skip link in the root layout points at an id that does not
+    // exist here (WCAG 2.4.1) and the whole page sits outside any landmark.
+    <main
+      id="main"
+      tabIndex={-1}
+      className="mx-auto flex min-h-dvh max-w-[720px] flex-col items-center justify-center px-6 text-center focus:outline-none"
+    >
       <span
         aria-hidden
         className="flex size-16 items-center justify-center rounded-full bg-(--surface-sunken) text-ink-2"
@@ -30,6 +38,6 @@ export default function OfflinePage() {
           <Link href="/">{t('common.back_home')}</Link>
         </Button>
       </div>
-    </div>
+    </main>
   );
 }

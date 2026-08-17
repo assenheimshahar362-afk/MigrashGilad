@@ -101,9 +101,15 @@ export function SiteFooter({ pitchName }: { pitchName: string }) {
         </div>
 
         {/* One rule above the links and one below, so the row reads as a band
-            rather than as a paragraph that happens to be underlined. */}
+            rather than as a paragraph that happens to be underlined.
+
+            Its own label, not `nav.primary`: the header (desktop) and the tab
+            bar (mobile) already carry that name, and two landmarks with the
+            same role AND the same accessible name give a screen-reader user a
+            rotor listing two identical "ניווט ראשי" entries with no way to
+            tell which is which (WCAG 1.3.1). */}
         <nav
-          aria-label={t('nav.primary')}
+          aria-label={t('nav.footer')}
           className="mt-10 border-y border-white/10 py-2"
         >
           <ul className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1">
