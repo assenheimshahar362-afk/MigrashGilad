@@ -35,6 +35,11 @@ export function RequestForm({
   prefill: { date?: string; start?: string; end?: string };
 }) {
   const [step, setStep] = useState<Step>('when');
+  // The chosen slot is association time, which `POST /api/requests` refuses
+  // outright (§ `blockingAssociationEvents`). Held here rather than inside
+  // <AvailabilityHint> because it is the "next" button that has to react to
+  // it — an ordinary clash still lets the visitor carry on, this does not.
+  const [slotBlocked, setSlotBlocked] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [queuedOffline, setQueuedOffline] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -106,6 +111,13 @@ export function RequestForm({
       what: ['participants', 'note'],
       who: ['requesterName', 'requesterPhone', 'consent'],
     };
+
+    // Association time never gets past the first step. The check runs on the
+    // server too — this only saves the visitor two screens of typing.
+    if (step === 'when' && slotBlocked) {
+      setFocus('startTime');
+      return;
+    }
 
     const valid = await trigger(fields[step]);
     if (!valid) {
@@ -215,6 +227,7 @@ export function RequestForm({
             date={values.date}
             startTime={values.startTime}
             endTime={values.endTime}
+            onBlockedChange={setSlotBlocked}
           />
         </fieldset>
       ) : null}
@@ -344,7 +357,15 @@ export function RequestForm({
             {isSubmitting ? t('request.submitting') : t('request.submit')}
           </Button>
         ) : (
-          <Button type="button" size="lg" className="flex-1" onClick={goNext}>
+          <Button
+            type="button"
+            size="lg"
+            className="flex-1"
+            onClick={goNext}
+            // Disabled rather than hidden, and the panel above says why: a
+            // button that vanishes leaves the visitor looking for it.
+            disabled={step === 'when' && slotBlocked}
+          >
             {t('request.next')}
             <ArrowLeft className="size-5" aria-hidden />
           </Button>

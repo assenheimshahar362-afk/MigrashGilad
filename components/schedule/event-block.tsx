@@ -3,15 +3,16 @@ import { formatTimeRange, minutesSinceMidnight } from '@/lib/time';
 import { usageTypeStyle } from '@/lib/usage-type';
 import { eventDisplayTitle, type PublicEvent } from '@/lib/types';
 import { TimeRange } from '@/components/ui/ltr';
+import { EventDetailTrigger } from '@/components/schedule/event-detail-trigger';
 
 /**
  * FR-3: an event block shows title, start–end time, and a usage-type colour AND
  * label AND pattern — never colour alone (A11Y-3).
  *
- * The public calendar is view-only: an existing booking is information, not a
- * control, so this renders as a plain `<div>` rather than a button and opens
- * nothing on tap. Only the admin panel's own event editor (a separate,
- * authenticated surface) can act on a booking.
+ * FR-4: tapping a block opens its detail sheet, which is the only place the
+ * whole of a booking is legible — a column on a phone is ~45px wide and
+ * carries no text at all. The sheet is still read-only; acting on a booking
+ * remains the admin editor's job, behind auth.
  */
 export function EventBlock({
   event,
@@ -54,15 +55,20 @@ export function EventBlock({
   const label = showTypeLabel ? `${title}, ${range}, ${style.label}` : `${title}, ${range}`;
 
   return (
-    <div
-      role="img"
+    <EventDetailTrigger
+      event={event}
       aria-label={label}
       /* A tinted card with a solid rule on its leading edge, in the manner
          of Google Calendar. The rule is `border-inline-start`, so it lands on
          the correct side under dir="rtl" without a second declaration. */
       className={cn(
-        'absolute z-10 overflow-hidden rounded-[6px] px-1 py-0.5 text-start sm:px-2 sm:py-1',
+        'press-sm absolute z-10 cursor-pointer overflow-hidden rounded-[6px] px-1 py-0.5 text-start sm:px-2 sm:py-1',
         'text-[0.5625rem] font-semibold leading-tight sm:text-xs',
+        // The block is already a filled card, so "tappable" is signalled by
+        // depth rather than by another fill: a hairline ring and a small lift
+        // of the shadow, nothing that changes the colour the legend keyed.
+        'transition-[box-shadow,transform] duration-(--duration-press) ease-(--ease-out-quiet)',
+        'hover:shadow-(--shadow-sm) focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary',
         style.block,
         style.patternClass,
       )}
@@ -80,6 +86,6 @@ export function EventBlock({
           </span>
         ) : null}
       </div>
-    </div>
+    </EventDetailTrigger>
   );
 }

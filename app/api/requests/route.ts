@@ -3,8 +3,9 @@ import { revalidateTag } from 'next/cache';
 import { AppError, handleRoute, errorResponse } from '@/lib/errors';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createRequestInput } from '@/lib/validation/request';
-import { getSettings, SCHEDULE_TAG } from '@/lib/data';
-import { assertRequestWindow } from '@/lib/schedule';
+import { getSchedule, getSettings, SCHEDULE_TAG } from '@/lib/data';
+import { assertRequestWindow, blockingAssociationEvents } from '@/lib/schedule';
+import { localDate } from '@/lib/time';
 import { verifyTurnstile } from '@/lib/turnstile';
 import { clientIp, consume, hashIp, IP_RULE, PHONE_RULE } from '@/lib/rate-limit';
 import { notifyAdminsOfNewRequest } from '@/lib/notifications/fan-out';
@@ -61,6 +62,17 @@ export async function POST(request: NextRequest) {
 
     // FR-17, FR-18 and the opening-hours check. Throws the specific AppError.
     assertRequestWindow(settings, start, end);
+
+    // Association time is not requestable, unless the association is already
+    // sharing that slot with community time (§ `blockingAssociationEvents`).
+    // Unlike an ordinary clash — which FR-13 only WARNS about, because an
+    // admin may still want to see the request — this one is refused outright,
+    // so it is checked here and not left to the form: the form is a courtesy,
+    // this route is the rule.
+    const { events } = await getSchedule(localDate(start), localDate(end));
+    if (blockingAssociationEvents(events, start, end).length > 0) {
+      throw new AppError('ERR_ASSOCIATION_SLOT');
+    }
 
     // The write goes through the service role: `booking_requests` has no anon
     // policy at all (§6.4), and this is the proxy the spec calls for.

@@ -7,6 +7,7 @@ import { InstallPrompt } from '@/components/pwa/install-prompt';
 import { RequestModalProvider } from '@/components/request/request-modal-context';
 import { RequestModal } from '@/components/request/request-modal';
 import { RequestModalUrlOpener } from '@/components/request/request-modal-url-opener';
+import { EventDetailProvider } from '@/components/schedule/event-detail-context';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 /**
@@ -34,17 +35,23 @@ export default async function PublicLayout({ children }: { children: React.React
     // nothing on the public site opens a `<Tooltip>` directly.
     <TooltipProvider delayDuration={300}>
       <RequestModalProvider>
-        <div className="flex min-h-dvh flex-col pb-20 lg:pb-0">
-          <SiteHeader pitchName={settings.pitchName} />
+        {/* FR-4: the calendar's event-detail sheet. Mounted beside the booking
+            modal rather than inside the schedule page, so the week grid and the
+            day view — and anything else that ever draws an event — all open the
+            same single sheet. */}
+        <EventDetailProvider>
+          <div className="flex min-h-dvh flex-col pb-20 lg:pb-0">
+            <SiteHeader pitchName={settings.pitchName} />
 
-          <main id="main" className="flex-1">
-            {children}
-          </main>
+            <main id="main" className="flex-1">
+              {children}
+            </main>
 
-          <SiteFooter pitchName={settings.pitchName} />
-          <BottomNav />
-          <InstallPrompt />
-        </div>
+            <SiteFooter pitchName={settings.pitchName} />
+            <BottomNav />
+            <InstallPrompt />
+          </div>
+        </EventDetailProvider>
 
         <RequestModal settings={settings} />
         <Suspense fallback={null}>

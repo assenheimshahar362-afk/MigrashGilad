@@ -6,6 +6,7 @@ import { clusterOverlappingEvents, eventsWithCommunityFill, hoursForDate } from 
 import { eventDisplayTitle, type PublicEvent, type PublicSettings } from '@/lib/types';
 import { usageTypeStyle } from '@/lib/usage-type';
 import { TimeRange } from '@/components/ui/ltr';
+import { EventDetailTrigger } from '@/components/schedule/event-detail-trigger';
 
 /**
  * The day view: one card per booking, full width and large enough to read at
@@ -83,9 +84,12 @@ function EventCard({ event }: { event: PublicEvent }) {
   const description = event.description ?? communityFallback(event);
 
   return (
-    <div
+    <EventDetailTrigger
+      event={event}
       className={cn(
-        'rounded-(--radius-card) px-5 py-4 shadow-(--shadow-sm)',
+        'press-sm block w-full cursor-pointer rounded-(--radius-card) px-5 py-4 text-start shadow-(--shadow-sm)',
+        'transition-[box-shadow,transform] duration-(--duration-press) ease-(--ease-out-quiet)',
+        'hover:shadow-(--shadow-md) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
         style.block,
         style.patternClass,
       )}
@@ -97,7 +101,7 @@ function EventCard({ event }: { event: PublicEvent }) {
       </div>
       {showTitle ? <p className="mt-1 font-semibold">{title}</p> : null}
       {description ? <p className="mt-1 text-sm text-(--ink-muted)">{description}</p> : null}
-    </div>
+    </EventDetailTrigger>
   );
 }
 
@@ -141,9 +145,12 @@ function CombinedHalf({ event, isFirst }: { event: PublicEvent; isFirst: boolean
   const description = event.description ?? communityFallback(event);
 
   return (
-    <div
+    <EventDetailTrigger
+      event={event}
       className={cn(
-        'px-4 py-3',
+        'block w-full cursor-pointer px-4 py-3 text-start',
+        'transition-[filter] duration-(--duration-tip) ease-(--ease-out-quiet) hover:brightness-[0.97]',
+        'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary',
         isFirst && 'border-e border-(--hairline)',
         style.block,
         style.patternClass,
@@ -155,7 +162,7 @@ function CombinedHalf({ event, isFirst }: { event: PublicEvent; isFirst: boolean
       </div>
       <p className="mt-1 truncate font-bold">{showTitle ? title : style.label}</p>
       {description ? <p className="mt-0.5 truncate text-xs text-(--ink-muted)">{description}</p> : null}
-    </div>
+    </EventDetailTrigger>
   );
 }
 

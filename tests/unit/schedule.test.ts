@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   assertRequestWindow,
   assertWithinOpeningHours,
+  blockingAssociationEvents,
   clusterOverlappingEvents,
   communityFillRanges,
   conflictingEvents,
@@ -222,6 +223,58 @@ describe('conflicts', () => {
       toInstant('2026-08-05', '21:00'),
     );
     expect(conflicts).toHaveLength(0);
+  });
+});
+
+describe('blockingAssociationEvents — association time is not requestable', () => {
+  const association = {
+    ...event('17:00', '19:00'),
+    id: 'assoc',
+    usageType: 'association' as const,
+  };
+
+  const range = (start: string, end: string) =>
+    [toInstant('2026-08-05', start), toInstant('2026-08-05', end)] as const;
+
+  it('blocks a request overlapping an association event', () => {
+    expect(blockingAssociationEvents([association], ...range('18:00', '20:00'))).toHaveLength(1);
+  });
+
+  it('blocks a request that only clips the edge of one', () => {
+    expect(blockingAssociationEvents([association], ...range('16:00', '17:15'))).toHaveLength(1);
+  });
+
+  it('allows a back-to-back slot — the ranges are half-open', () => {
+    expect(blockingAssociationEvents([association], ...range('19:00', '20:00'))).toHaveLength(0);
+  });
+
+  it('allows a clash with community time, which is only ever a warning', () => {
+    const community = event('17:00', '19:00');
+    expect(blockingAssociationEvents([community], ...range('17:00', '18:00'))).toHaveLength(0);
+  });
+
+  it('allows the half-pitch slot: association already shares it with community', () => {
+    const sharing = { ...event('17:00', '19:00'), id: 'half' };
+    expect(blockingAssociationEvents([association, sharing], ...range('17:30', '18:30'))).toHaveLength(0);
+  });
+
+  it('still blocks when the community event beside it is a different slot', () => {
+    const elsewhere = { ...event('20:00', '21:00'), id: 'later' };
+    expect(blockingAssociationEvents([association, elsewhere], ...range('18:00', '18:30'))).toHaveLength(1);
+  });
+
+  it('blocks when one of two association events in the range is unshared', () => {
+    const shared = {
+      ...event('19:00', '20:00'),
+      id: 'assoc-2',
+      usageType: 'association' as const,
+    };
+    const beside = { ...event('19:00', '20:00'), id: 'beside' };
+    const blocking = blockingAssociationEvents(
+      [association, shared, beside],
+      ...range('18:00', '20:00'),
+    );
+    expect(blocking.map((e) => e.id)).toEqual(['assoc']);
   });
 });
 

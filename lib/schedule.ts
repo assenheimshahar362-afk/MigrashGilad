@@ -71,6 +71,46 @@ export function conflictingEvents(events: PublicEvent[], start: Date, end: Date)
 }
 
 /**
+ * The pitch belongs to the association while it has it: a public request
+ * (always community time — there is no usage-type picker on the form) may not
+ * be made for a slot an association event covers.
+ *
+ * The one exception is a slot the association is already SHARING — an
+ * association event with a community event alongside it, which is exactly what
+ * the calendar draws as "חצי מגרש" (§ day-view.tsx `CombinedCard`). Half the
+ * pitch is community time there by definition, so a request for it is a
+ * request for time the community already has.
+ *
+ * This returns the association events that block the range, so a caller can
+ * both decide (empty = allowed) and say which booking is in the way.
+ */
+export function blockingAssociationEvents(
+  events: PublicEvent[],
+  start: Date,
+  end: Date,
+): PublicEvent[] {
+  return conflictingEvents(events, start, end).filter(
+    (event) => event.usageType === 'association' && !isSharedPitchSlot(events, event),
+  );
+}
+
+/**
+ * Whether an association event already has community time beside it. Compared
+ * against the association event's OWN range rather than against the requested
+ * one: the sharing is a property of the booking, not of who is asking about it,
+ * so a request touching only its last ten minutes gets the same answer as one
+ * covering the whole of it.
+ */
+export function isSharedPitchSlot(events: PublicEvent[], association: PublicEvent): boolean {
+  return events.some(
+    (other) =>
+      other.id !== association.id &&
+      other.usageType === 'community' &&
+      overlaps(other.startsAt, other.endsAt, association.startsAt, association.endsAt),
+  );
+}
+
+/**
  * Association and community time may now share a slot (the events table only
  * forbids two events of the SAME category overlapping), so neither the grid
  * nor the day view can assume one event ever fully owns its time range. This

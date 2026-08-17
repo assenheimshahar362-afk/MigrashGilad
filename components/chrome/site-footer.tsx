@@ -5,7 +5,6 @@ import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import logoMark from '@/public/images/logo-mark.webp';
 import { PitchWordmark } from '@/components/chrome/pitch-wordmark';
-import { RequestNavTrigger } from '@/components/request/request-nav-trigger';
 
 /**
  * The dark footer. It is the only large dark surface left in the product, which
@@ -20,7 +19,6 @@ import { RequestNavTrigger } from '@/components/request/request-nav-trigger';
  * which is why it is in that row and never behind a disclosure.
  */
 const LINKS = [
-  { href: '/schedule/month', label: t('nav.month') },
   { href: '/#about', label: t('nav.about') },
   { href: '/#trustees', label: t('nav.trustees') },
   { href: '/#contact', label: t('nav.contact') },
@@ -109,14 +107,6 @@ export function SiteFooter({ pitchName }: { pitchName: string }) {
           className="mt-10 border-y border-white/10 py-2"
         >
           <ul className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1">
-            {/* The booking form is a floating modal now, not an anchor — see
-                request-modal-context.tsx — so this one entry opens it
-                directly instead of linking to `/#request`. */}
-            <li>
-              <RequestNavTrigger className={footerNavItemClassName}>
-                {t('nav.request')}
-              </RequestNavTrigger>
-            </li>
             {LINKS.map((link) => (
               <li key={link.href}>
                 <Link href={link.href} className={footerNavItemClassName}>
@@ -128,7 +118,7 @@ export function SiteFooter({ pitchName }: { pitchName: string }) {
         </nav>
 
         <div className="mt-6 flex flex-col items-center gap-3 text-xs sm:flex-row sm:justify-center">
-          <p dir="ltr">© {year} {pitchName}. Powered by Shahar Assenheim</p>
+          <p dir="ltr">© {year} SA Software Solutions</p>
         </div>
       </div>
     </footer>

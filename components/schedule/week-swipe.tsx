@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import type { LocalDate } from '@/lib/time';
@@ -11,12 +11,15 @@ import type { LocalDate } from '@/lib/time';
  * whichever view is showing), so the gesture works anywhere on the calendar
  * rather than only on the thin nav row it used to be bound to.
  *
- * The content follows the finger while the gesture is undecided or horizontal,
- * which is the part that makes it read as a swipe rather than as a tap that
- * happens to change the week: without it there is no feedback until the server
- * responds, and a half-swipe looks identical to a dropped one. Past
- * `SWIPE_MIN_X` the release commits; short of it, it springs back and the week
- * does not change.
+ * The calendar does NOT follow the finger. It used to — the content was
+ * dragged up to 64px with a rubber-band curve — and the gesture read well in
+ * isolation, but the element being dragged is the whole block: the week nav,
+ * the view toggle and the grid card together. Sliding all of it left the card
+ * hanging over the shell's own margin, so a swipe looked like the page had
+ * come loose rather than like a calendar being turned. Nothing moves during
+ * the gesture now; the arriving week's entrance (`animate-week-*`, a 20px
+ * settle inside the block) is what says the swipe took, along with the brief
+ * dim below while the new week is on its way.
  *
  * Only touch is handled. A mouse drag is deliberately NOT a week change — on a
  * desktop the chevrons are always visible and a drag there is a text selection,
@@ -30,32 +33,7 @@ import type { LocalDate } from '@/lib/time';
 const SWIPE_MIN_X = 60;
 const SWIPE_AXIS_RATIO = 1.5;
 
-/** Movement before the gesture is locked to one axis. Below this a touch is
- *  still just noise from a finger landing, and reading an axis out of it picks
- *  the wrong one about half the time. Once locked, the lock holds for the rest
- *  of the gesture — a swipe that drifts vertically mid-travel keeps following
- *  the finger instead of stuttering between the two behaviours. */
-const AXIS_LOCK_SLOP = 10;
-
-/** The furthest the content travels, however far the finger goes. The pull is
- *  1:1 at first and tapers to this asymptote, so the grid stays attached to the
- *  finger without ever leaving its own card behind. */
-const MAX_PULL = 64;
-
-/** Where the content waits between a committed swipe and the new week
- *  arriving. Small and on the side the swipe was heading — enough that the
- *  gesture visibly took, not so much that a slow response looks broken. */
-const COMMIT_HOLD = 24;
-
-type Gesture = { x: number; y: number; axis: 'undecided' | 'x' | 'y' };
-
-/** `offset` is where the content sits; `animated` is whether it should travel
- *  there or be dragged there. Kept as one piece of state because they always
- *  change together and must never render out of step — an animated frame at a
- *  drag position lags the finger. */
-type Drag = { offset: number; animated: boolean };
-
-const AT_REST: Drag = { offset: 0, animated: true };
+type Gesture = { x: number; y: number };
 
 export function WeekSwipe({
   weekStart,
@@ -70,7 +48,6 @@ export function WeekSwipe({
 }) {
   const router = useRouter();
   const gesture = useRef<Gesture | null>(null);
-  const [drag, setDrag] = useState<Drag>(AT_REST);
   const [pending, startTransition] = useTransition();
 
   // Which way the week last moved, so the arriving week enters from the side it
@@ -84,76 +61,42 @@ export function WeekSwipe({
   if (weekStart !== shownWeek) {
     setDirection(weekStart > shownWeek ? 'forward' : 'back');
     setShownWeek(weekStart);
-    setDrag(AT_REST);
   }
-
-  // Safety release for `COMMIT_HOLD`: the week changing is what normally puts
-  // the content back (above), but a navigation that resolves to the week we are
-  // already on would otherwise leave it held off-centre forever.
-  useEffect(() => {
-    if (!pending) setDrag(AT_REST);
-  }, [pending]);
-
-  const cancel = () => {
-    gesture.current = null;
-    setDrag(AT_REST);
-  };
 
   const onTouchStart = (event: React.TouchEvent) => {
     // A second finger is a pinch-zoom, and a swipe on top of a week that is
     // already loading would queue a second navigation behind the first.
     if (pending || event.touches.length > 1) {
-      cancel();
+      gesture.current = null;
       return;
     }
     const touch = event.touches[0];
-    if (touch) gesture.current = { x: touch.clientX, y: touch.clientY, axis: 'undecided' };
+    if (touch) gesture.current = { x: touch.clientX, y: touch.clientY };
   };
 
+  // Nothing to draw mid-gesture any more; this exists only to drop a gesture
+  // that turned into a pinch.
   const onTouchMove = (event: React.TouchEvent) => {
-    const current = gesture.current;
-    const touch = event.touches[0];
-    if (!current || !touch) return;
-    if (event.touches.length > 1) {
-      cancel();
-      return;
-    }
-
-    const dx = touch.clientX - current.x;
-    const dy = touch.clientY - current.y;
-
-    if (current.axis === 'undecided') {
-      if (Math.abs(dx) < AXIS_LOCK_SLOP && Math.abs(dy) < AXIS_LOCK_SLOP) return;
-      current.axis = Math.abs(dx) > Math.abs(dy) * SWIPE_AXIS_RATIO ? 'x' : 'y';
-    }
-    if (current.axis === 'y') return;
-
-    setDrag({ offset: rubberBand(dx), animated: false });
+    if (event.touches.length > 1) gesture.current = null;
   };
 
   const onTouchEnd = (event: React.TouchEvent) => {
     const current = gesture.current;
     const touch = event.changedTouches[0];
     gesture.current = null;
-    if (!current || !touch) {
-      setDrag(AT_REST);
-      return;
-    }
+    if (!current || !touch) return;
 
     const dx = touch.clientX - current.x;
     const dy = touch.clientY - current.y;
 
-    // Re-checked against the whole gesture rather than trusting the axis lock:
-    // the lock only decides who follows the finger, this decides whether the
-    // week actually changes.
-    if (Math.abs(dx) < SWIPE_MIN_X || Math.abs(dx) < Math.abs(dy) * SWIPE_AXIS_RATIO) {
-      setDrag(AT_REST);
-      return;
-    }
+    // Far enough across, and decisively more horizontal than vertical — the
+    // page scrolls over this element constantly, and a scroll that drifts
+    // sideways must not turn the week.
+    if (Math.abs(dx) < SWIPE_MIN_X || Math.abs(dx) < Math.abs(dy) * SWIPE_AXIS_RATIO) return;
 
     // RTL: dragging the content to the right reveals what is to its left, which
     // is the next week.
-    setDrag({ offset: Math.sign(dx) * COMMIT_HOLD, animated: true });
+    //
     // `scroll: false`: a week change is a change of CONTENT inside a calendar
     // the visitor is already looking at, not a new page. Next's default is to
     // scroll to the top of the page element whenever it is not fully in the
@@ -168,7 +111,9 @@ export function WeekSwipe({
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
-      onTouchCancel={cancel}
+      onTouchCancel={() => {
+        gesture.current = null;
+      }}
       // Vertical scrolling and pinch-zoom stay with the browser; the horizontal
       // axis is ours, and nothing in here scrolls sideways for it to steal.
       // `pinch-zoom` is spelled out because dropping it would make the calendar
@@ -187,28 +132,17 @@ export function WeekSwipe({
           if (event.target === event.currentTarget) setDirection(null);
         }}
         className={cn(
+          // The committed-swipe feedback, in place of the old rubber-band pull:
+          // opacity moves nothing, so the card keeps its exact position and the
+          // shell's margins hold. It lasts only as long as the server takes.
+          'transition-opacity duration-(--duration-tip) ease-(--ease-out-quiet)',
+          pending && 'opacity-60',
           direction === 'forward' && 'animate-week-forward',
           direction === 'back' && 'animate-week-back',
         )}
-        style={{
-          // Left off entirely at rest: this element is an ancestor of the day
-          // strip's `position: sticky` header, and a transform that is never
-          // removed leaves a containing block behind for it to fight with.
-          transform: drag.offset === 0 ? undefined : `translate3d(${drag.offset}px, 0, 0)`,
-          transition: drag.animated
-            ? 'transform var(--duration-pop) var(--ease-out-quiet)'
-            : undefined,
-        }}
       >
         {children}
       </div>
     </div>
   );
-}
-
-/** 1:1 at the start, tapering to `MAX_PULL`. The exponential is what keeps the
- *  first millimetre honest — a plain `min()` clamp feels attached right up to
- *  the moment it locks solid, which reads as the gesture having been dropped. */
-function rubberBand(dx: number): number {
-  return Math.sign(dx) * MAX_PULL * (1 - Math.exp(-Math.abs(dx) / MAX_PULL));
 }
