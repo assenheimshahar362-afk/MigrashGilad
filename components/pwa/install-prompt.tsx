@@ -1,89 +1,77 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Download, X } from 'lucide-react';
-import { t } from '@/lib/i18n';
-import { Button } from '@/components/ui/button';
+import { useEffect, useRef, useState } from 'react';
 import { useInstall } from '@/components/pwa/install-context';
+import { InstallSheet } from '@/components/pwa/install-sheet';
 
-const VISIT_KEY = 'mg.visits';
-const DISMISS_KEY = 'mg.install-dismissed';
+/** When a "לא עכשיו" stops holding. A snooze rather than a permanent
+ *  dismissal: the label says "not now", and the footer's button (§
+ *  install-app-button.tsx) is the route back in the meantime. */
+const SNOOZE_KEY = 'mg.install-snoozed';
+const SNOOZE_DAYS = 14;
+
+/** Long enough that the calendar — the reason anyone opened this — paints and
+ *  is seen first, short enough that the sheet still reads as part of opening
+ *  the app rather than as something that ambushed a reader mid-scroll. */
+const OPEN_DELAY_MS = 1500;
 
 /**
- * §12: a dismissible, non-blocking banner after the SECOND visit.
+ * §12: the install offer, as a popup on opening the app.
  *
- * Not the first: a visitor who arrived from a WhatsApp link to check one week's
- * schedule has not yet earned an install prompt, and interrupting them costs
- * more than the install is worth.
+ * It was a docked banner above the tab bar for a while, which is quieter but
+ * was also missable — on a phone it sat exactly where a thumb rests, and it
+ * read as part of the page furniture rather than as an offer. This is the
+ * same content in the product's own sheet (§ install-sheet.tsx), centred on
+ * desktop and coming up from the bottom on a phone.
  *
- * Whether the browser CAN install now is `<InstallProvider>`'s business (the
- * `beforeinstallprompt` event has to be captured on every visit, not only the
- * ones this banner shows on); what is left here is the nagging policy — visit
- * count and dismissal — plus the banner itself.
+ * It comes up on every open until it is answered: installed, or waved away
+ * for `SNOOZE_DAYS`. Whether the browser CAN install is
+ * `<InstallProvider>`'s business — `beforeinstallprompt` has to be captured
+ * on every load, not only the ones this shows on — and all that is left here
+ * is when to ask.
  */
 export function InstallPrompt() {
-  const { canInstall, isStandalone, isIos, promptInstall } = useInstall();
-  const [earned, setEarned] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
+  const { canInstall, isStandalone, isIos } = useInstall();
+  const [snoozed, setSnoozed] = useState(true);
+  const [open, setOpen] = useState(false);
+  // One offer per page load. Without this, `canInstall` flipping (the browser
+  // re-fires `beforeinstallprompt` after a declined install) would re-open the
+  // sheet on someone who has just closed it.
+  const asked = useRef(false);
 
   useEffect(() => {
-    if (localStorage.getItem(DISMISS_KEY) === '1') {
-      setDismissed(true);
-      return;
-    }
-    const visits = Number(localStorage.getItem(VISIT_KEY) ?? '0') + 1;
-    localStorage.setItem(VISIT_KEY, String(visits));
-    setEarned(visits >= 2);
+    const until = Number(localStorage.getItem(SNOOZE_KEY) ?? '0');
+    setSnoozed(Date.now() < until);
   }, []);
 
-  const dismiss = () => {
-    localStorage.setItem(DISMISS_KEY, '1');
-    setDismissed(true);
-  };
+  // On iOS there is no event to wait for — the sheet there IS the
+  // instructions, so it may open as soon as the delay is up. Everywhere else
+  // this waits for a real prompt to have been captured, which is why the
+  // effect depends on `canInstall` rather than running once on mount.
+  const eligible = !isStandalone && !snoozed && (canInstall || isIos);
 
-  // On iOS there is no event to wait for — the banner IS the instructions.
-  if (isStandalone || dismissed || !earned || (!canInstall && !isIos)) return null;
+  useEffect(() => {
+    if (!eligible || asked.current) return;
+    const timer = setTimeout(() => {
+      asked.current = true;
+      setOpen(true);
+    }, OPEN_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [eligible]);
 
   return (
-    <div
-      role="dialog"
-      aria-label={t('pwa.install_title')}
-      /* Clears the tab bar, and nothing else — the schedule no longer docks a
-         button above it. On lg there is no tab bar either, so it drops. */
-      className="fixed inset-x-0 bottom-20 z-40 mx-auto max-w-[560px] px-3 lg:bottom-6"
-    >
-      <div className="flex items-start gap-3 card p-4 shadow-lg">
-        <Download className="mt-0.5 size-5 shrink-0 text-accent-ink" aria-hidden />
-
-        <div className="min-w-0 flex-1">
-          <p className="font-bold">{t('pwa.install_title')}</p>
-          <p className="mt-0.5 text-sm text-(--ink-muted)">
-            {canInstall ? t('pwa.install_body') : t('pwa.install_ios')}
-          </p>
-
-          {canInstall ? (
-            <Button
-              size="sm"
-              className="mt-3"
-              onClick={async () => {
-                await promptInstall();
-                dismiss();
-              }}
-            >
-              {t('pwa.install_action')}
-            </Button>
-          ) : null}
-        </div>
-
-        <button
-          type="button"
-          onClick={dismiss}
-          aria-label={t('pwa.install_dismiss')}
-          className="tap-target -me-2 -mt-2 flex items-center justify-center rounded-(--radius-input) text-(--ink-muted) hover:bg-(--surface-sunken)"
-        >
-          <X className="size-5" aria-hidden />
-        </button>
-      </div>
-    </div>
+    <InstallSheet
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        // Closed by the X, by Escape, by the overlay or by "לא עכשיו" — all
+        // four are the same answer, and only re-asking in two weeks respects
+        // any of them.
+        if (!next) {
+          localStorage.setItem(SNOOZE_KEY, String(Date.now() + SNOOZE_DAYS * 86_400_000));
+          setSnoozed(true);
+        }
+      }}
+    />
   );
 }

@@ -155,12 +155,12 @@ function DayHeader({ days, today }: { days: LocalDate[]; today: LocalDate }) {
   );
 }
 
-/** The height every hour row gets. An event here is `role="img"` — read-only
- *  information, never a tap target — so this no longer has to clear A11Y-1's
- *  44px the way the axis's OWN clickable rows would; it only has to stay tall
- *  enough that the shortest bookable slot (one hour) keeps its title and time
- *  legible. Lower than the old 44px on purpose: it is what actually shortens
- *  the grid, now that the axis marks every two hours instead of one. */
+/** The height every hour row gets. It only has to stay tall enough that the
+ *  shortest bookable slot (one hour) keeps its title and time legible — the
+ *  grid is read-only information first, and the day column underneath every
+ *  block is the target that carries A11Y-1's minimum (§ day-open-link.tsx).
+ *  Lower than the old 44px on purpose: it is what actually shortens the grid,
+ *  now that the axis marks every two hours instead of one. */
 const MIN_HOUR_HEIGHT = 32;
 
 /** Phones carry no text inside a block (§ event-block.tsx), so an hour row
@@ -287,10 +287,12 @@ function DayColumn({
 
         <NowMarker date={date} startMinute={startMinute} endMinute={endMinute} />
 
-        {/* Phone-only: the column itself is the tap target, since the blocks
-            inside it are far too narrow to be one (§ day-open-link.tsx). It is
-            the LAST child so it sits above the blocks, and it disappears from
-            `sm` up, where each block opens its own sheet instead. */}
+        {/* Phone-only: the column itself is a tap target too, since a block
+            that shares its slot is far too narrow to be a comfortable one (§
+            day-open-link.tsx). It sits UNDER the blocks (z-20 to their z-30),
+            so it catches the empty stretches of the day while an event keeps
+            its own taps, and it disappears from `sm` up, where the column is
+            wide enough that every block is an easy target on its own. */}
         <DayOpenLink
           href={`/?view=day&week=${weekStart}&date=${date}`}
           label={t('schedule.open_day', { day: formatWeekdayLong(date) })}

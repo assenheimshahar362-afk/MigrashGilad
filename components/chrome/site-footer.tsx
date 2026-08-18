@@ -76,13 +76,6 @@ export function SiteFooter({ pitchName }: { pitchName: string }) {
             </li>
           </ul>
 
-          {/* The considered route to installing, as against `<InstallPrompt>`,
-              which interrupts once and can be dismissed for good. The footer is
-              where someone ends up when they are already looking for what else
-              this site can do, and it renders nothing at all on a browser (or a
-              session) where there is nothing to install. */}
-          <InstallAppButton className="mt-6" />
-
           {socials.length > 0 ? (
             <ul className="mt-6 flex items-center gap-2">
               {socials.map(({ href, label, Icon }) => (
@@ -128,6 +121,18 @@ export function SiteFooter({ pitchName }: { pitchName: string }) {
                 </Link>
               </li>
             ))}
+
+            {/* The standing route to installing, as against `<InstallPrompt>`,
+                which offers once on opening and can be waved away (§
+                install-app-button.tsx). Last in the row, which under dir="rtl"
+                puts it to the LEFT of the accessibility statement.
+
+                A button inside the nav's list: it is an action rather than a
+                destination, but it belongs to this row visually, and the
+                `<li>` wrapper keeps the list's content model valid. */}
+            <li>
+              <InstallAppButton />
+            </li>
           </ul>
         </nav>
 

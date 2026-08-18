@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { getSettings } from '@/lib/data';
 import { SiteHeader } from '@/components/chrome/site-header';
 import { BottomNav } from '@/components/chrome/bottom-nav';
+import { HashScroll } from '@/components/chrome/hash-scroll';
 import { SiteFooter } from '@/components/chrome/site-footer';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
 import { InstallProvider } from '@/components/pwa/install-context';
@@ -62,6 +63,9 @@ export default async function PublicLayout({ children }: { children: React.React
               <SiteFooter pitchName={settings.pitchName} />
               <BottomNav />
               <InstallPrompt />
+              {/* Every link into a section anchor depends on this once the
+                  router cache is warm (see hash-scroll.tsx). */}
+              <HashScroll />
             </div>
           </EventDetailProvider>
         </InstallProvider>

@@ -1,29 +1,32 @@
 'use client';
 
 import { useState } from 'react';
-import { Download, Share, Plus, Check } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { InstallSheet } from '@/components/pwa/install-sheet';
 import { useInstall } from '@/components/pwa/install-context';
 
 /**
- * "Install the app", in the footer — the deliberate, always-available route to
- * installing, as opposed to `<InstallPrompt>`, which interrupts once and can
- * be dismissed forever. Someone who waved that banner away and later decided
- * they did want the icon on their home screen previously had nowhere to go.
+ * "Install the app", in the footer's link row — the standing route to
+ * installing, as
+ * opposed to `<InstallPrompt>`, which offers once on opening and can be waved
+ * away. Someone who dismissed that popup and later decided they did want the
+ * icon on their home screen has to have somewhere to go.
  *
- * It renders NOTHING when there is nothing to do — already installed, or a
- * browser that neither fires the install event nor is iOS (desktop Firefox,
- * say). A button that opens a dialog saying "not supported here" is worse than
- * no button: it takes up the same room and answers a question nobody asked.
+ * It is here on every browser, whether or not the install event ever fired:
+ * the sheet it opens explains the manual route (browser menu, or iOS's Share →
+ * "Add to Home Screen") wherever there is no button to press (§
+ * install-sheet.tsx). The one case it renders nothing is a session that is
+ * already running from the home screen — there, there is genuinely nothing
+ * left to install.
  */
 export function InstallAppButton({ className }: { className?: string }) {
-  const { canInstall, isStandalone, isIos, promptInstall } = useInstall();
-  const [showIosSteps, setShowIosSteps] = useState(false);
+  const { canInstall, isStandalone, promptInstall } = useInstall();
+  const [showSheet, setShowSheet] = useState(false);
 
-  if (isStandalone || (!canInstall && !isIos)) return null;
+  if (isStandalone) return null;
 
   return (
     <>
@@ -32,49 +35,22 @@ export function InstallAppButton({ className }: { className?: string }) {
         // default primary green on `primary-900` is two brand colours fighting.
         variant="onField"
         size="sm"
-        className={cn('gap-2', className)}
-        onClick={() => (canInstall ? promptInstall() : setShowIosSteps(true))}
+        // Sized down to sit quietly at the end of the footer's link row:
+        // smaller type, tighter sides, a smaller icon, and 36px tall against
+        // the row's own 44px. That is under A11Y-1's 44px minimum — asked for
+        // deliberately, and it still clears WCAG 2.5.8's 24px — so this is the
+        // one control in the product allowed to be smaller than the rule.
+        className={cn('min-h-9 gap-1.5 px-2.5 text-[0.6875rem] [&_svg]:size-3.5', className)}
+        // With a captured prompt there is nothing to explain — going straight
+        // to the browser's own dialog is one tap instead of two. Without one,
+        // the sheet is the only thing that can answer "how".
+        onClick={() => (canInstall ? promptInstall() : setShowSheet(true))}
       >
-        <Download className="size-4" aria-hidden />
+        <Download aria-hidden />
         {t('pwa.install_footer')}
       </Button>
 
-      {/* iOS has no install API at all, so there the button can only teach the
-          gesture. Three steps in the same sheet every other dialog uses. */}
-      <Sheet open={showIosSteps} onOpenChange={setShowIosSteps}>
-        <SheetContent title={t('pwa.install_title')} description={t('pwa.install_body')}>
-          <ol className="space-y-4">
-            <Step icon={<Share className="size-5" />} n={1}>
-              {t('pwa.install_ios_step_share')}
-            </Step>
-            <Step icon={<Plus className="size-5" />} n={2}>
-              {t('pwa.install_ios_step_add')}
-            </Step>
-            <Step icon={<Check className="size-5" />} n={3}>
-              {t('pwa.install_ios_step_done')}
-            </Step>
-          </ol>
-        </SheetContent>
-      </Sheet>
+      <InstallSheet open={showSheet} onOpenChange={setShowSheet} />
     </>
-  );
-}
-
-/** One numbered step. The number is real text rather than a list marker, so it
- *  is announced with the step and cannot be dropped by a styled `<ol>`. */
-function Step({ icon, n, children }: { icon: React.ReactNode; n: number; children: React.ReactNode }) {
-  return (
-    <li className="flex items-start gap-3">
-      <span
-        aria-hidden
-        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-600"
-      >
-        {icon}
-      </span>
-      <p className="pt-1.5">
-        <span className="font-semibold">{n}. </span>
-        {children}
-      </p>
-    </li>
   );
 }

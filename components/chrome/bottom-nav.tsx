@@ -22,10 +22,14 @@ import { useRequestModal } from '@/components/request/request-modal-context';
  * the press itself, which is feedback rather than decoration.
  */
 const TABS = [
-  { href: '/', section: 'schedule', label: t('nav.schedule'), Icon: CalendarDays },
-  { href: '/#about', section: 'about', label: t('nav.about'), Icon: Info },
-  { href: '/#trustees', section: 'trustees', label: t('nav.trustees'), Icon: Users },
-  { href: '/#contact', section: 'contact', label: t('nav.contact'), Icon: Phone },
+  // `routes`: the OTHER pathnames this tab stands for. The month view is the
+  // same calendar in a different shape, so the calendar tab has to light up
+  // there too — it is reached from the schedule and there is no tab of its
+  // own for it to hand over to.
+  { href: '/', section: 'schedule', routes: ['/schedule/month'], label: t('nav.schedule'), Icon: CalendarDays },
+  { href: '/#about', section: 'about', routes: [], label: t('nav.about'), Icon: Info },
+  { href: '/#trustees', section: 'trustees', routes: [], label: t('nav.trustees'), Icon: Users },
+  { href: '/#contact', section: 'contact', routes: [], label: t('nav.contact'), Icon: Phone },
 ] as const;
 
 // The short label, not `nav.request`: five tabs on a 360px screen leave 72px
@@ -36,62 +40,101 @@ const REQUEST_TAB = { label: t('nav.request_short'), Icon: FilePlus2 };
 
 const tabClassName = 'press tap-target relative flex flex-col items-center justify-center gap-1 py-2 text-[0.6875rem] font-medium';
 
+/** Where down the viewport a section has to reach before it counts as the one
+ *  being looked at. A third of the way down rather than dead centre: a section
+ *  only has to arrive to read as current. */
+const CURRENT_LINE = 0.35;
+
 /**
  * `/`, `/#about`, `/#trustees` and `/#contact` are all the same route — the
  * home page merged into one-page anchors (§ one-page merge) — so
  * `usePathname()` alone cannot tell them apart, and the calendar tab (the
- * only one whose href IS the bare pathname) ends up permanently "active"
- * regardless of which section is actually on screen. This tracks which
- * section's midpoint is currently crossing the vertical centre of the
- * viewport instead, the same signal a visitor's own eye is using.
+ * only one whose href IS the bare pathname) would end up permanently "active"
+ * regardless of which section is actually on screen. This answers the question
+ * from scroll position instead, the same signal a visitor's own eye is using.
+ *
+ * It MEASURES rather than observing. An `IntersectionObserver` over a thin
+ * band was the obvious shape for this and was wrong three ways, all of which
+ * showed up as a tab bar stuck on the wrong icon:
+ *
+ *   - It only reports CHANGES. Scrolling back up past the first section left
+ *     nothing crossing the band, which is indistinguishable from "nothing has
+ *     changed" — so the last section to have been lit stayed lit at the top of
+ *     the page, where the calendar is what is actually on screen.
+ *   - A section shorter than the gap between the band's edges (or a tall
+ *     phone) can pass through without ever generating a crossing at all.
+ *   - Anything that changes the page's height AFTER load — the hero image
+ *     arriving, a week swipe redrawing a taller grid — moves every section
+ *     without any scrolling, and an observer that has already fired has
+ *     nothing more to say. A measurement re-runs.
+ *
+ * Reading four `getBoundingClientRect()`s inside a `requestAnimationFrame` is
+ * cheap enough to do on every scroll frame: they are laid out already, and the
+ * read happens at the moment the browser is about to paint anyway.
  */
 function useActiveSection(enabled: boolean): string {
-  const [active, setActive] = useState<string>('schedule');
+  const [active, setActive] = useState<string>(TABS[0].section);
 
   useEffect(() => {
     if (!enabled) return;
 
-    const sections = TABS.map((tab) => document.getElementById(tab.section)).filter(
-      (el): el is HTMLElement => el !== null,
-    );
-    if (sections.length === 0) return;
+    let frame = 0;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // Several sections can straddle the line at once on a short viewport;
-        // the one closest to the top wins, matching what a visitor would call
-        // "the section I'm looking at".
-        const crossing = entries.filter((entry) => entry.isIntersecting);
-        if (crossing.length === 0) return;
-        const topmost = crossing.reduce((a, b) =>
-          a.boundingClientRect.top <= b.boundingClientRect.top ? a : b,
-        );
-        setActive(topmost.target.id);
-      },
-      // A zero-height line near the top third of the viewport, rather than
-      // dead centre — a section only has to arrive, not be centred, to read
-      // as "current", which also gives a short trailing section (contact,
-      // shorter than the ones before it) more room to cross it at all.
-      { rootMargin: '-30% 0px -65% 0px', threshold: 0 },
-    );
+    const measure = () => {
+      frame = 0;
 
-    sections.forEach((section) => observer.observe(section));
+      const line = window.innerHeight * CURRENT_LINE;
+      // The last section whose top has passed the line is the current one;
+      // above all of them — the hero — the calendar is what is on screen, and
+      // TABS[0] is already the default this starts from.
+      let current: string = TABS[0].section;
+      let lastPresent: string = TABS[0].section;
 
-    // Safety net for that same short-last-section case: if it's too short to
-    // ever cross the line above, the page still runs out of room to scroll
-    // — reaching the bottom of the document is itself an unambiguous "the
-    // last section is what's on screen", independent of its height.
-    const lastSection = TABS.at(-1)?.section ?? 'contact';
-    const onScroll = () => {
+      for (const tab of TABS) {
+        const element = document.getElementById(tab.section);
+        if (!element) continue;
+        const rect = element.getBoundingClientRect();
+        // A section with no height yet is a section the browser has not laid
+        // out — streamed HTML that has not arrived, a suspended boundary. Its
+        // top reads as 0, which is "above the line" for every section at once,
+        // and the LAST one would win: for the second or so before the page
+        // finishes arriving the bar lit "יצירת קשר" on a visitor who was
+        // looking at the calendar. Nothing that measures 0 gets a vote.
+        if (rect.height === 0) continue;
+        lastPresent = tab.section;
+        if (rect.top <= line) current = tab.section;
+      }
+
+      // The last section is usually shorter than the ones above it and sits
+      // over a tall footer, so on a big screen it can never reach the line.
+      // Running out of page to scroll is itself an unambiguous "this is the
+      // end", independent of any section's height.
       const atBottom =
         window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
-      if (atBottom) setActive(lastSection);
+      setActive(atBottom ? lastPresent : current);
     };
-    window.addEventListener('scroll', onScroll, { passive: true });
+
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(measure);
+    };
+
+    measure();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    // The two silent movers: a hash jump on load lands before the sections
+    // have their final geometry, and anything that changes the document's
+    // height (images, a swiped-in week) shifts every section without a scroll
+    // or a resize event to announce it.
+    window.addEventListener('hashchange', schedule);
+    const resizeObserver = new ResizeObserver(schedule);
+    resizeObserver.observe(document.body);
 
     return () => {
-      observer.disconnect();
-      window.removeEventListener('scroll', onScroll);
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+      window.removeEventListener('hashchange', schedule);
+      resizeObserver.disconnect();
     };
   }, [enabled]);
 
@@ -123,8 +166,15 @@ export function BottomNav() {
           </button>
         </li>
 
-        {TABS.map(({ href, section, label, Icon }) => {
-          const active = onHome && activeSection === section;
+        {TABS.map(({ href, section, routes, label, Icon }) => {
+          // On the home page the tab follows the section being read; anywhere
+          // else it follows the route. A public page that belongs to no tab
+          // (the rules and accessibility pages, both reached from the footer)
+          // correctly lights none of them rather than leaving whichever tab
+          // was lit before still lit.
+          const active = onHome
+            ? activeSection === section
+            : (routes as readonly string[]).includes(pathname);
           return (
             <li key={href} className="min-w-0 flex-1">
               <Link
