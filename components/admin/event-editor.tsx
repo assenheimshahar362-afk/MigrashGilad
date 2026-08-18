@@ -17,8 +17,10 @@ import {
   type LocalDate,
 } from '@/lib/time';
 import { apiFetch, errorText } from '@/lib/client-api';
+import type { EventScope } from '@/lib/event-series';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select, Textarea } from '@/components/ui/field';
+import { EventScopeChoice } from '@/components/admin/event-scope-choice';
 
 type RepeatPreset = '3m' | '6m' | '1y' | '2y' | 'none';
 
@@ -60,15 +62,24 @@ function repeatUntil(date: LocalDate, preset: RepeatPreset): LocalDate | null {
  */
 export function EventEditor({
   event,
+  repeats = false,
   onDone,
 }: {
   event?: EventRow;
+  /** Whether this occurrence has later ones to carry the edit to (FR-33a) —
+   *  a series occurrence, or the same booking typed out week after week. The
+   *  caller works it out, because only it has the surrounding weeks. */
+  repeats?: boolean;
   onDone?: () => void;
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [generated, setGenerated] = useState<number | null>(null);
+  const [updated, setUpdated] = useState<number | null>(null);
+  // Never 'following' by default: see event-scope-choice.tsx on why the
+  // reversible option is the one that is pre-selected.
+  const [scope, setScope] = useState<EventScope>('single');
 
   const [form, setForm] = useState({
     title: event?.title ?? '',
@@ -103,6 +114,8 @@ export function EventEditor({
     setPending(true);
     setError(null);
     setGenerated(null);
+    setUpdated(null);
+    let touched = 1;
 
     try {
       if (recurring) {
@@ -135,14 +148,24 @@ export function EventEditor({
         };
 
         if (event) {
-          await apiFetch(`/api/admin/events/${event.id}`, { method: 'PATCH', json: body });
+          const result = await apiFetch<{ updated: number }>(`/api/admin/events/${event.id}`, {
+            method: 'PATCH',
+            json: repeats ? { ...body, scope } : body,
+          });
+          // Worth saying out loud only when it reached more than the row the
+          // admin was looking at — and when it did, the sheet stays open long
+          // enough to read it (see the close below).
+          touched = result.updated;
+          if (touched > 1) setUpdated(touched);
         } else {
           await apiFetch('/api/admin/events', { method: 'POST', json: body });
         }
       }
 
       router.refresh();
-      onDone?.();
+      // Closing on top of "12 events updated" would hide the only report of
+      // what an edit across a whole series actually did.
+      if (touched <= 1) onDone?.();
     } catch (thrown) {
       // ERR_SLOT_CONFLICT arrives here from the exclusion constraint (G4) with
       // its Hebrew message already attached.
@@ -318,9 +341,20 @@ export function EventEditor({
         </label>
       ) : null}
 
+      {/* FR-33a: only for an occurrence that actually has later ones. */}
+      {event && repeats ? (
+        <EventScopeChoice value={scope} onChange={setScope} disabled={pending} />
+      ) : null}
+
       {error ? (
         <p role="alert" className="text-sm font-semibold text-danger-ink">
           {error}
+        </p>
+      ) : null}
+
+      {updated !== null ? (
+        <p role="status" className="text-sm font-semibold text-success-ink">
+          {t('admin.scope.updated', { count: updated })}
         </p>
       ) : null}
 

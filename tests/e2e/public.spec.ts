@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 /**
@@ -17,7 +17,6 @@ const PUBLIC_PAGES = [
   '/',
   '/rules',
   '/accessibility',
-  '/schedule/month',
   // Since §2 was amended, /login wears the public chrome like any other page,
   // so it is held to the same axe budget. /register is its sibling, split out
   // of the old tabbed form onto its own route.
@@ -113,7 +112,16 @@ test.describe('Scenario 2 — a request in under 60 seconds, no account', () => 
     // it on load the same way the PWA shortcut does (request-modal-url-
     // opener.tsx), so this waits on the same code path a real user's click
     // would drive rather than reaching in through a different door.
-    await page.goto('/?book=1');
+    //
+    // The hour is chosen against live availability rather than left on the
+    // form's 17:00 default. Association time is REFUSED outright (FR-13), and
+    // the pitch has a standing association booking most afternoons — so on any
+    // day where that covers 17:00, the default lands on a blocked slot, "לשלב
+    // הבא" is disabled, and this test failed on the data rather than on the
+    // form. What it is here to prove — three steps, no password — needs a
+    // slot the form will accept, not one particular slot.
+    const slot = await firstFreeHour(page);
+    await page.goto(`/?book=1&date=${slot.date}&start=${slot.start}&end=${slot.end}`);
 
     // The page now carries many <h2>s (one per section, plus this one from
     // the form's own step indicator), so each check is scoped to the step
@@ -135,6 +143,32 @@ test.describe('Scenario 2 — a request in under 60 seconds, no account', () => 
     await expect(phone).toHaveAttribute('dir', 'ltr');
   });
 });
+
+/**
+ * The first hour of the pitch's opening day that `GET /api/availability` says
+ * is free, walking forward from tomorrow. Tomorrow rather than today because
+ * the form enforces a lead time, and hour by hour because which hours are free
+ * depends on the real schedule in the database.
+ */
+async function firstFreeHour(page: Page): Promise<{ date: string; start: string; end: string }> {
+  const day = new Date();
+  for (let ahead = 1; ahead <= 14; ahead++) {
+    const target = new Date(day.getFullYear(), day.getMonth(), day.getDate() + ahead);
+    const date = `${target.getFullYear()}-${String(target.getMonth() + 1).padStart(2, '0')}-${String(target.getDate()).padStart(2, '0')}`;
+
+    for (let hour = 8; hour <= 21; hour++) {
+      const start = `${String(hour).padStart(2, '0')}:00`;
+      const end = `${String(hour + 1).padStart(2, '0')}:00`;
+      const response = await page.request.get(
+        `/api/availability?start=${date}T${start}:00%2B03:00&end=${date}T${end}:00%2B03:00`,
+      );
+      if (!response.ok()) continue;
+      const body = (await response.json()) as { available: boolean; blocked: boolean };
+      if (body.available && !body.blocked) return { date, start, end };
+    }
+  }
+  throw new Error('no free hour found in the next 14 days — check the seeded schedule');
+}
 
 test.describe('The one-page merge — old routes redirect, not 404', () => {
   const OLD_ROUTES: Array<[string, string]> = [

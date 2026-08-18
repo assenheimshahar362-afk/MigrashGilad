@@ -22,11 +22,11 @@ import { useRequestModal } from '@/components/request/request-modal-context';
  * the press itself, which is feedback rather than decoration.
  */
 const TABS = [
-  // `routes`: the OTHER pathnames this tab stands for. The month view is the
-  // same calendar in a different shape, so the calendar tab has to light up
-  // there too — it is reached from the schedule and there is no tab of its
-  // own for it to hand over to.
-  { href: '/', section: 'schedule', routes: ['/schedule/month'], label: t('nav.schedule'), Icon: CalendarDays },
+  // `routes`: the OTHER pathnames a tab stands for. None of them has one at
+  // the moment — the calendar is a single route again since the month view was
+  // removed — but the mechanism stays, because the alternative is the tab bar
+  // silently lighting nothing on any second calendar route added later.
+  { href: '/', section: 'schedule', routes: [], label: t('nav.schedule'), Icon: CalendarDays },
   { href: '/#about', section: 'about', routes: [], label: t('nav.about'), Icon: Info },
   { href: '/#trustees', section: 'trustees', routes: [], label: t('nav.trustees'), Icon: Users },
   { href: '/#contact', section: 'contact', routes: [], label: t('nav.contact'), Icon: Phone },

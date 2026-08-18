@@ -47,7 +47,7 @@ const DEVICES = [
 // /request, /about, /contact, /trustees, /rules and /accessibility are now
 // anchor sections on '/' (redirected there), not separate documents — auditing
 // them again would just re-measure the same page.
-const PAGES = ['/', '/schedule/month', '/login'];
+const PAGES = ['/', '/login'];
 
 const browser = await chromium.launch();
 const problems = [];

@@ -51,8 +51,16 @@ export const createEventInput = eventFields.refine(
   'ERR_VALIDATION',
 );
 
+/**
+ * FR-33a: which occurrences an edit reaches — this one, or this one and every
+ * later occurrence of the same repeating booking (§ lib/event-series.ts).
+ * Absent means `single`, so every existing caller keeps its old behaviour.
+ */
+export const eventScope = z.enum(['single', 'following']);
+
 export const updateEventInput = eventFields
   .partial()
+  .extend({ scope: eventScope.optional() })
   .refine(
     // Only checkable when the patch supplies both; a one-sided move is
     // validated by the `event_time_order` constraint in the database.

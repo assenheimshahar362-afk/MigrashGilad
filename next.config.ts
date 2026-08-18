@@ -89,6 +89,9 @@ const nextConfig: NextConfig = {
       // from a success screen, or sent to someone's own WhatsApp — now goes
       // home rather than 404ing.
       { source: '/request/:token', destination: '/', permanent: true },
+      // The month view is gone entirely — the week and day shapes of the
+      // calendar are the whole of it now. A saved link lands on the calendar.
+      { source: '/schedule/month', destination: '/', permanent: true },
       { source: '/about', destination: '/#about', permanent: true },
       { source: '/trustees', destination: '/#trustees', permanent: true },
       { source: '/contact', destination: '/#contact', permanent: true },
@@ -102,6 +105,18 @@ const withSerwist = withSerwistInit({
   // The service worker fights hot reload; it is a production-only concern.
   disable: process.env.NODE_ENV === 'development',
   reloadOnOnline: false,
+  // The offline page has to be IN the precache for the fallback in app/sw.ts
+  // to have anything to serve: Serwist resolves that entry through
+  // `matchPrecache`, and the generated manifest carries build assets only —
+  // no HTML documents. Without this line the fallback silently never fires,
+  // and a visitor with no signal gets the browser's own error page on any
+  // route they had not already opened.
+  //
+  // The revision is the build id, so a new deploy replaces the cached copy
+  // rather than serving last month's wording forever.
+  additionalPrecacheEntries: [
+    { url: '/offline', revision: process.env.VERCEL_GIT_COMMIT_SHA ?? String(Date.now()) },
+  ],
 });
 
 export default withSerwist(nextConfig);

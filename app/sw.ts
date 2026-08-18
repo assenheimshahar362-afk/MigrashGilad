@@ -4,6 +4,7 @@ import {
   BackgroundSyncQueue,
   CacheFirst,
   ExpirationPlugin,
+  NetworkFirst,
   NetworkOnly,
   Serwist,
   StaleWhileRevalidate,
@@ -39,6 +40,28 @@ const serwist = new Serwist({
   clientsClaim: true,
   navigationPreload: true,
   runtimeCaching: [
+    {
+      // Pages themselves (§12). Without a route that MATCHES a navigation,
+      // nothing below reaches it: `fallbacks` installs a catch handler on the
+      // routes this router owns, so an unrouted navigation goes straight to
+      // the network, and on a dead signal the visitor gets the browser's own
+      // error page — not the offline page this app ships, and not the cached
+      // schedule either. That was the state of it: with the service worker
+      // installed and in control, every navigation failed offline, /offline
+      // included.
+      //
+      // Network-FIRST, never cache-first: the schedule changes, and a stale
+      // week shown to someone standing at the pitch gate is worse than a slow
+      // one. The cache is the answer only when the network has none. The three
+      // second timeout is what makes a phone on one bar fall back to the last
+      // week it saw rather than hang.
+      matcher: ({ request }) => request.mode === 'navigate',
+      handler: new NetworkFirst({
+        cacheName: 'pages',
+        networkTimeoutSeconds: 3,
+        plugins: [new ExpirationPlugin({ maxEntries: 32, maxAgeSeconds: 24 * 60 * 60 })],
+      }),
+    },
     {
       // The schedule must be readable offline (§12). Stale-while-revalidate so
       // the visitor sees something instantly and the fresh copy lands behind it.

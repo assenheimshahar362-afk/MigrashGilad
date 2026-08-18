@@ -1,9 +1,7 @@
-import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
-import { CalendarRange, MapPin, Clock } from 'lucide-react';
+import { MapPin, Clock } from 'lucide-react';
 import { t } from '@/lib/i18n';
-import { cn } from '@/lib/utils';
 import { getSchedule, getSettings, getTrustees } from '@/lib/data';
 import {
   addLocalDays,
@@ -52,12 +50,15 @@ export const metadata: Metadata = {
  * in the public layout so it opens the same way from every public route;
  * /rules and /accessibility (`app/(public)/rules`,
  * `app/(public)/accessibility`) are ordinary pages again, each with its own
- * <h1>. Along with the admin/manager area, the month view and a visitor's
- * own request-status link, that is everything left with its own route: the
- * first is a genuinely different application behind auth, the month view is
- * a different SHAPE of the same calendar rather than a section of prose, and
- * the request-status link is a private, tokenised deep link that has no
- * business being anchored into a page search engines index.
+ * <h1>. Along with the admin/manager area, that is everything left with its
+ * own route — the admin area being a genuinely different application behind
+ * auth.
+ *
+ * The month view had a route here too and no longer does: the calendar is the
+ * week grid and the day view, both of them on THIS page and both reachable
+ * from the toggle above the grid, so a third shape on a page of its own was
+ * one more place the same bookings could be read from. `/schedule/month`
+ * permanent-redirects here (§ next.config.ts).
  */
 export const revalidate = 300;
 
@@ -159,22 +160,8 @@ export default async function HomePage({
             )}
           </WeekSwipe>
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="mt-4">
             <Legend />
-
-            <Link
-              href="/schedule/month"
-              className={cn(
-                'press-sm inline-flex min-h-11 items-center gap-1.5 rounded-(--radius-input) px-4 py-2',
-                'text-sm font-semibold text-(--ink-muted)',
-                'border border-(--hairline) bg-(--surface-raised)',
-                'transition-[background-color,border-color,color] duration-(--duration-tip)',
-                'ease-(--ease-out-quiet) hover:border-(--hairline-strong) hover:text-(--ink)',
-              )}
-            >
-              <CalendarRange className="size-4" aria-hidden />
-              {t('nav.month')}
-            </Link>
           </div>
 
           {isEmpty && view === 'week' ? <p className="empty-state mt-4">{t('schedule.empty')}</p> : null}
