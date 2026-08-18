@@ -24,7 +24,3 @@ export function isMessageKey(key: string): key is MessageKey {
   return key in messages;
 }
 
-/** Resolve a dynamic key, falling back to a generic message. */
-export function tDynamic(key: string, fallback: MessageKey, vars?: Record<string, string | number>) {
-  return isMessageKey(key) ? t(key, vars) : t(fallback, vars);
-}

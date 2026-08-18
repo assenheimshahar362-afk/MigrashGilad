@@ -121,16 +121,3 @@ export async function listAccessRequests(): Promise<AccessRequest[]> {
     alreadyAdmin: active.has(row.email.toLowerCase()),
   }));
 }
-
-/** True when the address has an active allowlist row — i.e. may sign in. */
-export async function isApprovedEmail(email: string): Promise<boolean> {
-  const service = createAdminClient();
-  const { data } = await service
-    .from('admin_allowlist')
-    .select('id')
-    .ilike('email', email)
-    .is('revoked_at', null)
-    .maybeSingle();
-
-  return Boolean(data);
-}

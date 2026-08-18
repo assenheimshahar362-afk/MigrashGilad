@@ -6,15 +6,6 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * §11.4: phone numbers, times and dates are LTR runs inside RTL text. Rendering
- * them raw makes `+972` come out as `972+`. Prefer the <Ltr> component; this is
- * for the places where a plain string is required (aria-label, title, ics).
- */
-export function ltrIsolate(value: string): string {
-  return `⁦${value}⁩`;
-}
-
-/**
  * `+972541234567` -> `054-1234567`, which is how Israelis read a number.
  * An Israeli mobile is +972 followed by nine digits: a two-digit prefix (5X)
  * and a seven-digit subscriber number.

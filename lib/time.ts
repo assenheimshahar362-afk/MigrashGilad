@@ -1,4 +1,4 @@
-import { fromZonedTime, toZonedTime, formatInTimeZone } from 'date-fns-tz';
+import { fromZonedTime, formatInTimeZone } from 'date-fns-tz';
 
 /**
  * §14. Every Asia/Jerusalem conversion in the app lives in this file.
@@ -40,11 +40,6 @@ export function localDate(instant: Date | string): LocalDate {
 /** The Asia/Jerusalem wall-clock time of an instant, `HH:mm`. */
 export function localTime(instant: Date | string): LocalTime {
   return formatInTimeZone(new Date(instant), TZ, 'HH:mm');
-}
-
-/** `0`=Sunday .. `6`=Saturday, in Asia/Jerusalem. */
-export function localWeekday(instant: Date | string): number {
-  return toZonedTime(new Date(instant), TZ).getDay();
 }
 
 /**
@@ -113,28 +108,9 @@ export function localWeekDays(sunday: LocalDate): LocalDate[] {
   return Array.from({ length: 7 }, (_, i) => addLocalDays(sunday, i));
 }
 
-export function startOfLocalMonth(date: LocalDate): LocalDate {
-  return `${date.slice(0, 7)}-01`;
-}
-
-/** The 6×7 grid a month view needs, always starting on a Sunday. */
-export function localMonthGrid(monthStart: LocalDate): LocalDate[] {
-  const first = startOfLocalWeek(startOfLocalMonth(monthStart));
-  return Array.from({ length: 42 }, (_, i) => addLocalDays(first, i));
-}
-
-export function isSameLocalMonth(a: LocalDate, b: LocalDate): boolean {
-  return a.slice(0, 7) === b.slice(0, 7);
-}
-
 /** Today's Asia/Jerusalem date, regardless of where the server is. */
 export function todayLocal(now: Date = new Date()): LocalDate {
   return localDate(now);
-}
-
-/** Start-of-day and end-of-day instants for a local date. */
-export function localDayRange(date: LocalDate): { start: Date; end: Date } {
-  return { start: toInstant(date, '00:00'), end: toInstant(addLocalDays(date, 1), '00:00') };
 }
 
 // ---------------------------------------------------------------------------
@@ -154,20 +130,7 @@ const dateShortFmt = new Intl.DateTimeFormat(LOCALE, {
   month: 'short',
 });
 
-const monthYearFmt = new Intl.DateTimeFormat(LOCALE, {
-  timeZone: TZ,
-  month: 'long',
-  year: 'numeric',
-});
-
 const weekdayLongFmt = new Intl.DateTimeFormat(LOCALE, { timeZone: TZ, weekday: 'long' });
-
-const hebrewCalendarFmt = new Intl.DateTimeFormat('he-IL-u-ca-hebrew', {
-  timeZone: TZ,
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-});
 
 /** A local date string is midday-anchored before formatting so that the
  *  timezone conversion inside Intl can never roll it to the previous day. */
@@ -177,9 +140,7 @@ function anchor(date: LocalDate): Date {
 
 export const formatDateLong = (date: LocalDate) => dateLongFmt.format(anchor(date));
 export const formatDateShort = (date: LocalDate) => dateShortFmt.format(anchor(date));
-export const formatMonthYear = (date: LocalDate) => monthYearFmt.format(anchor(date));
 export const formatWeekdayLong = (date: LocalDate) => weekdayLongFmt.format(anchor(date));
-export const formatHebrewCalendar = (date: LocalDate) => hebrewCalendarFmt.format(anchor(date));
 
 export function dayOfMonth(date: LocalDate): number {
   return Number(date.slice(8, 10));

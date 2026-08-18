@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   addLocalDays,
   localDate,
-  localMonthGrid,
   localTime,
   localWeekDays,
   minutesSinceMidnight,
@@ -42,11 +41,6 @@ describe('local date arithmetic', () => {
     expect(addLocalDays('2026-01-01', -1)).toBe('2025-12-31');
   });
 
-  it('builds a 42-cell month grid that starts on a Sunday', () => {
-    const grid = localMonthGrid('2026-08-01');
-    expect(grid).toHaveLength(42);
-    expect(weekdayOfLocalDate(grid[0]!)).toBe(0);
-  });
 });
 
 describe('Asia/Jerusalem conversion', () => {

@@ -13,6 +13,23 @@
 -- recognises exactly these two categories, baked in directly.
 -- Sample data lives in supabase/seed.sql, run after this file.
 --
+-- This file is the ONLY schema file. Two patches once lived beside it and
+-- have been folded in and deleted, since every statement they carried is
+-- present here verbatim:
+--
+--   security-patch-01-definer-rpcs   authorization on the `security definer`
+--                                    maintenance RPCs — is_service_role(),
+--                                    expire_stale_requests(),
+--                                    anonymise_old_requests(),
+--                                    preview_closure_conflicts(), and the
+--                                    revoke/grant pairs that go with them.
+--   patch-02-enum-status-cast        the text -> enum casts in
+--                                    decide_access_request() and
+--                                    approve_request().
+--
+-- A database that already had them applied needs nothing; a fresh one gets
+-- them from this file.
+--
 -- Re-runnable. Every statement is `if not exists` / `or replace` /
 -- `drop ... if exists`, so running it twice is a no-op rather than an error.
 --

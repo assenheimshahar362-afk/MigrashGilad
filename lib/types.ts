@@ -12,7 +12,6 @@ export type UsageType = (typeof USAGE_TYPES)[number];
 
 /** Both categories are requestable — there is nothing left to exclude. */
 export const REQUESTABLE_USAGE_TYPES = USAGE_TYPES;
-export type RequestableUsageType = (typeof REQUESTABLE_USAGE_TYPES)[number];
 
 export const REQUEST_STATUSES = [
   'pending',

@@ -26,8 +26,6 @@ export const createRequestInput = z
   })
   .strict();
 
-export type CreateRequestInput = z.infer<typeof createRequestInput>;
-
 /**
  * The shape the form holds before it is serialised for the API.
  *

@@ -152,118 +152,116 @@ export function ManagerTable({ managers }: { managers: Manager[] }) {
       <section>
         <h2 className="mb-3 text-h3">{t('managers.title')}</h2>
 
-        <div className="overflow-x-auto card">
-          <table className="w-full border-collapse text-sm">
-            <caption className="sr-only">{t('managers.title')}</caption>
-            <thead>
-              <tr className="border-b border-(--hairline) text-start">
-                <th scope="col" className="p-3 text-start">
-                  {t('managers.column.name')}
-                </th>
-                <th scope="col" className="p-3 text-start">
-                  {t('managers.column.role')}
-                </th>
-                <th scope="col" className="p-3 text-start">
-                  {t('managers.column.status')}
-                </th>
-                <th scope="col" className="p-3 text-start">
-                  {t('managers.last_seen')}
-                </th>
-                <th scope="col" className="p-3 text-start">
-                  <span className="sr-only">{t('common.confirm')}</span>
-                </th>
-              </tr>
-            </thead>
+        {/* A card list, not a table.
+            It WAS a five-column table in a horizontally scrolling card, and on a
+            phone that table's own minimum width (a name, an email, two chips, a
+            relative date and two buttons) came to ~556px against a 341px card.
+            The scroll container clipped it visually but the document still grew
+            with it — under dir="rtl" the overflow lands on the inline-start side
+            and Chromium extends the page's scrollable area regardless of the
+            container's overflow-x — so the whole admin area scrolled sideways.
+            Nothing containable fixed that: min-width, max-width, overflow-x:
+            scroll, contain, and clipping the <main> all left the page 496px wide
+            in a 375px viewport.
 
-            <tbody>
-              {managers.map((manager) => (
-                <tr
-                  key={manager.id}
-                  className={cn(
-                    'border-b border-(--hairline) last:border-0',
-                    manager.revokedAt && 'opacity-60',
-                    manager.isSelf && 'bg-accent/10',
-                  )}
-                >
-                  <td className="p-3">
-                    <div className="font-semibold">
-                      {manager.fullName ?? manager.email.split('@')[0]}
-                      {manager.isSelf ? (
-                        <span className="ms-2 rounded-full border border-accent-ink px-2 py-0.5 text-xs font-bold text-accent-ink">
-                          {t('managers.self')}
-                        </span>
-                      ) : null}
-                    </div>
-                    <bdi dir="ltr" className="text-xs text-(--ink-muted)">
-                      {manager.email}
-                    </bdi>
-                  </td>
+            So the row reflows instead of scrolling, which is what every other
+            list in this area already does (§ access-queue.tsx) — same card, same
+            `min-w-0 flex-1` name block, same wrapped action buttons. Each value
+            names itself now that there are no column headers above it: the role
+            and status are chips that read as words, and the last-seen date
+            carries its own label. */}
+        <ul className="card divide-y divide-(--hairline)">
+          {managers.map((manager) => (
+            <li
+              key={manager.id}
+              className={cn(
+                'flex flex-wrap items-center gap-3 p-3 sm:p-4',
+                manager.revokedAt && 'opacity-60',
+                manager.isSelf && 'bg-accent/10',
+              )}
+            >
+              {/* `basis-full` below `sm`: on a phone the name, the email and
+                  the status want the whole line, so the buttons wrap under them
+                  rather than squeezing a three-word name into a column an inch
+                  wide. From `sm` the row has space for both side by side. */}
+              <div className="min-w-0 flex-1 basis-full sm:basis-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold">
+                    {manager.fullName ?? manager.email.split('@')[0]}
+                  </span>
 
-                  <td className="p-3">
-                    <span
-                      className={cn(
-                        'inline-flex rounded-full border px-2 py-0.5 text-xs font-semibold',
-                        manager.role === 'super_admin'
-                          ? 'border-accent text-(--ink)'
-                          : 'border-(--hairline) text-(--ink-muted)',
-                      )}
-                    >
-                      {t(`managers.role.${manager.role}` as const)}
+                  {manager.isSelf ? (
+                    <span className="rounded-full border border-accent-ink px-2 py-0.5 text-xs font-bold text-accent-ink">
+                      {t('managers.self')}
                     </span>
-                  </td>
+                  ) : null}
 
-                  <td className="p-3">
-                    {manager.revokedAt
-                      ? t('managers.revoked')
-                      : manager.hasSignedIn
-                        ? t('managers.active')
-                        : t('managers.never_signed_in')}
-                  </td>
+                  <span
+                    className={cn(
+                      'rounded-full border px-2 py-0.5 text-xs font-semibold',
+                      manager.role === 'super_admin'
+                        ? 'border-accent text-(--ink)'
+                        : 'border-(--hairline) text-(--ink-muted)',
+                    )}
+                  >
+                    {t(`managers.role.${manager.role}` as const)}
+                  </span>
+                </div>
 
-                  <td className="p-3 text-xs text-(--ink-muted)">
-                    {manager.lastSeen ? formatRelative(manager.lastSeen) : '—'}
-                  </td>
+                {/* The one genuinely unbreakable string on the row, so it is
+                    the one thing allowed to truncate. */}
+                <bdi dir="ltr" className="mt-0.5 block truncate text-xs text-(--ink-muted)">
+                  {manager.email}
+                </bdi>
 
-                  <td className="p-3">
-                    <div className="flex flex-wrap gap-1">
-                      {manager.revokedAt ? (
-                        <RowButton onClick={() => setAction({ kind: 'restore', manager })}>
-                          {t('managers.restore')}
-                        </RowButton>
-                      ) : (
-                        <>
-                          {manager.role === 'admin' ? (
-                            <RowButton onClick={() => setAction({ kind: 'promote', manager })}>
-                              {t('managers.promote')}
-                            </RowButton>
-                          ) : (
-                            <RowButton
-                              // §10.8: prevented, not explained afterwards.
-                              disabled={manager.isSelf}
-                              title={manager.isSelf ? t('managers.self_locked') : undefined}
-                              onClick={() => setAction({ kind: 'demote', manager })}
-                            >
-                              {t('managers.demote')}
-                            </RowButton>
-                          )}
+                <p className="mt-1 text-xs text-(--ink-faint)">
+                  {manager.revokedAt
+                    ? t('managers.revoked')
+                    : manager.hasSignedIn
+                      ? t('managers.active')
+                      : t('managers.never_signed_in')}
+                  {manager.lastSeen
+                    ? ` · ${t('managers.last_seen')}: ${formatRelative(manager.lastSeen)}`
+                    : ''}
+                </p>
+              </div>
 
-                          <RowButton
-                            danger
-                            disabled={manager.isSelf}
-                            title={manager.isSelf ? t('managers.self_locked') : undefined}
-                            onClick={() => setAction({ kind: 'revoke', manager })}
-                          >
-                            {t('managers.revoke')}
-                          </RowButton>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              <div className="flex flex-wrap gap-2">
+                {manager.revokedAt ? (
+                  <RowButton onClick={() => setAction({ kind: 'restore', manager })}>
+                    {t('managers.restore')}
+                  </RowButton>
+                ) : (
+                  <>
+                    {manager.role === 'admin' ? (
+                      <RowButton onClick={() => setAction({ kind: 'promote', manager })}>
+                        {t('managers.promote')}
+                      </RowButton>
+                    ) : (
+                      <RowButton
+                        // §10.8: prevented, not explained afterwards.
+                        disabled={manager.isSelf}
+                        title={manager.isSelf ? t('managers.self_locked') : undefined}
+                        onClick={() => setAction({ kind: 'demote', manager })}
+                      >
+                        {t('managers.demote')}
+                      </RowButton>
+                    )}
+
+                    <RowButton
+                      danger
+                      disabled={manager.isSelf}
+                      title={manager.isSelf ? t('managers.self_locked') : undefined}
+                      onClick={() => setAction({ kind: 'revoke', manager })}
+                    >
+                      {t('managers.revoke')}
+                    </RowButton>
+                  </>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
       </section>
 
       {/* §10.8: each action is confirmed by a dialog NAMING the person. */}

@@ -123,6 +123,13 @@ test.describe('Scenario 2 — a request in under 60 seconds, no account', () => 
     const slot = await firstFreeHour(page);
     await page.goto(`/?book=1&date=${slot.date}&start=${slot.start}&end=${slot.end}`);
 
+    // The modal is opened by an effect after hydration, so the wait is on the
+    // dialog itself before anything inside it is asserted. With the suite
+    // running fully parallel, hydration on a loaded server occasionally took
+    // longer than the default 5s and this test failed on the first heading
+    // while the page behind it was perfectly fine.
+    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 15_000 });
+
     // The page now carries many <h2>s (one per section, plus this one from
     // the form's own step indicator), so each check is scoped to the step
     // indicator's heading specifically rather than "the" level-2 heading.

@@ -45,7 +45,7 @@ rejected person has exactly the permissions of a stranger.
 npm install
 cp .env.example .env.local        # fill in the Supabase values at minimum
 
-# Local database: applies supabase/migrations/0001_init.sql, then seeds
+# Local database: applies supabase/init.sql, then seeds
 supabase start
 npm run db:reset
 
@@ -67,7 +67,7 @@ than crashing (NFR-3). Requests will not submit.
 | `SUPABASE_SERVICE_ROLE_KEY` | the two public write endpoints, cron, notification fan-out |
 
 The one bootstrap super admin (§2) is not an environment variable — it is a
-literal in `supabase/migrations/0001_init.sql`, under "PART 4 — BOOTSTRAP".
+literal in `supabase/init.sql`, under "PART 4 — BOOTSTRAP".
 
 Everything else in `.env.example` is optional and degrades explicitly:
 
@@ -180,7 +180,7 @@ lib/
   errors.ts          error code → Hebrew message
   supabase/          server (cookie), public (cookieless, cached), admin (service role), client
 messages/he.json     every Hebrew string in the UI
-supabase/           0001_init.sql (schema · functions · RLS · bootstrap) · seed.sql
+supabase/           init.sql (schema · functions · RLS · bootstrap) · seed.sql (a live snapshot)
 tests/               unit · integration (RLS matrix) · e2e (Playwright + axe)
 ```
 
@@ -253,7 +253,7 @@ bite. None of them blocks the build; all of them block launch.
 | 2 | Automated SMS to requesters — budget approved? v1 ships the one-tap WhatsApp link plus the status page. | `lib/notifications/whatsapp.ts` |
 | 3 | Memorial text, portrait, family approval. The memorial section of `/about` shows an honest placeholder until settings carry the content. | launch |
 | 5 | Which emails are on the `admin` tier. | `/admin/managers` |
-| 6 | Real trustee names, titles, phones, photos. `supabase/seed.sql` has placeholders. | `/#trustees` |
+| 6 | Trustee photos. Names, titles and phones are live and carried in `supabase/seed.sql`. | `/#trustees` |
 | 7 | Opening hours per weekday, max duration, lead time. Seeded at 06:00–23:00 every day. | `/admin/settings` |
 | 8 | Domain and DNS. | deployment |
 | 9 | Named accessibility coordinator. `/#accessibility` has bracketed placeholders that cannot ship unnoticed. | legal (A11Y-9) |
@@ -262,10 +262,10 @@ bite. None of them blocks the build; all of them block launch.
 
 ## Deployment checklist
 
-1. Supabase project created; `supabase db push` applied `0001_init.sql` and
+1. Supabase project created; `supabase db push` applied `supabase/init.sql` and
    `0002_access_requests.sql` — or the same files pasted whole into the
    dashboard SQL editor, which also works.
-2. The super admin address edited into "PART 4 — BOOTSTRAP" in `0001_init.sql`
+2. The super admin address edited into "PART 4 — BOOTSTRAP" in `supabase/init.sql`
    **before** that first run. There is no UI that can create the first one.
 3. Google OAuth configured in Supabase Auth → Providers, redirect URL set to
    `https://<domain>/auth/callback`.
