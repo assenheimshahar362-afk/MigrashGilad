@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock, Info, MessageSquareText, Phone, Tag, User } from 'lucide-react';
+import { Clock, MessageSquareText, Phone, Tag, User } from 'lucide-react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Ltr, TimeRange } from '@/components/ui/ltr';
 import { cn } from '@/lib/utils';
@@ -46,10 +46,6 @@ export function EventDetailSheet({
   // lib/schedule.ts) — repeating it as a heading and again as the type row
   // would say the same word twice.
   const heading = title === style.label ? style.label : title;
-  // Unbooked community time carries no admin-written description; the same
-  // reassuring default the day view uses stands in (§ day-view.tsx).
-  const description =
-    event.description ?? (event.usageType === 'community' ? t('schedule.community_free_text') : null);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -79,18 +75,17 @@ export function EventDetailSheet({
             </span>
           </DetailRow>
 
-          {description ? (
-            <DetailRow icon={Info} label={t('event.description')}>
-              <p className="text-sm leading-relaxed text-(--ink)">{description}</p>
-            </DetailRow>
-          ) : null}
+          {/* The only free text this sheet shows. The admin-written
+              `description` used to sit above it and no longer appears here at
+              all: the day view already carries it, and repeating it in the
+              sheet left the requester's own words buried under a field that is
+              empty on most bookings anyway.
 
-          {/* What the requester typed on the public form, carried onto the event
-              by `approve_request` (§ supabase/init.sql). It sits directly under
-              the description because it is the same kind of fact — what this
-              booking is for — only written by the person who asked for it
-              rather than by an admin. `whitespace-pre-line` keeps the line
-              breaks they typed; the textarea allows them. */}
+              This one is what the requester typed on the public form, carried
+              onto the event by `approve_request` and published only once an
+              admin ticks `show_note` — `toPublicEvent` returns null for it
+              otherwise, so an unapproved note never reaches the browser.
+              `whitespace-pre-line` keeps the line breaks they typed. */}
           {event.requesterNote ? (
             <DetailRow icon={MessageSquareText} label={t('event.note')}>
               <p className="text-sm leading-relaxed whitespace-pre-line text-(--ink)">

@@ -42,7 +42,6 @@
   "event.time": "שעות",
   "event.type": "סוג שימוש",
   "event.responsible": "אחראי",
-  "event.description": "תיאור",
   "event.note": "הערת המזמין",
   "event.close": "סגירה",
   "event.requested_by": "הוגש על ידי {name}",
