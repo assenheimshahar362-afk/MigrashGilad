@@ -52,6 +52,11 @@ export function RequestCard({
   const [conflict, setConflict] = useState<EventRow | null>(null);
   const [rejecting, setRejecting] = useState(false);
   const [editingTime, setEditingTime] = useState(false);
+  // §7 PII: the requester wrote their note for the person deciding, not for the
+  // public calendar. It is published only if the admin ticks this first, and
+  // approving without touching it keeps the note admin-only (G3 still wants
+  // approve to be one tap).
+  const [showNote, setShowNote] = useState(false);
 
   const date = localDate(request.requested_start);
 
@@ -143,10 +148,23 @@ export function RequestCard({
         {request.note ? (
           <div className="flex gap-2">
             <dt className="text-(--ink-muted)">{t('request.field.note')}</dt>
-            <dd>{request.note}</dd>
+            <dd className="whitespace-pre-line">{request.note}</dd>
           </div>
         ) : null}
       </dl>
+
+      {request.note ? (
+        <label className="mt-3 flex items-center gap-3 text-sm">
+          <input
+            type="checkbox"
+            className="size-5 accent-(--color-floodlight)"
+            checked={showNote}
+            onChange={(e) => setShowNote(e.target.checked)}
+            disabled={pending}
+          />
+          {t('admin.show_note')}
+        </label>
+      ) : null}
 
       {error ? (
         <p role="alert" className="mt-3 text-sm font-semibold text-danger-ink">
@@ -162,7 +180,7 @@ export function RequestCard({
       ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <Button onClick={() => decide('approve', {}, true)} disabled={pending}>
+        <Button onClick={() => decide('approve', { showNote }, true)} disabled={pending}>
           {t('admin.approve')}
         </Button>
 
@@ -180,7 +198,7 @@ export function RequestCard({
           <a
             href={telLink(request.requester_phone)}
             className="press tap-target flex items-center gap-2 rounded-(--radius-input) border border-(--hairline) px-3 text-sm font-semibold transition-[background-color,border-color,transform] duration-(--duration-press) ease-(--ease-out-quiet) hover:border-(--hairline-strong) hover:bg-(--surface-hover)"
-            aria-label={`${t('trustees.call')} — ${request.requester_name}`}
+            aria-label={`${t('trustees.call')} - ${request.requester_name}`}
           >
             <Phone className="size-4" aria-hidden />
             <Ltr>{formatIsraeliPhone(request.requester_phone)}</Ltr>
@@ -193,7 +211,7 @@ export function RequestCard({
             target="_blank"
             rel="noopener noreferrer"
             className="press tap-target flex items-center justify-center rounded-(--radius-input) border border-(--hairline) px-3 transition-[background-color,border-color,transform] duration-(--duration-press) ease-(--ease-out-quiet) hover:border-(--hairline-strong) hover:bg-(--surface-hover)"
-            aria-label={`${t('trustees.whatsapp')} — ${request.requester_name}`}
+            aria-label={`${t('trustees.whatsapp')} - ${request.requester_name}`}
           >
             <MessageCircle className="size-4" aria-hidden />
           </a>
@@ -215,7 +233,7 @@ export function RequestCard({
         defaultStart={localTime(request.requested_start)}
         defaultEnd={localTime(request.requested_end)}
         onApprove={(start, end, note) =>
-          decide('approve', { start, end, note }, false)
+          decide('approve', { start, end, note, showNote }, false)
         }
       />
     </li>

@@ -84,6 +84,11 @@ drop function if exists cancel_request_admin(uuid, int, text) cascade;
 drop function if exists delete_request(uuid, int) cascade;
 drop function if exists delete_request(uuid) cascade;
 drop function if exists reject_request(uuid, int, text) cascade;
+-- Both signatures: Postgres overloads on the argument list, so the five-argument
+-- version that predates `p_show_note` is a separate function. Left in place
+-- beside the six-argument one it would make `approve_request(...)` ambiguous
+-- for every caller that omits the new flag.
+drop function if exists approve_request(uuid, int, timestamptz, timestamptz, text, boolean) cascade;
 drop function if exists approve_request(uuid, int, timestamptz, timestamptz, text) cascade;
 drop function if exists decide_access_request(uuid, boolean, admin_role, text) cascade;
 drop function if exists add_manager(citext, text, admin_role) cascade;
@@ -305,6 +310,16 @@ create table if not exists events (
   id              uuid primary key default gen_random_uuid(),
   title           text not null,
   description     text,
+  -- The note the requester typed on the public form, copied here by
+  -- approve_request() so the public detail sheet can show it beneath the
+  -- description. `booking_requests` has no anon read policy (PART 3), so an
+  -- event row is the only way that text can ever reach a visitor.
+  requester_note  text,
+  -- Whether that note is published. Off by default and flipped by an admin,
+  -- exactly like `show_contact` below: the requester wrote it for the people
+  -- deciding on the booking, not for the public calendar, so nothing they type
+  -- reaches a visitor until a manager says so.
+  show_note       boolean not null default false,
   usage_type      usage_type not null,
   starts_at       timestamptz not null,
   ends_at         timestamptz not null,
@@ -332,6 +347,13 @@ do $$ begin
       tstzrange(starts_at, ends_at, '[)') with &&
     ) where (status = 'scheduled');
 exception when duplicate_object then null; end $$;
+
+-- PART 0 drops `events` before this file recreates it, so the column above is
+-- always there on a fresh run. This line is what a LIVE database needs: run it,
+-- plus the `approve_request` replacement further down, to pick the column up
+-- without resetting the schema.
+alter table events add column if not exists requester_note text;
+alter table events add column if not exists show_note boolean not null default false;
 
 create index if not exists events_range_idx on events using gist (tstzrange(starts_at, ends_at, '[)'));
 create index if not exists events_starts_idx on events (starts_at) where status = 'scheduled';
@@ -642,7 +664,11 @@ create or replace function approve_request(
   p_version    int,
   p_start      timestamptz default null,   -- null => use requested times
   p_end        timestamptz default null,
-  p_note       text default null
+  p_note       text default null,
+  -- FR-4: whether the requester's own note is published with the event. The
+  -- admin ticks this on the pending-queue card before approving; unticked (the
+  -- default) the note is still stored, just not shown to visitors.
+  p_show_note  boolean default false
 ) returns events
 language plpgsql security definer set search_path = public as $$
 declare
@@ -674,9 +700,15 @@ begin
     raise exception 'ERR_CLOSED';
   end if;
 
+  -- `requester_note` always carries the requester's own words across, so the
+  -- event editor can publish them later without going back to the request;
+  -- `show_note` is what decides whether a visitor ever sees them.
+  -- `description` is left empty so it stays the admin's field to write in.
   insert into events (title, usage_type, starts_at, ends_at, source, request_id,
+                      requester_note, show_note,
                       contact_name, contact_phone, created_by)
   values (r.requester_name, r.usage_type, v_start, v_end, 'request', r.id,
+          nullif(btrim(coalesce(r.note, '')), ''), coalesce(p_show_note, false),
           r.requester_name, r.requester_phone, auth.uid())
   returning * into v_event;   -- exclusion constraint raises 23P01 => ERR_SLOT_CONFLICT
 
@@ -1034,12 +1066,12 @@ revoke all on function anonymise_old_requests(int) from public, anon;
 revoke all on function materialize_recurring(int) from public, anon;
 revoke all on function create_closure(text, timestamptz, timestamptz, boolean, boolean) from public, anon;
 revoke all on function preview_closure_conflicts(timestamptz, timestamptz) from public, anon;
-revoke all on function approve_request(uuid, int, timestamptz, timestamptz, text) from public, anon;
+revoke all on function approve_request(uuid, int, timestamptz, timestamptz, text, boolean) from public, anon;
 revoke all on function reject_request(uuid, int, text) from public, anon;
 revoke all on function cancel_request_admin(uuid, int, text) from public, anon;
 revoke all on function delete_request(uuid, int) from public, anon;
 
-grant execute on function approve_request(uuid, int, timestamptz, timestamptz, text) to authenticated;
+grant execute on function approve_request(uuid, int, timestamptz, timestamptz, text, boolean) to authenticated;
 grant execute on function reject_request(uuid, int, text) to authenticated;
 grant execute on function cancel_request_admin(uuid, int, text) to authenticated;
 grant execute on function delete_request(uuid, int) to authenticated;

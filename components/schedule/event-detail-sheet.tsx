@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock, Info, Phone, Tag, User } from 'lucide-react';
+import { Clock, Info, MessageSquareText, Phone, Tag, User } from 'lucide-react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Ltr, TimeRange } from '@/components/ui/ltr';
 import { cn } from '@/lib/utils';
@@ -85,6 +85,20 @@ export function EventDetailSheet({
             </DetailRow>
           ) : null}
 
+          {/* What the requester typed on the public form, carried onto the event
+              by `approve_request` (§ supabase/init.sql). It sits directly under
+              the description because it is the same kind of fact — what this
+              booking is for — only written by the person who asked for it
+              rather than by an admin. `whitespace-pre-line` keeps the line
+              breaks they typed; the textarea allows them. */}
+          {event.requesterNote ? (
+            <DetailRow icon={MessageSquareText} label={t('event.note')}>
+              <p className="text-sm leading-relaxed whitespace-pre-line text-(--ink)">
+                {event.requesterNote}
+              </p>
+            </DetailRow>
+          ) : null}
+
           {event.contactName ? (
             <DetailRow icon={User} label={t('event.responsible')}>
               <p className="text-sm font-semibold text-(--ink)">{event.contactName}</p>
@@ -107,10 +121,12 @@ export function EventDetailSheet({
           ) : null}
         </dl>
 
-        {/* An approved public request shows the requester's first name only
-            (FR-4 / `firstNameOnly`), which on its own reads as a title with no
-            explanation. This is the line that says what that name is. */}
-        {event.source === 'request' ? (
+        {/* An approved public request is titled with the requester's name and
+            nothing else, which on its own reads as a heading with no
+            explanation. This is the line that says what that name is — skipped
+            when the "responsible" row above already shows the same name under a
+            label of its own, so the sheet does not print it three times. */}
+        {event.source === 'request' && event.contactName !== title ? (
           <p className="mt-5 border-t border-(--hairline) pt-4 text-sm text-(--ink-muted)">
             {t('event.requested_by', { name: title })}
           </p>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ERROR_CODES, codeFromDbError, errorMessage } from '@/lib/errors';
-import { firstNameOnly, toPublicEvent } from '@/lib/types';
+import { eventDisplayTitle, toPublicEvent } from '@/lib/types';
 import { formatIsraeliPhone, whatsappNumber } from '@/lib/utils';
 import type { EventRow } from '@/lib/types';
 
@@ -51,6 +51,8 @@ describe('public projections (§7 PII)', () => {
     id: 'e1',
     title: 'יעל בר-אילן',
     description: null,
+    requester_note: 'אימון כדורגל לילדי השכונה',
+    show_note: false,
     usage_type: 'community',
     starts_at: '2026-08-05T14:00:00.000Z',
     ends_at: '2026-08-05T16:00:00.000Z',
@@ -72,10 +74,16 @@ describe('public projections (§7 PII)', () => {
     expect(toPublicEvent({ ...baseEvent, show_contact: true }).contactPhone).toBe('+972541234567');
   });
 
-  /** FR-4: an approved public request shows the requester's FIRST NAME only. */
-  it('reduces a full name to its first part', () => {
-    expect(firstNameOnly('יעל בר-אילן')).toBe('יעל');
-    expect(firstNameOnly('  אורי   כהן ')).toBe('אורי');
+  it('withholds the requester note unless show_note is true', () => {
+    expect(toPublicEvent(baseEvent).requesterNote).toBeNull();
+    expect(toPublicEvent({ ...baseEvent, show_note: true }).requesterNote).toBe(
+      'אימון כדורגל לילדי השכונה',
+    );
+  });
+
+  /** The calendar names whoever booked the pitch in full, not just a first name. */
+  it('shows an approved request under the requester full name', () => {
+    expect(eventDisplayTitle(toPublicEvent(baseEvent))).toBe('יעל בר-אילן');
   });
 });
 

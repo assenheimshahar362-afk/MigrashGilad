@@ -64,7 +64,7 @@ export function RequestHistoryList({ requests }: { requests: BookingRequestRow[]
                   {formatRelative(request.created_at)}
                 </span>
                 <IconButton
-                  label={`${t('admin.delete_request')} — ${request.requester_name}`}
+                  label={`${t('admin.delete_request')} - ${request.requester_name}`}
                   onClick={() => setDeleting(request)}
                   className="text-danger-ink"
                 >

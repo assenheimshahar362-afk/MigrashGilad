@@ -270,6 +270,7 @@ export function eventsWithCommunityFill(
       id: `community-fill-${date}-${range.start}`,
       title: t('usage.community'),
       description: null,
+      requesterNote: null,
       usageType: 'community',
       startsAt: toInstant(date, timeFromMinutes(range.start)).toISOString(),
       endsAt: toInstant(date, timeFromMinutes(range.end)).toISOString(),

@@ -22,7 +22,7 @@ export function notifyAdminsOfNewRequest(request: BookingRequestRow): void {
     const range = formatTimeRange(request.requested_start, request.requested_end);
 
     const payload = {
-      title: t('app.name') + ' — בקשה חדשה',
+      title: t('app.name') + ' - בקשה חדשה',
       body: `${request.requester_name} · ${day} ${date} · ${range}`,
       url: `/admin?request=${request.id}`,
       tag: `request-${request.id}`,

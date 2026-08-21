@@ -139,7 +139,7 @@ export function AccessQueue({ requests }: { requests: AccessRequest[] }) {
                   {t(request.status === 'approved' ? 'access.approved' : 'access.rejected')}
                 </span>
                 <span className="text-xs text-(--ink-faint)">
-                  {request.decidedAt ? formatRelative(request.decidedAt) : '—'}
+                  {request.decidedAt ? formatRelative(request.decidedAt) : '-'}
                 </span>
               </li>
             ))}

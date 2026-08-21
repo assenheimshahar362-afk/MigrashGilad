@@ -116,7 +116,7 @@ function renderAccessRequestEmail(request: AccessRequestRow): { subject: string;
           ${escapeHtml(t('access.email_body'))}
         </p>
         <dl style="margin:0 0 24px;font-size:15px;line-height:1.8;">
-          ${row('שם', escapeHtml(request.full_name ?? '—'))}
+          ${row('שם', escapeHtml(request.full_name ?? '-'))}
           ${row('דוא״ל', `<span dir="ltr">${escapeHtml(request.email)}</span>`)}
           ${row('אמצעי כניסה', escapeHtml(request.provider === 'google' ? 'Google' : 'דוא״ל וסיסמה'))}
         </dl>

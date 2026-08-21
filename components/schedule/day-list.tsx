@@ -1,7 +1,7 @@
 import { t } from '@/lib/i18n';
 import { formatTimeRange, formatWeekdayLong, type LocalDate } from '@/lib/time';
 import { groupByDay } from '@/lib/schedule';
-import { firstNameOnly, type PublicEvent } from '@/lib/types';
+import { eventDisplayTitle, type PublicEvent } from '@/lib/types';
 import { usageTypeLabel } from '@/lib/usage-type';
 
 /**
@@ -62,7 +62,7 @@ export function DayList({
                     {formatTimeRange(event.startsAt, event.endsAt)}
                   </time>
                   <span className="font-semibold">
-                    {event.source === 'request' ? firstNameOnly(event.title) : event.title}
+                    {eventDisplayTitle(event)}
                   </span>
                   <span className="text-(--ink-muted)">{usageTypeLabel(event.usageType)}</span>
                 </li>

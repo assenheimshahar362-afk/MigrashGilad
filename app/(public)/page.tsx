@@ -114,7 +114,7 @@ export default async function HomePage({
               in <WeekNav> is the heading here, so this one is for the
               accessibility tree only. */}
           <h2 className="sr-only">
-            {t('schedule.title')} — {t('schedule.week_of', { range: formatWeekRange(weekStart) })}
+            {t('schedule.title')} - {t('schedule.week_of', { range: formatWeekRange(weekStart) })}
           </h2>
 
           <OfflineBanner />

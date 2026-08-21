@@ -36,6 +36,7 @@ export async function POST(
       p_start: input.start ?? null,
       p_end: input.end ?? null,
       p_note: input.note ?? null,
+      p_show_note: input.showNote,
     });
 
     // 23P01 (exclusion violation) is mapped to ERR_SLOT_CONFLICT here as well

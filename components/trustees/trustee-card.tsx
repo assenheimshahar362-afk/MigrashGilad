@@ -122,7 +122,7 @@ function Action({
     <a
       href={href}
       className={className}
-      aria-label={`${label} — ${name}`}
+      aria-label={`${label} - ${name}`}
       {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
     >
       {children}

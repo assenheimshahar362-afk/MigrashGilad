@@ -31,6 +31,11 @@ export type EventRow = {
   id: string;
   title: string;
   description: string | null;
+  /** The note the requester typed on the public form. Copied onto the event by
+   *  `approve_request` (§ supabase/init.sql); null for every other source. */
+  requester_note: string | null;
+  /** Whether an admin has published that note. Off until one says otherwise. */
+  show_note: boolean;
   usage_type: UsageType;
   starts_at: string;
   ends_at: string;
@@ -49,13 +54,15 @@ export type EventRow = {
 
 /**
  * What the public schedule is allowed to expose. `contact_phone` is present
- * only when `show_contact` is true (§7 PII); the projection is applied on the
- * server so a phone number never reaches the browser in the first place.
+ * only when `show_contact` is true, and `requesterNote` only when `show_note`
+ * is (§7 PII); both projections are applied on the server, so neither a phone
+ * number nor an unpublished note reaches the browser in the first place.
  */
 export type PublicEvent = {
   id: string;
   title: string;
   description: string | null;
+  requesterNote: string | null;
   usageType: UsageType;
   startsAt: string;
   endsAt: string;
@@ -250,6 +257,7 @@ export function toPublicEvent(row: EventRow): PublicEvent {
     id: row.id,
     title: row.title,
     description: row.description,
+    requesterNote: row.show_note ? row.requester_note : null,
     usageType: row.usage_type,
     startsAt: row.starts_at,
     endsAt: row.ends_at,
@@ -259,18 +267,17 @@ export function toPublicEvent(row: EventRow): PublicEvent {
   };
 }
 
-/** FR-4: an approved public request shows the requester's first name only. */
-export function firstNameOnly(fullName: string): string {
-  return fullName.trim().split(/\s+/)[0] ?? fullName;
-}
-
 /**
  * The title shown for an event anywhere on the public schedule — the grid
  * block, the screen-reader day list, and the day-view cards all need exactly
  * this rule, so it lives once here rather than being re-derived per view.
+ *
+ * An approved request used to be cut back to the requester's first name here
+ * (the old FR-4 `firstNameOnly`). The calendar now names whoever booked the
+ * pitch in full — which is exactly what `approve_request` stores in `title`.
  */
 export function eventDisplayTitle(event: PublicEvent): string {
-  return event.source === 'request' ? firstNameOnly(event.title) : event.title;
+  return event.title;
 }
 
 /** The same range every day of the week — no per-day exceptions any more. */

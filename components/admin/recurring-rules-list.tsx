@@ -77,7 +77,7 @@ export function RecurringRulesList({ rules }: { rules: RecurringRuleRow[] }) {
             </div>
 
             <IconButton
-              label={`${t('admin.delete_event')} — ${rule.title}`}
+              label={`${t('admin.delete_event')} - ${rule.title}`}
               onClick={() => setDeleting(rule)}
               className="text-danger-ink"
             >

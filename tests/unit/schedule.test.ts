@@ -23,6 +23,7 @@ function event(start: string, end: string, date = '2026-08-05'): PublicEvent {
     id: `${date}-${start}`,
     title: 'אימון',
     description: null,
+    requesterNote: null,
     usageType: 'community',
     startsAt: toInstant(date, start).toISOString(),
     endsAt: toInstant(date, end).toISOString(),

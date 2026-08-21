@@ -116,14 +116,14 @@ export function EventList({ events }: { events: EventRow[] }) {
               </div>
 
               <IconButton
-                label={`${t('admin.edit_event')} — ${event.title}`}
+                label={`${t('admin.edit_event')} - ${event.title}`}
                 onClick={() => setEditing(event)}
               >
                 <Pencil className="size-4" aria-hidden />
               </IconButton>
 
               <IconButton
-                label={`${t('admin.delete_event')} — ${event.title}`}
+                label={`${t('admin.delete_event')} - ${event.title}`}
                 onClick={() => {
                   setDeleteScope('single');
                   setDeleting(event);

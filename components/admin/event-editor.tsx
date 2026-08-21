@@ -91,6 +91,7 @@ export function EventEditor({
     contactName: event?.contact_name ?? '',
     contactPhone: event?.contact_phone ?? '',
     showContact: event?.show_contact ?? false,
+    showNote: event?.show_note ?? false,
     isRecurring: false,
     repeatUntilPreset: '1y' as RepeatPreset,
   });
@@ -148,9 +149,13 @@ export function EventEditor({
         };
 
         if (event) {
+          // `showNote` is on the PATCH schema only — a manual event has no
+          // requester note to publish, so `createEventInput` (`.strict()`)
+          // rejects the key outright.
+          const editBody = { ...body, showNote: form.showNote };
           const result = await apiFetch<{ updated: number }>(`/api/admin/events/${event.id}`, {
             method: 'PATCH',
-            json: repeats ? { ...body, scope } : body,
+            json: repeats ? { ...editBody, scope } : editBody,
           });
           // Worth saying out loud only when it reached more than the row the
           // admin was looking at — and when it did, the sheet stays open long
@@ -327,6 +332,26 @@ export function EventEditor({
           </Field>
         ) : null}
       </div>
+
+      {/* §7 PII: the requester's own note, published ONLY when this is on. The
+          note itself is shown above the switch, because "publish it" is not a
+          decision anyone can make without seeing the words they are publishing.
+          Only an approved request has one, hence the guard. */}
+      {event?.requester_note ? (
+        <div className="rounded-(--radius-input) border border-(--hairline) bg-(--surface-sunken) p-3">
+          <p className="text-xs font-semibold text-(--ink-faint)">{t('request.field.note')}</p>
+          <p className="mt-1 text-sm whitespace-pre-line text-(--ink)">{event.requester_note}</p>
+          <label className="mt-3 flex items-center gap-3 text-sm">
+            <input
+              type="checkbox"
+              className="size-5 accent-(--color-floodlight)"
+              checked={form.showNote}
+              onChange={(e) => set('showNote', e.target.checked)}
+            />
+            {t('calendar.field.show_note')}
+          </label>
+        </div>
+      ) : null}
 
       {/* §7 PII: the contact phone is shown publicly ONLY when this is on. */}
       {!recurring ? (

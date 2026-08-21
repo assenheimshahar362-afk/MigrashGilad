@@ -81,6 +81,7 @@ export async function PATCH(
     if (input.contactName !== undefined) patch.contact_name = input.contactName ?? null;
     if (input.contactPhone !== undefined) patch.contact_phone = input.contactPhone ?? null;
     if (input.showContact !== undefined) patch.show_contact = input.showContact;
+    if (input.showNote !== undefined) patch.show_note = input.showNote;
 
     if (scope === 'single') {
       const { data, error } = await supabase

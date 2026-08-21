@@ -19,6 +19,8 @@ function row(overrides: Partial<EventRow> & { date: string }): EventRow {
     id: `${date}-${rest.title ?? 'אימון'}`,
     title: 'אימון',
     description: null,
+    requester_note: null,
+    show_note: false,
     usage_type: 'association',
     starts_at: toInstant(date, '17:00').toISOString(),
     ends_at: toInstant(date, '19:00').toISOString(),

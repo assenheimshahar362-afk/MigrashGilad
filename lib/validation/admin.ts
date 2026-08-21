@@ -24,6 +24,8 @@ export const approveInput = z
     start: z.iso.datetime({ offset: true }).optional(),
     end: z.iso.datetime({ offset: true }).optional(),
     note: z.string().max(500).optional(),
+    /** Publishes the requester's own note with the event (§ show_note). */
+    showNote: z.boolean().default(false),
   })
   .strict();
 
@@ -60,7 +62,9 @@ export const eventScope = z.enum(['single', 'following']);
 
 export const updateEventInput = eventFields
   .partial()
-  .extend({ scope: eventScope.optional() })
+  // Only editable, never creatable: a manual event has no requester note to
+  // publish, so `showNote` has no meaning on `createEventInput`.
+  .extend({ scope: eventScope.optional(), showNote: z.boolean().optional() })
   .refine(
     // Only checkable when the patch supplies both; a one-sided move is
     // validated by the `event_time_order` constraint in the database.

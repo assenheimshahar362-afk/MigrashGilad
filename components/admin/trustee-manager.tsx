@@ -212,7 +212,7 @@ export function TrusteeManager({ trustees }: { trustees: TrusteeRow[] }) {
                 <Tooltip content={t('trustees.photo_upload')}>
                   <label
                     htmlFor={`trustee-photo-${trustee.id}`}
-                    aria-label={`${t('trustees.photo_upload')} — ${trustee.full_name}`}
+                    aria-label={`${t('trustees.photo_upload')} - ${trustee.full_name}`}
                     className={cn(
                       'tap-target flex items-center justify-center rounded-(--radius-input) hover:bg-(--surface-sunken)',
                       pending && 'pointer-events-none opacity-40',
@@ -224,7 +224,7 @@ export function TrusteeManager({ trustees }: { trustees: TrusteeRow[] }) {
 
                 {trustee.photo_url ? (
                   <IconButton
-                    label={`${t('trustees.photo_remove')} — ${trustee.full_name}`}
+                    label={`${t('trustees.photo_remove')} - ${trustee.full_name}`}
                     disabled={pending}
                     onClick={() => removePhoto(trustee.id)}
                   >
@@ -233,7 +233,7 @@ export function TrusteeManager({ trustees }: { trustees: TrusteeRow[] }) {
                 ) : null}
 
                 <IconButton
-                  label={`${t('trustees.edit')} — ${trustee.full_name}`}
+                  label={`${t('trustees.edit')} - ${trustee.full_name}`}
                   disabled={pending}
                   onClick={() => setEditing(trustee)}
                 >
@@ -241,7 +241,7 @@ export function TrusteeManager({ trustees }: { trustees: TrusteeRow[] }) {
                 </IconButton>
 
                 <IconButton
-                  label={`${t('trustees.archive')} — ${trustee.full_name}`}
+                  label={`${t('trustees.archive')} - ${trustee.full_name}`}
                   disabled={pending}
                   onClick={() => setArchiving(trustee)}
                   className="text-danger-ink"

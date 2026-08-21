@@ -77,7 +77,7 @@ export default async function AdminAuditPage({
               </div>
 
               <p className="mt-0.5 text-xs text-(--ink-muted)">
-                {(entry.actor_label as string | null) ?? (entry.actor_id as string | null) ?? '—'}
+                {(entry.actor_label as string | null) ?? (entry.actor_id as string | null) ?? '-'}
               </p>
 
               {entry.before || entry.after ? (

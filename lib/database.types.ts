@@ -124,6 +124,8 @@ export type Database = {
           EventRow,
           | 'id'
           | 'description'
+          | 'requester_note'
+          | 'show_note'
           | 'status'
           | 'source'
           | 'request_id'
@@ -277,6 +279,7 @@ export type Database = {
           p_start?: string | null;
           p_end?: string | null;
           p_note?: string | null;
+          p_show_note?: boolean;
         };
         Returns: EventRow;
       };

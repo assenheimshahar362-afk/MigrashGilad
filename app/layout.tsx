@@ -31,7 +31,7 @@ const A11Y_INIT_SCRIPT = `
 })();
 `;
 
-const SITE_TITLE = `${t('app.name')} — ${t('schedule.title')}`;
+const SITE_TITLE = `${t('app.name')} - ${t('schedule.title')}`;
 const SITE_DESCRIPTION =
   'לוח הזמנים של מגרש גילעד. צפייה בשימושי המגרש והגשת בקשה.';
 
@@ -45,7 +45,7 @@ const OG_IMAGE = {
   url: '/images/og-cover.jpg',
   width: 1200,
   height: 630,
-  alt: `${t('app.name')} — ${t('app.tagline')}`,
+  alt: `${t('app.name')} - ${t('app.tagline')}`,
 };
 
 export const metadata: Metadata = {

@@ -60,7 +60,7 @@ export default async function RulesPage() {
                 `minLeadHours: 0` this used to read "לפחות 0 שעות לפני המועד",
                 which states a rule the site no longer enforces. */}
             <li>
-              שימוש מאורגן מחייב בקשה מראש —{' '}
+              שימוש מאורגן מחייב בקשה מראש -{' '}
               {settings.minLeadHours > 0
                 ? `לפחות ${settings.minLeadHours} שעות לפני המועד, ועד ${settings.maxHorizonDays} ימים קדימה.`
                 : `אפשר להגיש גם למועד קרוב, ועד ${settings.maxHorizonDays} ימים קדימה.`}
