@@ -34,37 +34,42 @@ export function Reveal({
     const node = ref.current;
     if (!node) return;
 
-    // Respect the OS setting before doing anything: under `reduce` the content
-    // simply stays where it is.
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setState('shown');
-      return;
-    }
+    let observer: IntersectionObserver | undefined;
+    const frame = requestAnimationFrame(() => {
+      // Respect the OS setting before doing anything: under `reduce` the
+      // content simply stays where it is.
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        setState('shown');
+        return;
+      }
 
-    // Already on screen at mount (above the fold): show it without the observer,
-    // so the first paint is not a flash of hidden content.
-    const rect = node.getBoundingClientRect();
-    if (rect.top < window.innerHeight * 0.9) {
-      setState('shown');
-      return;
-    }
+      // Already on screen at mount (above the fold): show it without the
+      // observer, so the first paint is not a flash of hidden content.
+      const rect = node.getBoundingClientRect();
+      if (rect.top < window.innerHeight * 0.9) {
+        setState('shown');
+        return;
+      }
 
-    setState('pending');
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setState('shown');
-            observer.disconnect();
+      setState('pending');
+      observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              setState('shown');
+              observer?.disconnect();
+            }
           }
-        }
-      },
-      { rootMargin: '0px 0px -12% 0px' },
-    );
+        },
+        { rootMargin: '0px 0px -12% 0px' },
+      );
+      observer.observe(node);
+    });
 
-    observer.observe(node);
-    return () => observer.disconnect();
+    return () => {
+      cancelAnimationFrame(frame);
+      observer?.disconnect();
+    };
   }, []);
 
   return (

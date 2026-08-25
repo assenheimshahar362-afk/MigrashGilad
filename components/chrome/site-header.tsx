@@ -43,14 +43,12 @@ const HERO_ROUTES = new Set<string>(['/']);
 export function SiteHeader({ pitchName }: { pitchName: string }) {
   const pathname = usePathname();
   const overHero = HERO_ROUTES.has(pathname);
-  const [solid, setSolid] = useState(!overHero);
+  const [heroSolid, setHeroSolid] = useState(false);
+  const solid = !overHero || heroSolid;
 
   useEffect(() => {
-    if (!overHero) {
-      setSolid(true);
-      return;
-    }
-    const onScroll = () => setSolid(window.scrollY > 24);
+    if (!overHero) return;
+    const onScroll = () => setHeroSolid(window.scrollY > 24);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);

@@ -40,8 +40,11 @@ export function InstallPrompt() {
   const asked = useRef(false);
 
   useEffect(() => {
-    const until = Number(localStorage.getItem(SNOOZE_KEY) ?? '0');
-    setSnoozed(Date.now() < until);
+    const frame = requestAnimationFrame(() => {
+      const until = Number(localStorage.getItem(SNOOZE_KEY) ?? '0');
+      setSnoozed(Date.now() < until);
+    });
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   // On iOS there is no event to wait for — the sheet there IS the

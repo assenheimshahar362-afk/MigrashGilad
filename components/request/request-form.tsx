@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { t, isMessageKey } from '@/lib/i18n';
 import { requestFormSchemaWithLimits, type RequestFormValues } from '@/lib/validation/request';
@@ -88,20 +88,27 @@ export function RequestForm({
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     trigger,
     setFocus,
     formState: { errors, isSubmitting },
   } = form;
 
-  const values = watch();
+  const watched = useWatch({ control });
+  const selectedDate = watched.date ?? prefill.date ?? minDate;
+  const selectedStart = watched.startTime ?? prefill.start ?? '17:00';
+  const selectedEnd = watched.endTime ?? prefill.end ?? '18:00';
   const onToken = useCallback((token: string) => {
     turnstileToken.current = token;
   }, []);
 
   if (submitted) {
     return (
-      <SuccessPanel date={values.date} startTime={values.startTime} endTime={values.endTime} />
+      <SuccessPanel
+        date={selectedDate}
+        startTime={selectedStart}
+        endTime={selectedEnd}
+      />
     );
   }
 
@@ -136,7 +143,7 @@ export function RequestForm({
     if (index > 0) setStep(STEPS[index - 1]!);
   };
 
-  const onSubmit = handleSubmit(async (data) => {
+  const submitRequest = async (data: RequestFormValues, turnstile: string) => {
     setServerError(null);
     setQueuedOffline(false);
 
@@ -149,7 +156,7 @@ export function RequestForm({
       participants: data.participants ? Number(data.participants) : undefined,
       note: data.note.trim() ? data.note.trim() : undefined,
       consent: true as const,
-      turnstileToken: turnstileToken.current ?? 'development-no-turnstile',
+      turnstileToken: turnstile,
     };
 
     try {
@@ -180,7 +187,12 @@ export function RequestForm({
         setServerError(t('error.generic'));
       }
     }
-  });
+  };
+
+  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const turnstile = turnstileToken.current ?? 'development-no-turnstile';
+    return handleSubmit((data) => submitRequest(data, turnstile))(event);
+  };
 
   const stepIndex = STEPS.indexOf(step);
 
@@ -224,9 +236,9 @@ export function RequestForm({
           </div>
 
           <AvailabilityHint
-            date={values.date}
-            startTime={values.startTime}
-            endTime={values.endTime}
+            date={selectedDate}
+            startTime={selectedStart}
+            endTime={selectedEnd}
             onBlockedChange={setSlotBlocked}
           />
         </fieldset>

@@ -46,9 +46,8 @@ jobs:
 
       - run: npm ci
 
-      # NFR-7: the schema is a versioned file applied by CI; there are no manual
-      # dashboard schema edits to reproduce here. The suite creates the admins it
-      # needs with the service role, so the bootstrap row is left as it is.
+      # The single baseline migration is applied by CI. The suite creates the
+      # admins it needs with the service role, so the bootstrap row is left as-is.
       - name: Start Supabase and apply the schema
         run: |
           supabase start

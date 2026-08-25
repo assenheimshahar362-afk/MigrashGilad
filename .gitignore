@@ -35,6 +35,6 @@ supabase/.temp/
 
 .vercel
 
-# Personal, per-developer permission grants — .claude/settings.json (no
-# "local") is the shared, committed one.
-.claude/settings.local.json
+# Assistant-specific settings are not project source. Shared guidance belongs
+# in AGENTS.md.
+.claude/

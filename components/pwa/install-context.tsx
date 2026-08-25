@@ -39,12 +39,6 @@ export function InstallProvider({ children }: { children: React.ReactNode }) {
   const [isIos, setIsIos] = useState(false);
 
   useEffect(() => {
-    const standalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as { standalone?: boolean }).standalone === true;
-    setIsStandalone(standalone);
-    setIsIos(/iphone|ipad|ipod/i.test(navigator.userAgent));
-
     const onPrompt = (event: Event) => {
       // Chrome shows its own mini-infobar unless this is prevented; the whole
       // point is to choose our own moment for it.
@@ -60,7 +54,16 @@ export function InstallProvider({ children }: { children: React.ReactNode }) {
 
     window.addEventListener('beforeinstallprompt', onPrompt);
     window.addEventListener('appinstalled', onInstalled);
+    const frame = requestAnimationFrame(() => {
+      const standalone =
+        window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as { standalone?: boolean }).standalone === true;
+      setIsStandalone(standalone);
+      setIsIos(/iphone|ipad|ipod/i.test(navigator.userAgent));
+    });
+
     return () => {
+      cancelAnimationFrame(frame);
       window.removeEventListener('beforeinstallprompt', onPrompt);
       window.removeEventListener('appinstalled', onInstalled);
     };

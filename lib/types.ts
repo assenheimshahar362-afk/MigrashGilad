@@ -32,7 +32,8 @@ export type EventRow = {
   title: string;
   description: string | null;
   /** The note the requester typed on the public form. Copied onto the event by
-   *  `approve_request` (§ supabase/init.sql); null for every other source. */
+   *  `approve_request` in the Supabase baseline migration; null for every
+   *  other source. */
   requester_note: string | null;
   /** Whether an admin has published that note. Off until one says otherwise. */
   show_note: boolean;

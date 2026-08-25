@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import Link from 'next/link';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import {
@@ -79,13 +79,6 @@ export function AccessibilityMenu() {
   const [open, setOpen] = useState(false);
   const [prefs, setPrefs] = useState<A11yPrefs>(DEFAULT_PREFS);
 
-  // The blocking script in the root layout already applied any saved prefs
-  // to <html> before paint (no flash); this just brings React's own state
-  // up to date so the toggle buttons render as pressed correctly.
-  useEffect(() => {
-    setPrefs(loadPrefs());
-  }, []);
-
   const update = useCallback((next: Partial<A11yPrefs>) => {
     setPrefs((current) => {
       const merged = { ...current, ...next };
@@ -103,7 +96,15 @@ export function AccessibilityMenu() {
   const reset = () => update(DEFAULT_PREFS);
 
   return (
-    <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
+    <DialogPrimitive.Root
+      open={open}
+      onOpenChange={(next) => {
+        // The root-layout script already applies saved preferences before
+        // paint. React only needs to read them when these controls are opened.
+        if (next) setPrefs(loadPrefs());
+        setOpen(next);
+      }}
+    >
       <DialogPrimitive.Trigger asChild>
         <button
           type="button"

@@ -24,9 +24,6 @@ export function PendingQueue({ initial }: { initial: BookingRequestRow[] }) {
   const [requests, setRequests] = useState(initial);
   const [toast, setToast] = useState<string | null>(null);
 
-  // Keep in step with a server refresh (after an approve, or a navigation).
-  useEffect(() => setRequests(initial), [initial]);
-
   useEffect(() => {
     const supabase = createClient();
 

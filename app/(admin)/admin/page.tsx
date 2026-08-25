@@ -47,7 +47,10 @@ export default async function AdminDashboardPage() {
           ) : null}
         </div>
 
-        <PendingQueue initial={pending} />
+        <PendingQueue
+          key={pending.map((request) => `${request.id}:${request.version}`).join('|')}
+          initial={pending}
+        />
       </section>
 
       {/* §10.7 secondary tabs: this week's schedule and a quick "create event". */}

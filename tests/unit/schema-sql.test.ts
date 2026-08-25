@@ -1,21 +1,30 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
+import { relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 /**
- * A static read of `supabase/init.sql`.
+ * A static read of the single Supabase schema migration.
  *
- * The schema is applied by hand in the Supabase SQL editor, so nothing else in
- * the suite ever executes it — a function body can be wrong for a week and
- * every test here still passes. This guards the one class of mistake that
- * `create function` cannot catch for us: PL/pgSQL bodies are not planned at
- * creation time, so a type error inside one installs cleanly and only raises
- * when the function is finally called, in production, as a bare HTTP 500.
+ * The unit suite does not execute Postgres. This guards the one class of
+ * mistake that `create function` cannot catch for us: PL/pgSQL bodies are not
+ * planned at creation time, so a type error can install cleanly and only raise
+ * when the function is called.
  */
-const sql = readFileSync(
-  fileURLToPath(new URL('../../supabase/init.sql', import.meta.url)),
-  'utf8',
+const supabaseDirectory = fileURLToPath(new URL('../../supabase', import.meta.url));
+const migrationPath = resolve(
+  supabaseDirectory,
+  'migrations',
+  '00000000000000_init.sql',
 );
+const sql = readFileSync(migrationPath, 'utf8');
+
+function listSqlFiles(directory: string): string[] {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = resolve(directory, entry.name);
+    return entry.isDirectory() ? listSqlFiles(path) : path.endsWith('.sql') ? [path] : [];
+  });
+}
 
 /** Every `status` column in the schema and the enum type it holds. */
 const ENUM_STATUS_COLUMNS = {
@@ -25,6 +34,18 @@ const ENUM_STATUS_COLUMNS = {
 } as const;
 
 describe('init.sql enum assignments', () => {
+  it('keeps exactly one baseline migration and one seed file', () => {
+    const files = listSqlFiles(supabaseDirectory)
+      .map((path) => relative(supabaseDirectory, path).replaceAll('\\', '/'))
+      .sort();
+
+    expect(files).toEqual(['migrations/00000000000000_init.sql', 'seed.sql']);
+  });
+
+  it('never drops application tables from the production baseline', () => {
+    expect(sql).not.toMatch(/\bdrop\s+table\b/i);
+  });
+
   it('declares every status column as its enum type', () => {
     // Guards the premise of the test below: if one of these were ever widened
     // to `text`, the cast rule would stop applying and this file would be

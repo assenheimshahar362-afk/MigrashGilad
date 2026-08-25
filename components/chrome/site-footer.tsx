@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Facebook, Instagram, MessageCircle, Phone, MapPin, Clock } from 'lucide-react';
+import { MessageCircle, MapPin, Clock } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import logoMark from '@/public/images/logo-mark.webp';
@@ -33,17 +33,8 @@ const footerNavItemClassName = cn(
   'hover:bg-white/8 hover:text-white focus-visible:outline-white',
 );
 
-/* Placeholder handles — swap for the real accounts. A social icon that leads
-   nowhere is worse than no icon, so each is rendered only when its href is set
-   to something other than the empty string. */
-const SOCIALS = [
-  { href: '', label: 'Facebook', Icon: Facebook },
-  { href: '', label: 'Instagram', Icon: Instagram },
-] as const;
-
 export function SiteFooter({ pitchName }: { pitchName: string }) {
   const year = new Date().getFullYear();
-  const socials = SOCIALS.filter((s) => s.href);
 
   return (
     <footer className="mt-auto bg-primary-900 text-white/70">
@@ -76,29 +67,6 @@ export function SiteFooter({ pitchName }: { pitchName: string }) {
             </li>
           </ul>
 
-          {socials.length > 0 ? (
-            <ul className="mt-6 flex items-center gap-2">
-              {socials.map(({ href, label, Icon }) => (
-                <li key={label}>
-                  <a
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={label}
-                    className={cn(
-                      'press tap-target flex items-center justify-center rounded-(--radius-input)',
-                      'border border-white/12 bg-white/6 text-white/80',
-                      'transition-[background-color,border-color,color,transform]',
-                      'duration-(--duration-press) ease-(--ease-out-quiet)',
-                      'hover:border-white/30 hover:bg-white/14 hover:text-white',
-                    )}
-                  >
-                    <Icon className="size-5" aria-hidden />
-                  </a>
-                </li>
-              ))}
-            </ul>
-          ) : null}
         </div>
 
         {/* One rule above the links and one below, so the row reads as a band
@@ -144,11 +112,7 @@ export function SiteFooter({ pitchName }: { pitchName: string }) {
   );
 }
 
-/**
- * The single large WhatsApp action the brief asks for. It lives here as a
- * component rather than inline so the contact page and the trustees page use
- * exactly the same affordance.
- */
+/** The shared large WhatsApp contact action. */
 export function WhatsAppButton({
   phone,
   className,
@@ -176,27 +140,6 @@ export function WhatsAppButton({
     >
       <MessageCircle className="size-6" aria-hidden />
       {t('contact.whatsapp_cta')}
-    </a>
-  );
-}
-
-/** Used by the contact page for the phone counterpart. */
-export function PhoneButton({ phone, className }: { phone: string; className?: string }) {
-  return (
-    <a
-      href={`tel:${phone}`}
-      className={cn(
-        'press inline-flex min-h-14 items-center justify-center gap-3 rounded-(--radius-input)',
-        'border border-(--hairline) bg-(--surface-raised) px-7 text-base font-semibold text-(--ink)',
-        // `translate` alongside `transform`: see WhatsAppButton above.
-        'shadow-(--shadow-xs) transition-[background-color,border-color,box-shadow,transform,translate]',
-        'duration-(--duration-press) ease-(--ease-out-quiet)',
-        'motion-safe:hover:-translate-y-px hover:border-(--hairline-strong) hover:bg-(--surface-hover)',
-        className,
-      )}
-    >
-      <Phone className="size-6" aria-hidden />
-      {t('contact.call_cta')}
     </a>
   );
 }

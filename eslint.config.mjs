@@ -1,11 +1,6 @@
-import { dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { FlatCompat } from '@eslint/eslintrc';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({ baseDirectory: __dirname });
+import { defineConfig, globalIgnores } from 'eslint/config';
+import nextVitals from 'eslint-config-next/core-web-vitals';
+import nextTypescript from 'eslint-config-next/typescript';
 
 /**
  * §11.4 RTL implementation rules. Physical-direction Tailwind utilities are a
@@ -15,17 +10,16 @@ const compat = new FlatCompat({ baseDirectory: __dirname });
 const PHYSICAL_DIRECTION_CLASSES =
   '\\b(ml|mr|pl|pr|left|right|border-l|border-r|rounded-l|rounded-r|rounded-tl|rounded-tr|rounded-bl|rounded-br|text-left|text-right|inset-l|inset-r)(-[a-z0-9./[\\]]+)?\\b';
 
-const eslintConfig = [
-  ...compat.extends('next/core-web-vitals', 'next/typescript'),
-  {
-    ignores: [
-      '.next/**',
-      'node_modules/**',
-      'public/sw.js',
-      'public/swe-worker-*.js',
-      'next-env.d.ts',
-    ],
-  },
+const eslintConfig = defineConfig([
+  ...nextVitals,
+  ...nextTypescript,
+  globalIgnores([
+    '.next/**',
+    'node_modules/**',
+    'public/sw.js',
+    'public/swe-worker-*.js',
+    'next-env.d.ts',
+  ]),
   {
     files: ['**/*.tsx'],
     rules: {
@@ -68,6 +62,6 @@ const eslintConfig = [
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
-];
+]);
 
 export default eslintConfig;

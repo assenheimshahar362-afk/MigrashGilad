@@ -20,24 +20,13 @@ export function PushOptIn() {
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      if (isIos()) setState('needs-install');
-      return;
-    }
-
-    if (Notification.permission === 'granted') {
-      setState('enabled');
-      return;
-    }
-
-    if (Notification.permission === 'denied') return;
-
-    if (isIos() && !isStandalone()) {
-      setState('needs-install');
-      return;
-    }
-
-    setState('prompt');
+    let active = true;
+    queueMicrotask(() => {
+      if (active) setState(detectPushState());
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   if (state === 'hidden') return null;
@@ -146,4 +135,18 @@ function isStandalone(): boolean {
     window.matchMedia('(display-mode: standalone)').matches ||
     (window.navigator as { standalone?: boolean }).standalone === true
   );
+}
+
+function detectPushState(): 'hidden' | 'prompt' | 'needs-install' | 'enabled' {
+  if (
+    !('serviceWorker' in navigator) ||
+    !('PushManager' in window) ||
+    !('Notification' in window)
+  ) {
+    return isIos() ? 'needs-install' : 'hidden';
+  }
+  if (Notification.permission === 'granted') return 'enabled';
+  if (Notification.permission === 'denied') return 'hidden';
+  if (isIos() && !isStandalone()) return 'needs-install';
+  return 'prompt';
 }

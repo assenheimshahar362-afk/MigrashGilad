@@ -1,8 +1,9 @@
 -- ===========================================================================
--- Migrash Gilad — the whole database, in one file.
+-- Migrash Gilad — complete database baseline.
 --
--- Single source of truth for the schema. Paste whole into the Supabase
--- dashboard SQL editor. Contains no psql meta-commands.
+-- This is the only schema migration. Supabase CLI applies it before
+-- supabase/seed.sql during `supabase start` and `supabase db reset`.
+-- It contains no seed data and no psql meta-commands.
 --
 --   PART 1 schema     — extensions, enums, tables, indexes, guard triggers
 --   PART 2 functions  — security-definer RPCs and grants
@@ -13,99 +14,16 @@
 -- recognises exactly these two categories, baked in directly.
 -- Sample data lives in supabase/seed.sql, run after this file.
 --
--- This file is the ONLY schema file. Two patches once lived beside it and
--- have been folded in and deleted, since every statement they carried is
--- present here verbatim:
+-- Historical patches are folded into this baseline, including the
+-- security-definer authorization hardening, enum status casts, and the
+-- requester-note columns/function/backfill.
 --
---   security-patch-01-definer-rpcs   authorization on the `security definer`
---                                    maintenance RPCs — is_service_role(),
---                                    expire_stale_requests(),
---                                    anonymise_old_requests(),
---                                    preview_closure_conflicts(), and the
---                                    revoke/grant pairs that go with them.
---   patch-02-enum-status-cast        the text -> enum casts in
---                                    decide_access_request() and
---                                    approve_request().
---
--- A database that already had them applied needs nothing; a fresh one gets
--- them from this file.
---
--- Re-runnable. Every statement is `if not exists` / `or replace` /
--- `drop ... if exists`, so running it twice is a no-op rather than an error.
---
--- ---------------------------------------------------------------------------
--- BEFORE YOU RUN:
---  1. PART 0 below DROPS every table/function/type this script owns, so the
---     rest of the file always starts from a clean slate — safe to re-run
---     regardless of what state the target database is currently in. THIS IS
---     DESTRUCTIVE: it deletes all data in those tables (auth.users itself is
---     untouched). Do not run against a database holding real bookings.
---  2. Check the super admin email at the bottom, under "PART 4 — BOOTSTRAP".
---     §2 says the super admin tier is bootstrapped, not granted; no UI can
---     create the first one.
--- ---------------------------------------------------------------------------
+-- Safe to apply to a fresh database or the existing project: this baseline
+-- never drops application tables or data. Check the super-admin email in
+-- PART 4 before applying it to a new project.
 -- ===========================================================================
 
-
--- ===========================================================================
--- ===========================================================================
--- PART 0 — RESET
--- Drops everything PART 1-4 create, in FK-safe order, so this script is
--- re-runnable against a database in ANY prior state (empty, partially
--- applied, or shaped by an older version of this schema) without hitting
--- "already exists" on an object whose definition changed underneath it —
--- which is exactly what happened to `events_no_overlap`: Postgres raises
--- 42P07 (duplicate_table) for a colliding EXCLUDE-constraint index, not
--- 42710 (duplicate_object), so `exception when duplicate_object` never
--- caught it on a second run.
--- ===========================================================================
--- ===========================================================================
-
-drop table if exists notification_log   cascade;
-drop table if exists rate_limits        cascade;
-drop table if exists push_subscriptions cascade;
-drop table if exists audit_log          cascade;
-drop table if exists events             cascade;
-drop table if exists recurring_rules    cascade;
-drop table if exists booking_requests   cascade;
-drop table if exists closures           cascade;
-drop table if exists site_settings      cascade;
-drop table if exists access_requests    cascade;
-drop table if exists trustees           cascade;
-drop table if exists admin_profiles     cascade;
-drop table if exists admin_allowlist    cascade;
-
-drop function if exists preview_closure_conflicts(timestamptz, timestamptz) cascade;
-drop function if exists create_closure(text, timestamptz, timestamptz, boolean, boolean) cascade;
-drop function if exists materialize_recurring(int) cascade;
-drop function if exists anonymise_old_requests(int) cascade;
-drop function if exists expire_stale_requests() cascade;
-drop function if exists cancel_request_admin(uuid, int, text) cascade;
-drop function if exists delete_request(uuid, int) cascade;
-drop function if exists delete_request(uuid) cascade;
-drop function if exists reject_request(uuid, int, text) cascade;
--- Both signatures: Postgres overloads on the argument list, so the five-argument
--- version that predates `p_show_note` is a separate function. Left in place
--- beside the six-argument one it would make `approve_request(...)` ambiguous
--- for every caller that omits the new flag.
-drop function if exists approve_request(uuid, int, timestamptz, timestamptz, text, boolean) cascade;
-drop function if exists approve_request(uuid, int, timestamptz, timestamptz, text) cascade;
-drop function if exists decide_access_request(uuid, boolean, admin_role, text) cascade;
-drop function if exists add_manager(citext, text, admin_role) cascade;
-drop function if exists set_manager_role(uuid, admin_role, boolean) cascade;
-drop function if exists my_allowlist_id() cascade;
-drop function if exists is_super_admin() cascade;
-drop function if exists is_admin() cascade;
-drop function if exists touch_updated_at() cascade;
-drop function if exists assert_opening_hours_shape() cascade;
-drop function if exists assert_super_admin_survives() cascade;
-
-drop type if exists access_request_status;
-drop type if exists admin_role;
-drop type if exists event_source;
-drop type if exists event_status;
-drop type if exists request_status;
-drop type if exists usage_type;
+begin;
 
 
 -- ===========================================================================
@@ -341,17 +259,22 @@ create table if not exists events (
 -- Association and community may share a slot (one of each, at once); two
 -- bookings of the same category still cannot double-book.
 do $$ begin
-  alter table events add constraint events_no_overlap
-    exclude using gist (
-      usage_type with =,
-      tstzrange(starts_at, ends_at, '[)') with &&
-    ) where (status = 'scheduled');
-exception when duplicate_object then null; end $$;
+  if not exists (
+    select 1
+      from pg_constraint
+     where conrelid = 'events'::regclass
+       and conname = 'events_no_overlap'
+  ) then
+    alter table events add constraint events_no_overlap
+      exclude using gist (
+        usage_type with =,
+        tstzrange(starts_at, ends_at, '[)') with &&
+      ) where (status = 'scheduled');
+  end if;
+end $$;
 
--- PART 0 drops `events` before this file recreates it, so the column above is
--- always there on a fresh run. This line is what a LIVE database needs: run it,
--- plus the `approve_request` replacement further down, to pick the column up
--- without resetting the schema.
+-- Keep these additive statements for databases created before requester notes
+-- were introduced. They are harmless on a fresh database.
 alter table events add column if not exists requester_note text;
 alter table events add column if not exists show_note boolean not null default false;
 
@@ -659,6 +582,10 @@ $$;
 -- ---------------------------------------------------------------------------
 -- Approval workflow (§4.3, §5)
 -- ---------------------------------------------------------------------------
+-- Postgres overloads by argument list. Remove the historical five-argument
+-- signature so calls which omit p_show_note cannot become ambiguous.
+drop function if exists approve_request(uuid, int, timestamptz, timestamptz, text);
+
 create or replace function approve_request(
   p_request_id uuid,
   p_version    int,
@@ -733,6 +660,14 @@ exception
     raise exception 'ERR_SLOT_CONFLICT';
 end;
 $$;
+
+-- Preserve requester notes on events approved before the column existed.
+-- The visibility flag remains false until an admin explicitly publishes it.
+update events e
+   set requester_note = nullif(btrim(coalesce(b.note, '')), '')
+  from booking_requests b
+ where e.request_id = b.id
+   and e.requester_note is null;
 
 create or replace function reject_request(
   p_request_id uuid,
@@ -1282,3 +1217,5 @@ end $$;
 -- Pitch name, opening hours and request limits used to live in a
 -- super-admin-editable `site_settings` row here. They are fixed values in
 -- code now (`lib/types.ts`, `SITE_SETTINGS`) — nothing left to bootstrap.
+
+commit;

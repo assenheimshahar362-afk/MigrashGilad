@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Archive, ImageOff, ImagePlus, Pencil } from 'lucide-react';
@@ -285,12 +285,15 @@ export function TrusteeManager({ trustees }: { trustees: TrusteeRow[] }) {
         onConfirm={archive}
       />
 
-      <EditTrusteeSheet
-        trustee={editing}
-        onOpenChange={(open) => !open && setEditing(null)}
-        onSave={patch}
-        pending={pending}
-      />
+      {editing ? (
+        <EditTrusteeSheet
+          key={editing.id}
+          trustee={editing}
+          onOpenChange={(open) => !open && setEditing(null)}
+          onSave={patch}
+          pending={pending}
+        />
+      ) : null}
     </div>
   );
 }
@@ -298,9 +301,9 @@ export function TrusteeManager({ trustees }: { trustees: TrusteeRow[] }) {
 /**
  * FR-31 extension: editing a trustee's own fields (name, role title, phone,
  * WhatsApp visibility) used to have no UI at all — only reordering,
- * on-duty/availability toggles and archiving did. The form re-seeds from
- * `trustee` in an effect keyed on its identity, not on every render, so
- * typing isn't fought by a prop that hasn't changed.
+ * on-duty/availability toggles and archiving did. The sheet is keyed by trustee
+ * identity, so each edit session starts with a fresh form without copying props
+ * into state from an effect.
  */
 function EditTrusteeSheet({
   trustee,
@@ -308,26 +311,20 @@ function EditTrusteeSheet({
   onSave,
   pending,
 }: {
-  trustee: TrusteeRow | null;
+  trustee: TrusteeRow;
   onOpenChange: (open: boolean) => void;
   onSave: (id: string, body: Record<string, unknown>) => Promise<void>;
   pending: boolean;
 }) {
-  const [form, setForm] = useState({ fullName: '', title: '', phone: '', whatsappOk: true });
-
-  useEffect(() => {
-    if (!trustee) return;
-    setForm({
-      fullName: trustee.full_name,
-      title: trustee.title ?? '',
-      phone: trustee.phone_e164,
-      whatsappOk: trustee.whatsapp_ok,
-    });
-  }, [trustee]);
+  const [form, setForm] = useState(() => ({
+    fullName: trustee.full_name,
+    title: trustee.title ?? '',
+    phone: trustee.phone_e164,
+    whatsappOk: trustee.whatsapp_ok,
+  }));
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!trustee) return;
     await onSave(trustee.id, {
       fullName: form.fullName.trim(),
       title: form.title.trim() || undefined,
@@ -338,8 +335,8 @@ function EditTrusteeSheet({
   };
 
   return (
-    <Sheet open={Boolean(trustee)} onOpenChange={onOpenChange}>
-      <SheetContent title={t('trustees.edit_title')} description={trustee?.full_name}>
+    <Sheet open onOpenChange={onOpenChange}>
+      <SheetContent title={t('trustees.edit_title')} description={trustee.full_name}>
         <form onSubmit={submit} className="space-y-4">
           <Field id="trustee-edit-name" label={t('request.field.name')} required>
             {(props) => (
