@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { t } from '@/lib/i18n';
 import { requireAdmin } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
-import { addLocalDays, todayLocal, toInstant } from '@/lib/time';
+import { addLocalDays, startOfLocalWeek, todayLocal, toInstant } from '@/lib/time';
 import type { EventRow, RecurringRuleRow } from '@/lib/types';
 import { EventEditor } from '@/components/admin/event-editor';
 import { EventList } from '@/components/admin/event-list';
@@ -15,8 +15,9 @@ export const dynamic = 'force-dynamic';
 export default async function AdminCalendarPage() {
   await requireAdmin();
 
-  const from = toInstant(todayLocal(), '00:00').toISOString();
-  const to = toInstant(addLocalDays(todayLocal(), 60), '00:00').toISOString();
+  const today = todayLocal();
+  const from = toInstant(startOfLocalWeek(today), '00:00').toISOString();
+  const to = toInstant(addLocalDays(today, 60), '00:00').toISOString();
 
   const supabase = await createClient();
   const [{ data }, { data: rules }] = await Promise.all([

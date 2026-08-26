@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Pencil, Repeat, Trash2 } from 'lucide-react';
 import { t } from '@/lib/i18n';
 import { formatDateShort, formatTimeRange, formatWeekdayLong, localDate } from '@/lib/time';
-import { usageTypeStyle } from '@/lib/usage-type';
+import { eventStyle } from '@/lib/usage-type';
 import { cn } from '@/lib/utils';
 import { apiFetch, errorText } from '@/lib/client-api';
 import { followingOccurrences, type EventScope } from '@/lib/event-series';
@@ -77,7 +77,7 @@ export function EventList({ events }: { events: EventRow[] }) {
 
       <ul className="divide-y divide-(--hairline) card">
         {events.map((event) => {
-          const style = usageTypeStyle(event.usage_type);
+          const style = eventStyle(event.title, event.usage_type);
           const date = localDate(event.starts_at);
           const isRepeating = repeats(event);
 

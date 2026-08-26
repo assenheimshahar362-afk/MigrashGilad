@@ -47,8 +47,32 @@ const STYLES: Record<UsageType, Omit<UsageTypeStyle, 'label'>> = {
   },
 };
 
+/**
+ * A real, named community booking should not look like the generic community
+ * availability bands around it. Association events deliberately keep their
+ * established yellow palette, regardless of title.
+ */
+const NAMED_COMMUNITY_EVENT_PALETTE = {
+  block: 'bg-success-50 border-s-[3px] border-s-success text-success-ink',
+  chip: 'bg-success-50 text-success-ink border border-success-200',
+  bar: 'bg-success',
+} satisfies Pick<UsageTypeStyle, 'block' | 'chip' | 'bar'>;
+
 export function usageTypeStyle(type: UsageType): UsageTypeStyle {
   return { label: usageTypeLabel(type), ...STYLES[type] };
+}
+
+/**
+ * Visual treatment for a schedule event. Association events always stay
+ * yellow. A community event receives the green booking palette only when its
+ * title is different from the generic "community time" label.
+ */
+export function eventStyle(title: string, type: UsageType): UsageTypeStyle {
+  const style = usageTypeStyle(type);
+
+  return type === 'association' || title.trim() === usageTypeLabel('community')
+    ? style
+    : { ...style, ...NAMED_COMMUNITY_EVENT_PALETTE };
 }
 
 export function usageTypeLabel(type: UsageType): string {

@@ -4,7 +4,7 @@ import { t } from '@/lib/i18n';
 import { formatTimeRange, type LocalDate } from '@/lib/time';
 import { clusterOverlappingEvents, eventsWithCommunityFill, hoursForDate } from '@/lib/schedule';
 import { eventDisplayTitle, type PublicEvent, type PublicSettings } from '@/lib/types';
-import { usageTypeStyle } from '@/lib/usage-type';
+import { eventStyle } from '@/lib/usage-type';
 import { TimeRange } from '@/components/ui/ltr';
 import { EventDetailTrigger } from '@/components/schedule/event-detail-trigger';
 
@@ -74,7 +74,7 @@ export function DayView({
 }
 
 function EventCard({ event }: { event: PublicEvent }) {
-  const style = usageTypeStyle(event.usageType);
+  const style = eventStyle(event.title, event.usageType);
   const range = formatTimeRange(event.startsAt, event.endsAt);
   const title = eventDisplayTitle(event);
   // A synthesized community-time filler (or any event whose title is just
@@ -139,7 +139,7 @@ function CombinedCard({ events }: { events: [PublicEvent, PublicEvent] }) {
 }
 
 function CombinedHalf({ event, isFirst }: { event: PublicEvent; isFirst: boolean }) {
-  const style = usageTypeStyle(event.usageType);
+  const style = eventStyle(event.title, event.usageType);
   const title = eventDisplayTitle(event);
   const showTitle = title !== style.label;
   const description = event.description ?? communityFallback(event);

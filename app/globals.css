@@ -60,6 +60,8 @@
   --color-canvas: #f7f8fa;
 
   /* State. */
+  --color-success-50: #edf9f0;
+  --color-success-200: #b8e4c5;
   --color-success: #22c55e;
   --color-success-ink: #15803d;
   --color-warning: #f59e0b;

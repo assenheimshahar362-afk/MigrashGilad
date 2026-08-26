@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { formatTimeRange, minutesSinceMidnight } from '@/lib/time';
-import { usageTypeStyle } from '@/lib/usage-type';
+import { eventStyle } from '@/lib/usage-type';
 import { eventDisplayTitle, type PublicEvent } from '@/lib/types';
 import { TimeRange } from '@/components/ui/ltr';
 import { EventDetailTrigger } from '@/components/schedule/event-detail-trigger';
@@ -29,7 +29,7 @@ export function EventBlock({
   col?: number;
   cols?: number;
 }) {
-  const style = usageTypeStyle(event.usageType);
+  const style = eventStyle(event.title, event.usageType);
 
   const span = endMinute - startMinute;
   const from = Math.max(minutesSinceMidnight(event.startsAt), startMinute);
