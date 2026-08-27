@@ -58,12 +58,12 @@ export const metadata: Metadata = {
     template: `%s · ${t('app.name')}`,
   },
   description: SITE_DESCRIPTION,
-  applicationName: t('app.name'),
+  applicationName: t('pwa.name'),
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: t('app.name'),
+    title: t('pwa.name'),
   },
   formatDetection: { telephone: false },
   openGraph: {

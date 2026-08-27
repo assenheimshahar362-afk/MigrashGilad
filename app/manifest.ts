@@ -4,8 +4,8 @@ import { t } from '@/lib/i18n';
 /** §12 manifest. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: t('app.name'),
-    short_name: t('app.name'),
+    name: t('pwa.name'),
+    short_name: t('pwa.name'),
     lang: 'he',
     dir: 'rtl',
     start_url: '/',
