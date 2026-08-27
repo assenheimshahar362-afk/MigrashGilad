@@ -1,5 +1,5 @@
 -- ===========================================================================
--- Migrash Gilad — deterministic local seed data.
+-- MigrashGinegar — deterministic local seed data.
 --
 -- Applied after the single schema migration by `supabase start` and
 -- `supabase db reset`. It contains public pitch data only: no booking

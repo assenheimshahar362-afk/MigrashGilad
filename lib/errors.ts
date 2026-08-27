@@ -150,5 +150,5 @@ export async function handleRoute(fn: () => Promise<Response>): Promise<Response
  * for `Sentry.captureException` is a one-line change and nothing else moves.
  */
 export function reportError(error: unknown, context?: Record<string, unknown>) {
-  console.error('[migrash-gilad]', error, context ?? {});
+  console.error('[migrashginegar]', error, context ?? {});
 }

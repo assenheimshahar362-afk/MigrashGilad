@@ -43,7 +43,7 @@ export function initials(fullName: string): string {
 /** Where this site actually lives in production. The last-resort fallback
  *  below, so a deployment that never sets `NEXT_PUBLIC_SITE_URL` still shares
  *  a working link rather than pointing the whole internet at `localhost`. */
-const PRODUCTION_SITE_URL = 'https://migrash-gilad.vercel.app';
+const PRODUCTION_SITE_URL = 'https://migrashginegar.vercel.app';
 const DEV_SITE_URL = 'http://localhost:3000';
 
 function isLoopback(url: string): boolean {

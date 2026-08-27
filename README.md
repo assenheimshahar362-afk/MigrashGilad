@@ -1,4 +1,4 @@
-# מגרש גילעד — Migrash Gilad
+# מגרש גילעד — MigrashGinegar
 
 Production-oriented community football-pitch management PWA. The interface is
 Hebrew, RTL-only, mobile-first, and built with Next.js 16, React 19, Supabase,

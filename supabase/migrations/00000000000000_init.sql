@@ -1,5 +1,5 @@
 -- ===========================================================================
--- Migrash Gilad — complete database baseline.
+-- MigrashGinegar — complete database baseline.
 --
 -- This is the only schema migration. Supabase CLI applies it before
 -- supabase/seed.sql during `supabase start` and `supabase db reset`.

@@ -1,4 +1,4 @@
-project_id = "migrash-gilad"
+project_id = "migrashginegar"
 
 [db.seed]
 enabled = true

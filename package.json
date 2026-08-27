@@ -1,8 +1,8 @@
 {
-  "name": "migrash-gilad",
+  "name": "migrashginegar",
   "version": "1.0.0",
   "private": true,
-  "description": "Migrash Gilad - community football pitch management PWA",
+  "description": "MigrashGinegar - community football pitch management PWA",
   "scripts": {
     "dev": "next dev",
     "build": "next build --webpack",
