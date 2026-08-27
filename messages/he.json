@@ -21,6 +21,7 @@
   "schedule.pick_date": "בחירת תאריך",
   "schedule.legend": "מקרא",
   "schedule.legend_hide": "הסתרת המקרא",
+  "schedule.booked_event": "אירוע מוזמן",
   "schedule.now": "השעה כעת",
   "schedule.week_of": "שבוע {range}",
   "schedule.sr_heading": "פירוט אירועי השבוע",

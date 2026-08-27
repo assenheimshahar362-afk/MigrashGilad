@@ -5,7 +5,7 @@ import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { t } from '@/lib/i18n';
 import { USAGE_TYPES } from '@/lib/types';
-import { usageTypeStyle } from '@/lib/usage-type';
+import { eventStyle, usageTypeStyle } from '@/lib/usage-type';
 
 /**
  * §10.1: a compact key of the usage types, collapsible.
@@ -16,6 +16,13 @@ import { usageTypeStyle } from '@/lib/usage-type';
  */
 export function Legend({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
+  const items = [
+    ...USAGE_TYPES.map((type) => usageTypeStyle(type)),
+    {
+      ...eventStyle(t('schedule.booked_event'), 'community'),
+      label: t('schedule.booked_event'),
+    },
+  ];
 
   return (
     <div className={cn('text-(--ink)', className)}>
@@ -47,11 +54,10 @@ export function Legend({ className }: { className?: string }) {
         hidden={!open}
         className="flex flex-wrap gap-2 px-4 pt-1 pb-3"
       >
-        {USAGE_TYPES.map((type) => {
-          const style = usageTypeStyle(type);
+        {items.map((style) => {
           return (
             <li
-              key={type}
+              key={style.label}
               className={cn(
                 'inline-flex items-center gap-2 rounded-(--radius-chip) px-2.5 py-1 text-xs font-medium',
                 style.chip,
