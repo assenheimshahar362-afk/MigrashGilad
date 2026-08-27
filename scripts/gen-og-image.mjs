@@ -21,11 +21,15 @@
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { writeFile, rm } from 'node:fs/promises';
+import { readFile, writeFile, rm } from 'node:fs/promises';
 import { chromium } from '@playwright/test';
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const OUT = path.join(ROOT, 'public/images/og-cover.jpg');
+const messages = JSON.parse(await readFile(path.join(ROOT, 'messages/he.json'), 'utf8'));
+
+const escapeHtml = (value) =>
+  value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
 const fileUrl = (relPath) =>
   'file:///' + path.join(ROOT, relPath).replace(/\\/g, '/');
@@ -36,14 +40,14 @@ const HTML = `<!doctype html>
 <meta charset="utf-8" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800;900&family=Heebo:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html, body {
     width: 1200px;
     height: 630px;
     overflow: hidden;
-    font-family: 'Rubik', 'Heebo', sans-serif;
+    font-family: 'Heebo', sans-serif;
   }
   .card { position: relative; width: 1200px; height: 630px; background: #071120; }
   .bg {
@@ -83,8 +87,8 @@ const HTML = `<!doctype html>
     margin-bottom: 34px;
   }
   .title {
-    font-family: 'Rubik', sans-serif; font-weight: 900; font-size: 92px; line-height: 1;
-    color: #ffffff; letter-spacing: -0.01em; text-shadow: 0 4px 24px rgba(0,0,0,0.35);
+    font-family: 'Heebo', sans-serif; font-weight: 700; font-size: 92px; line-height: 1.05;
+    color: #ffffff; letter-spacing: -0.02em; text-shadow: 0 4px 24px rgba(0,0,0,0.35);
   }
   /* The rule carries the gap the tagline used to sit in. Without it the
      title and the rule would close to 30px and read as crowded, where the
@@ -101,7 +105,7 @@ const HTML = `<!doctype html>
     <div class="scrim-h"></div>
     <div class="content">
       <img class="badge" src="${fileUrl('public/images/logo.png')}" />
-      <div class="title">מגרש גילעד</div>
+      <div class="title">${escapeHtml(messages['hero.title'])}</div>
       <div class="rule">
         <span class="dot"></span>
         <span class="meta">לוח זמנים · הגשת בקשה למגרש</span>
@@ -126,6 +130,8 @@ const page = await context.newPage();
 try {
   await page.goto('file:///' + tmpHtml.replace(/\\/g, '/'), { waitUntil: 'networkidle' });
   await page.evaluate(() => document.fonts.ready);
+  const heroFontLoaded = await page.evaluate(() => document.fonts.check('700 92px Heebo'));
+  if (!heroFontLoaded) throw new Error('Heebo 700 failed to load for the OG image');
   await page.waitForTimeout(300);
 
   const buffer = await page.screenshot({
