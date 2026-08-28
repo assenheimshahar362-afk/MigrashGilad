@@ -14,6 +14,7 @@ import {
 import type { OpeningHours, PublicEvent, PublicSettings } from '@/lib/types';
 import { AppError } from '@/lib/errors';
 import { t } from '@/lib/i18n';
+import { usageTypeLabel } from '@/lib/usage-type';
 
 /**
  * Opening hours for one local date. All seven weekdays are looked up the same
@@ -71,26 +72,36 @@ export function conflictingEvents(events: PublicEvent[], start: Date, end: Date)
 }
 
 /**
- * The pitch belongs to the association while it has it: a public request
- * (always community time — there is no usage-type picker on the form) may not
- * be made for a slot an association event covers.
- *
- * The one exception is a slot the association is already SHARING — an
- * association event with a community event alongside it, which is exactly what
- * the calendar draws as "חצי מגרש" (§ day-view.tsx `CombinedCard`). Half the
- * pitch is community time there by definition, so a request for it is a
- * request for time the community already has.
- *
- * This returns the association events that block the range, so a caller can
- * both decide (empty = allowed) and say which booking is in the way.
+ * A community event that carries a title of its own is somebody's booking, not
+ * open time — it is what the calendar draws in green rather than blue
+ * (§ usage-type.ts `eventStyle`). The two must agree: anything the visitor
+ * sees as green has to be refused, or the colour is a lie.
  */
-export function blockingAssociationEvents(
-  events: PublicEvent[],
-  start: Date,
-  end: Date,
-): PublicEvent[] {
-  return conflictingEvents(events, start, end).filter(
-    (event) => event.usageType === 'association' && !isSharedPitchSlot(events, event),
+function isBookedCommunityEvent(event: PublicEvent): boolean {
+  return event.usageType === 'community' && event.title.trim() !== usageTypeLabel('community');
+}
+
+/**
+ * Only free community time — the blue bands the grid fills open hours with —
+ * is requestable. Two kinds of event block a range:
+ *
+ * - Association time: the pitch belongs to the association while it has it,
+ *   and a public request is always community time (there is no usage-type
+ *   picker on the form). The one exception is a slot the association is
+ *   already SHARING — an association event with community time alongside it,
+ *   which is what the calendar draws as "חצי מגרש" (§ day-view.tsx
+ *   `CombinedCard`); half the pitch is community time there by definition.
+ * - A community event that is already booked (green). It is taken, so asking
+ *   for it is asking for a slot that cannot be given.
+ *
+ * This returns the events that block the range, so a caller can both decide
+ * (empty = allowed) and say which booking is in the way.
+ */
+export function blockingEvents(events: PublicEvent[], start: Date, end: Date): PublicEvent[] {
+  return conflictingEvents(events, start, end).filter((event) =>
+    event.usageType === 'association'
+      ? !isSharedPitchSlot(events, event)
+      : isBookedCommunityEvent(event),
   );
 }
 

@@ -11,18 +11,19 @@ type State =
   | { kind: 'checking' }
   | { kind: 'available' }
   | { kind: 'taken' }
-  | { kind: 'blocked' };
+  | { kind: 'blocked'; reason: 'association' | 'taken' };
 
 /**
  * FR-13: a live availability check before submit, which WARNS and does not
  * block. The wording is deliberate — "המועד תפוס — אפשר בכל זאת להגיש בקשה" —
  * because an admin may still want to see the request.
  *
- * Association time is the exception, and the only state here that is not a
- * warning: `POST /api/requests` refuses it, so `onBlockedChange` tells the form
- * to hold the visitor on this step rather than letting them fill in two more
- * screens for a request that cannot be sent. A failed check reports `false` —
- * the server is the authority, and a network blip must not lock the form.
+ * Time that is not free community time is the exception, and the only state
+ * here that is not a warning: `POST /api/requests` refuses it, so
+ * `onBlockedChange` tells the form to hold the visitor on this step rather
+ * than letting them fill in two more screens for a request that cannot be
+ * sent. A failed check reports `false` — the server is the authority, and a
+ * network blip must not lock the form.
  *
  * The result is announced politely (A11Y-7): it changes while the visitor is
  * still filling the form, and an assertive region would interrupt them.
@@ -74,12 +75,16 @@ export function AvailabilityHint({
           settle({ kind: 'idle' });
           return;
         }
-        const body = (await response.json()) as { available: boolean; blocked?: boolean };
-        // `blocked` is checked first: an association slot is also a conflict,
+        const body = (await response.json()) as {
+          available: boolean;
+          blocked?: boolean;
+          blockedReason?: 'association' | 'taken' | null;
+        };
+        // `blocked` is checked first: a blocked slot is also a conflict,
         // and "you cannot request this" is the more useful of the two answers.
         settle(
           body.blocked
-            ? { kind: 'blocked' }
+            ? { kind: 'blocked', reason: body.blockedReason ?? 'taken' }
             : body.available
               ? { kind: 'available' }
               : { kind: 'taken' },
@@ -111,7 +116,7 @@ export function AvailabilityHint({
         )}
       >
         <Ban className="mt-0.5 size-4 shrink-0" aria-hidden />
-        {t('request.association_blocked')}
+        {t(state.reason === 'association' ? 'request.association_blocked' : 'request.taken_blocked')}
       </p>
     );
   }

@@ -4,7 +4,7 @@ import { AppError, handleRoute, errorResponse } from '@/lib/errors';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createRequestInput } from '@/lib/validation/request';
 import { getSchedule, getSettings, SCHEDULE_TAG } from '@/lib/data';
-import { assertRequestWindow, blockingAssociationEvents } from '@/lib/schedule';
+import { assertRequestWindow, blockingEvents } from '@/lib/schedule';
 import { localDate } from '@/lib/time';
 import { verifyTurnstile } from '@/lib/turnstile';
 import { clientIp, consume, hashIp, IP_RULE, PHONE_RULE } from '@/lib/rate-limit';
@@ -63,15 +63,20 @@ export async function POST(request: NextRequest) {
     // FR-17, FR-18 and the opening-hours check. Throws the specific AppError.
     assertRequestWindow(settings, start, end);
 
-    // Association time is not requestable, unless the association is already
-    // sharing that slot with community time (§ `blockingAssociationEvents`).
+    // Only free community time is requestable (§ `blockingEvents`): association
+    // time, and a slot an existing booking already holds, are both refused.
     // Unlike an ordinary clash — which FR-13 only WARNS about, because an
     // admin may still want to see the request — this one is refused outright,
     // so it is checked here and not left to the form: the form is a courtesy,
     // this route is the rule.
     const { events } = await getSchedule(localDate(start), localDate(end));
-    if (blockingAssociationEvents(events, start, end).length > 0) {
-      throw new AppError('ERR_ASSOCIATION_SLOT');
+    const blocking = blockingEvents(events, start, end);
+    if (blocking.length > 0) {
+      throw new AppError(
+        blocking.some((event) => event.usageType === 'association')
+          ? 'ERR_ASSOCIATION_SLOT'
+          : 'ERR_SLOT_TAKEN',
+      );
     }
 
     // The write goes through the service role: `booking_requests` has no anon

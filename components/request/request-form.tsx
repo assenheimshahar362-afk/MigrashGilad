@@ -35,8 +35,8 @@ export function RequestForm({
   prefill: { date?: string; start?: string; end?: string };
 }) {
   const [step, setStep] = useState<Step>('when');
-  // The chosen slot is association time, which `POST /api/requests` refuses
-  // outright (§ `blockingAssociationEvents`). Held here rather than inside
+  // The chosen slot is not free community time, which `POST /api/requests`
+  // refuses outright (§ `blockingEvents`). Held here rather than inside
   // <AvailabilityHint> because it is the "next" button that has to react to
   // it — an ordinary clash still lets the visitor carry on, this does not.
   const [slotBlocked, setSlotBlocked] = useState(false);

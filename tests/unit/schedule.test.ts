@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   assertRequestWindow,
   assertWithinOpeningHours,
-  blockingAssociationEvents,
+  blockingEvents,
   clusterOverlappingEvents,
   communityFillRanges,
   conflictingEvents,
@@ -227,41 +227,52 @@ describe('conflicts', () => {
   });
 });
 
-describe('blockingAssociationEvents — association time is not requestable', () => {
+describe('blockingEvents — only free community time is requestable', () => {
   const association = {
     ...event('17:00', '19:00'),
     id: 'assoc',
     usageType: 'association' as const,
   };
 
+  /** The blue bands the grid fills open hours with: free, and requestable. */
+  const freeCommunity = (start: string, end: string, id = 'free') => ({
+    ...event(start, end),
+    id,
+    title: 'זמן קהילה',
+  });
+
   const range = (start: string, end: string) =>
     [toInstant('2026-08-05', start), toInstant('2026-08-05', end)] as const;
 
   it('blocks a request overlapping an association event', () => {
-    expect(blockingAssociationEvents([association], ...range('18:00', '20:00'))).toHaveLength(1);
+    expect(blockingEvents([association], ...range('18:00', '20:00'))).toHaveLength(1);
   });
 
   it('blocks a request that only clips the edge of one', () => {
-    expect(blockingAssociationEvents([association], ...range('16:00', '17:15'))).toHaveLength(1);
+    expect(blockingEvents([association], ...range('16:00', '17:15'))).toHaveLength(1);
   });
 
   it('allows a back-to-back slot — the ranges are half-open', () => {
-    expect(blockingAssociationEvents([association], ...range('19:00', '20:00'))).toHaveLength(0);
+    expect(blockingEvents([association], ...range('19:00', '20:00'))).toHaveLength(0);
   });
 
-  it('allows a clash with community time, which is only ever a warning', () => {
-    const community = event('17:00', '19:00');
-    expect(blockingAssociationEvents([community], ...range('17:00', '18:00'))).toHaveLength(0);
+  it('blocks a clash with a community event that is already booked', () => {
+    const booked = event('17:00', '19:00');
+    expect(blockingEvents([booked], ...range('17:00', '18:00'))).toHaveLength(1);
   });
 
-  it('allows the half-pitch slot: association already shares it with community', () => {
-    const sharing = { ...event('17:00', '19:00'), id: 'half' };
-    expect(blockingAssociationEvents([association, sharing], ...range('17:30', '18:30'))).toHaveLength(0);
+  it('allows free community time', () => {
+    expect(blockingEvents([freeCommunity('17:00', '19:00')], ...range('17:00', '18:00'))).toHaveLength(0);
+  });
+
+  it('allows the half-pitch slot: association shares it with free community time', () => {
+    const sharing = freeCommunity('17:00', '19:00', 'half');
+    expect(blockingEvents([association, sharing], ...range('17:30', '18:30'))).toHaveLength(0);
   });
 
   it('still blocks when the community event beside it is a different slot', () => {
-    const elsewhere = { ...event('20:00', '21:00'), id: 'later' };
-    expect(blockingAssociationEvents([association, elsewhere], ...range('18:00', '18:30'))).toHaveLength(1);
+    const elsewhere = freeCommunity('20:00', '21:00', 'later');
+    expect(blockingEvents([association, elsewhere], ...range('18:00', '18:30'))).toHaveLength(1);
   });
 
   it('blocks when one of two association events in the range is unshared', () => {
@@ -270,11 +281,8 @@ describe('blockingAssociationEvents — association time is not requestable', ()
       id: 'assoc-2',
       usageType: 'association' as const,
     };
-    const beside = { ...event('19:00', '20:00'), id: 'beside' };
-    const blocking = blockingAssociationEvents(
-      [association, shared, beside],
-      ...range('18:00', '20:00'),
-    );
+    const beside = freeCommunity('19:00', '20:00', 'beside');
+    const blocking = blockingEvents([association, shared, beside], ...range('18:00', '20:00'));
     expect(blocking.map((e) => e.id)).toEqual(['assoc']);
   });
 });

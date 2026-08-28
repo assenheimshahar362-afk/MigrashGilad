@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { handleRoute, errorResponse } from '@/lib/errors';
 import { getSchedule } from '@/lib/data';
 import { availabilityInput } from '@/lib/validation/request';
-import { blockingAssociationEvents, conflictingEvents } from '@/lib/schedule';
+import { blockingEvents, conflictingEvents } from '@/lib/schedule';
 import { localDate } from '@/lib/time';
 
 /**
@@ -34,10 +34,15 @@ export async function GET(request: NextRequest) {
 
     const { events } = await getSchedule(date, localDate(end));
     const conflicts = conflictingEvents(events, start, end);
-    const blocked = blockingAssociationEvents(events, start, end).length > 0;
+    const blocking = blockingEvents(events, start, end);
+    const blockedReason = blocking.some((event) => event.usageType === 'association')
+      ? 'association'
+      : blocking.length > 0
+        ? 'taken'
+        : null;
 
     return NextResponse.json(
-      { available: conflicts.length === 0, blocked, conflicts },
+      { available: conflicts.length === 0, blocked: blocking.length > 0, blockedReason, conflicts },
       { headers: { 'Cache-Control': 'no-store' } },
     );
   });
