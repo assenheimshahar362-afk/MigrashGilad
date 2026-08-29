@@ -29,7 +29,7 @@ export function Hero() {
   return (
     <section
       className={cn(
-        'relative isolate flex flex-col justify-end overflow-hidden',
+        'relative isolate flex flex-col justify-end overflow-hidden lg:justify-center',
         // Capped rather than proportional on a phone: the schedule has to stay
         // within one thumb-flick of the top, because it is what most people
         // opened the site for. The `min()` is what keeps the floor from
@@ -38,7 +38,7 @@ export function Hero() {
         'min-h-[min(30rem,88svh)] max-h-[38rem]',
         'sm:min-h-[min(34rem,88svh)] sm:max-h-none lg:min-h-[80svh]',
         // The header floats over this section, so the content needs clearance.
-        'pt-24 pb-9 sm:pt-28 sm:pb-12 lg:pb-16',
+        'pt-24 pb-9 sm:pt-28 sm:pb-12 lg:py-24',
         'short:pt-20 short:pb-6',
       )}
     >
@@ -65,10 +65,10 @@ export function Hero() {
       </div>
 
       {/* Three overlays, each with one job.
-          1. The vertical gradient anchors the text at the bottom. It is
-             deliberately lighter from `lg` up, where the copy occupies one side
-             of the frame rather than all of it — a full-strength wash there
-             costs the photograph its green for no legibility gained.
+          1. The vertical gradient anchors the text at the bottom on compact
+             screens. It is deliberately lighter from `lg` up, where the copy
+             is vertically centred on one side of the frame — a full-strength
+             wash there costs the photograph its green for no legibility gained.
           2. On a wide screen the copy sits at the inline start, which is the
              RIGHT under dir="rtl", so a horizontal scrim darkens that side only
              and leaves the pitch itself vivid.
