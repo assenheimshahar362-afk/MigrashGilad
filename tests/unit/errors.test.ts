@@ -81,6 +81,12 @@ describe('public projections (§7 PII)', () => {
     );
   });
 
+  it('always exposes the manager-written activity description', () => {
+    expect(
+      toPublicEvent({ ...baseEvent, description: 'יש להביא נעלי ספורט' }).description,
+    ).toBe('יש להביא נעלי ספורט');
+  });
+
   /** The calendar names whoever booked the pitch in full, not just a first name. */
   it('shows an approved request under the requester full name', () => {
     expect(eventDisplayTitle(toPublicEvent(baseEvent))).toBe('יעל בר-אילן');

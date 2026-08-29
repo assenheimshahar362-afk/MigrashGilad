@@ -1,6 +1,7 @@
 import { handleRoute, codeFromDbError, errorResponse } from '@/lib/errors';
 import { requireAdmin } from '@/lib/auth';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { ensurePushConfigured } from '@/lib/notifications/push';
 import { pushSubscriptionInput } from '@/lib/validation/admin';
 import { ok, parseBody } from '@/lib/api';
 
@@ -15,8 +16,12 @@ export async function POST(request: Request) {
   return handleRoute(async () => {
     const identity = await requireAdmin();
     const input = await parseBody(request, pushSubscriptionInput);
+    ensurePushConfigured();
 
-    const supabase = await createClient();
+    // A service-role write lets a shared browser move its unique endpoint to
+    // the manager who is signed in now. RLS cannot upsert a row still owned by
+    // the previous account because that row is intentionally invisible.
+    const supabase = createAdminClient();
     const { error } = await supabase.from('push_subscriptions').upsert(
       {
         user_id: identity.userId,
@@ -36,13 +41,19 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   return handleRoute(async () => {
-    await requireAdmin();
+    const identity = await requireAdmin();
     const { searchParams } = new URL(request.url);
     const endpoint = searchParams.get('endpoint');
     if (!endpoint) return errorResponse('ERR_VALIDATION');
 
-    const supabase = await createClient();
-    await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint);
+    const supabase = createAdminClient();
+    const { error } = await supabase
+      .from('push_subscriptions')
+      .delete()
+      .eq('endpoint', endpoint)
+      .eq('user_id', identity.userId);
+
+    if (error) return errorResponse(codeFromDbError(error));
 
     return ok({ ok: true });
   });

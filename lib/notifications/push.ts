@@ -7,20 +7,29 @@ import { logNotification } from '@/lib/notifications/log';
 
 let configured = false;
 
-function configure(): boolean {
-  if (configured) return true;
+/** Validate and install the server-side VAPID key pair once per process. */
+export function ensurePushConfigured(): void {
+  if (configured) return;
 
-  const publicKey = process.env.VAPID_PUBLIC_KEY;
-  const privateKey = process.env.VAPID_PRIVATE_KEY;
+  // The browser-facing key is canonical: it is the key every existing
+  // PushSubscription was created with. `VAPID_PUBLIC_KEY` remains a fallback
+  // for older deployments, but a duplicated server value cannot silently
+  // drift away from the client bundle.
+  const publicKey =
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY?.trim() || process.env.VAPID_PUBLIC_KEY?.trim();
+  const privateKey = process.env.VAPID_PRIVATE_KEY?.trim();
   // VAPID wants a contact address, not an email account — this reuses
   // whichever one is already configured for outgoing mail rather than asking
   // for a third env var.
-  const contact = process.env.NOTIFY_FROM_EMAIL ?? process.env.GMAIL_USER ?? 'admin@example.com';
-  if (!publicKey || !privateKey) return false;
+  const contact = (
+    process.env.NOTIFY_FROM_EMAIL ??
+    process.env.GMAIL_USER ??
+    'admin@example.com'
+  ).trim();
+  if (!publicKey || !privateKey) throw new Error('VAPID keys not configured');
 
   webpush.setVapidDetails(`mailto:${contact}`, publicKey, privateKey);
   configured = true;
-  return true;
 }
 
 export interface PushPayload {
@@ -47,40 +56,65 @@ export interface PushPayload {
  * fan-out pays for a dead endpoint.
  */
 export async function pushToAdmins(payload: PushPayload): Promise<{ sent: number; failed: number }> {
-  if (!configure()) {
+  try {
+    ensurePushConfigured();
+  } catch (error) {
+    reportError(error, { where: 'pushToAdmins.configure' });
     await logNotification({
       channel: 'push',
       target: 'admins',
       status: 'failed',
-      error: 'VAPID keys not configured',
+      error: errorMessage(error),
       payload,
     });
-    return { sent: 0, failed: 0 };
+    return { sent: 0, failed: 1 };
   }
 
   const supabase = createAdminClient();
 
-  const { data: allowlist } = await supabase
+  const { data: allowlist, error: allowlistError } = await supabase
     .from('admin_allowlist')
     .select('email')
     .is('revoked_at', null)
     .eq('notify_push', true);
 
-  const emails = (allowlist ?? []).map((row) => (row.email as string).toLowerCase());
-  if (emails.length === 0) return { sent: 0, failed: 0 };
+  if (allowlistError) {
+    return logFanOutFailure(allowlistError, 'Could not load push recipients', payload);
+  }
 
-  const { data: profiles } = await supabase.from('admin_profiles').select('user_id, email');
+  const emails = (allowlist ?? []).map((row) => (row.email as string).toLowerCase());
+  if (emails.length === 0) {
+    return logFanOutFailure(null, 'No active managers have push enabled', payload);
+  }
+
+  const { data: profiles, error: profilesError } = await supabase
+    .from('admin_profiles')
+    .select('user_id, email');
+
+  if (profilesError) {
+    return logFanOutFailure(profilesError, 'Could not resolve manager accounts', payload);
+  }
 
   const userIds = (profiles ?? [])
     .filter((profile) => emails.includes((profile.email as string).toLowerCase()))
     .map((profile) => profile.user_id as string);
 
-  if (userIds.length === 0) return { sent: 0, failed: 0 };
+  if (userIds.length === 0) {
+    return logFanOutFailure(null, 'No active manager accounts have signed in', payload);
+  }
 
-  const { data: subscriptions } = await supabase
+  const { data: subscriptions, error: subscriptionsError } = await supabase
     .from('push_subscriptions')
     .select('id, endpoint, p256dh, auth')
     .in('user_id', userIds);
+
+  if (subscriptionsError) {
+    return logFanOutFailure(subscriptionsError, 'Could not load push subscriptions', payload);
+  }
+
+  if (!subscriptions || subscriptions.length === 0) {
+    return logFanOutFailure(null, 'No active manager devices are subscribed', payload);
+  }
 
   let sent = 0;
   let failed = 0;
@@ -95,7 +129,7 @@ export async function pushToAdmins(payload: PushPayload): Promise<{ sent: number
             keys: { p256dh: subscription.p256dh as string, auth: subscription.auth as string },
           },
           JSON.stringify(payload),
-          { TTL: 60 * 60 },
+          { TTL: 60 * 60, timeout: 5_000 },
         );
         sent += 1;
         await logNotification({ channel: 'push', target, status: 'sent', payload });
@@ -111,7 +145,7 @@ export async function pushToAdmins(payload: PushPayload): Promise<{ sent: number
           channel: 'push',
           target,
           status: 'failed',
-          error: String((error as Error).message ?? error),
+          error: errorMessage(error),
           payload,
         });
       }
@@ -119,4 +153,24 @@ export async function pushToAdmins(payload: PushPayload): Promise<{ sent: number
   );
 
   return { sent, failed };
+}
+
+async function logFanOutFailure(
+  cause: unknown,
+  message: string,
+  payload: PushPayload,
+): Promise<{ sent: number; failed: number }> {
+  if (cause) reportError(cause, { where: 'pushToAdmins', message });
+  await logNotification({
+    channel: 'push',
+    target: 'admins',
+    status: 'failed',
+    error: cause ? `${message}: ${errorMessage(cause)}` : message,
+    payload,
+  });
+  return { sent: 0, failed: 1 };
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

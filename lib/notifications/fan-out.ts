@@ -10,39 +10,33 @@ import { emailAdminsNewRequest } from '@/lib/notifications/email';
 import type { BookingRequestRow } from '@/lib/types';
 
 /**
- * FR-19 / §9.1: on submission ALL admins are notified. The fan-out runs after
- * the response has been returned (`after()`, Vercel's waitUntil), so submission
- * latency is unaffected — G2 wants the visitor done in 60 seconds, and waiting
- * on an SMTP round trip would be a needless part of that budget.
+ * FR-19 / §9.1: on submission ALL admins are notified. Web push is awaited by
+ * the request route so a serverless invocation cannot finish before the push
+ * provider has accepted (or rejected) the message. SMTP remains in `after()`:
+ * it is slower and must not hold the visitor on the success screen.
  */
-export function notifyAdminsOfNewRequest(request: BookingRequestRow): void {
-  const run = async () => {
-    const day = formatWeekdayLong(localDate(request.requested_start));
-    const date = formatDateShort(localDate(request.requested_start));
-    const range = formatTimeRange(request.requested_start, request.requested_end);
+export async function notifyAdminsOfNewRequest(request: BookingRequestRow): Promise<void> {
+  const day = formatWeekdayLong(localDate(request.requested_start));
+  const date = formatDateShort(localDate(request.requested_start));
+  const range = formatTimeRange(request.requested_start, request.requested_end);
 
-    const payload = {
-      title: t('app.name') + ' - בקשה חדשה',
-      body: `${request.requester_name} · ${day} ${date} · ${range}`,
-      url: `/admin?request=${request.id}`,
-      tag: `request-${request.id}`,
-      requestId: request.id,
-      // The whole queue, not "+1": two requests arriving close together must
-      // not race to both claim they are the first, and an admin who already
-      // cleared some elsewhere should see what is actually left.
-      badgeCount: await countPendingRequests(),
-    };
+  const payload = {
+    title: t('app.name') + ' - בקשה חדשה',
+    body: `${request.requester_name} · ${day} ${date} · ${range}`,
+    url: `/admin?request=${request.id}`,
+    tag: `request-${request.id}`,
+    requestId: request.id,
+    // The whole queue, not "+1": two requests arriving close together must
+    // not race to both claim they are the first, and an admin who already
+    // cleared some elsewhere should see what is actually left.
+    badgeCount: await countPendingRequests(),
+  };
 
-    // Channels are independent: a broken Gmail credential must not stop web push.
-    const results = await Promise.allSettled([
-      pushToAdmins(payload),
-      emailAdminsNewRequest(request),
-    ]);
-
-    for (const result of results) {
-      if (result.status === 'rejected') {
-        reportError(result.reason, { where: 'notifyAdminsOfNewRequest', requestId: request.id });
-      }
+  const email = async () => {
+    try {
+      await emailAdminsNewRequest(request);
+    } catch (error) {
+      reportError(error, { where: 'notifyAdminsOfNewRequest.email', requestId: request.id });
     }
   };
 
@@ -51,14 +45,23 @@ export function notifyAdminsOfNewRequest(request: BookingRequestRow): void {
   // without the Vercel adapter, some local dev setups). That would take the
   // whole booking submission down with it, which is a far worse outcome than
   // a best-effort notification: the visitor's booking is the point, the
-  // fan-out is a courtesy. Falling back to firing `run()` unawaited keeps the
+  // email is a courtesy. Falling back to firing it unawaited keeps the
   // request bulletproof either way, at the cost of no delivery guarantee if
   // this specific runtime kills the process before it finishes.
   try {
-    after(run);
+    after(email);
   } catch (error) {
     reportError(error, { where: 'notifyAdminsOfNewRequest.after', requestId: request.id });
-    void run();
+    void email();
+  }
+
+  // `pushToAdmins` records ordinary provider, configuration, query, and empty
+  // recipient failures. This last catch protects the booking if an unexpected
+  // error escapes that boundary.
+  try {
+    await pushToAdmins(payload);
+  } catch (error) {
+    reportError(error, { where: 'notifyAdminsOfNewRequest.push', requestId: request.id });
   }
 }
 
@@ -66,9 +69,8 @@ export function notifyAdminsOfNewRequest(request: BookingRequestRow): void {
  * How many requests are waiting on a decision — the number the app icon badge
  * shows. Counted with `head: true` so Postgres returns the count and no rows.
  *
- * Read with the service role: this runs in `after()`, detached from the
- * visitor's request, and the visitor who just submitted is anonymous — there is
- * no admin session here for RLS to resolve.
+ * Read with the service role because the visitor who just submitted is
+ * anonymous — there is no admin session here for RLS to resolve.
  *
  * Falls back to `undefined` rather than 0 on failure. A zero would tell every
  * admin's phone to CLEAR its badge (§ lib/app-badge.ts), quietly hiding a queue

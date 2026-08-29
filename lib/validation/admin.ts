@@ -23,6 +23,7 @@ export const approveInput = z
     version: z.number().int().min(1),
     start: z.iso.datetime({ offset: true }).optional(),
     end: z.iso.datetime({ offset: true }).optional(),
+    /** Manager-authored decision note, also published as the event description. */
     note: z.string().max(500).optional(),
     /** Publishes the requester's own note with the event (§ show_note). */
     showNote: z.boolean().default(false),

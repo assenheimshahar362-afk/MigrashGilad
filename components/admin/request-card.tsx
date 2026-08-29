@@ -57,6 +57,10 @@ export function RequestCard({
   // approving without touching it keeps the note admin-only (G3 still wants
   // approve to be one tap).
   const [showNote, setShowNote] = useState(false);
+  // The manager's own text is public activity context, separate from the
+  // requester's note above. `approve_request` stores it both on the decision
+  // and as the resulting event's description.
+  const [approvalNote, setApprovalNote] = useState('');
 
   const date = localDate(request.requested_start);
 
@@ -166,6 +170,24 @@ export function RequestCard({
         </label>
       ) : null}
 
+      <div className="mt-3">
+        <Field
+          id={`approval-note-${request.id}`}
+          label={t('admin.calendar_note_label')}
+          hint={t('admin.calendar_note_help')}
+        >
+          {(props) => (
+            <Textarea
+              {...props}
+              value={approvalNote}
+              maxLength={500}
+              disabled={pending}
+              onChange={(event) => setApprovalNote(event.target.value)}
+            />
+          )}
+        </Field>
+      </div>
+
       {error ? (
         <p role="alert" className="mt-3 text-sm font-semibold text-danger-ink">
           {error}
@@ -180,7 +202,16 @@ export function RequestCard({
       ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <Button onClick={() => decide('approve', { showNote }, true)} disabled={pending}>
+        <Button
+          onClick={() =>
+            decide(
+              'approve',
+              { showNote, note: approvalNote.trim() || undefined },
+              true,
+            )
+          }
+          disabled={pending}
+        >
           {t('admin.approve')}
         </Button>
 
@@ -232,8 +263,14 @@ export function RequestCard({
         date={date}
         defaultStart={localTime(request.requested_start)}
         defaultEnd={localTime(request.requested_end)}
-        onApprove={(start, end, note) =>
-          decide('approve', { start, end, note, showNote }, false)
+        note={approvalNote}
+        onNoteChange={setApprovalNote}
+        onApprove={(start, end) =>
+          decide(
+            'approve',
+            { start, end, note: approvalNote.trim() || undefined, showNote },
+            false,
+          )
         }
       />
     </li>
@@ -315,6 +352,8 @@ function ModifiedApprovalSheet({
   date,
   defaultStart,
   defaultEnd,
+  note,
+  onNoteChange,
   onApprove,
 }: {
   open: boolean;
@@ -323,11 +362,12 @@ function ModifiedApprovalSheet({
   date: string;
   defaultStart: string;
   defaultEnd: string;
-  onApprove: (start: string, end: string, note: string | undefined) => void;
+  note: string;
+  onNoteChange: (note: string) => void;
+  onApprove: (start: string, end: string) => void;
 }) {
   const [start, setStart] = useState(defaultStart);
   const [end, setEnd] = useState(defaultEnd);
-  const [note, setNote] = useState('');
 
   const invalid = minutesFromTime(end) <= minutesFromTime(start);
 
@@ -365,13 +405,17 @@ function ModifiedApprovalSheet({
         </div>
 
         <div className="mt-4">
-          <Field id="modified-note" label={t('admin.note_label')}>
+          <Field
+            id="modified-note"
+            label={t('admin.calendar_note_label')}
+            hint={t('admin.calendar_note_help')}
+          >
             {(props) => (
               <Textarea
                 {...props}
                 value={note}
                 maxLength={500}
-                onChange={(event) => setNote(event.target.value)}
+                onChange={(event) => onNoteChange(event.target.value)}
               />
             )}
           </Field>
@@ -389,7 +433,6 @@ function ModifiedApprovalSheet({
                 // explicit (§14) — never by adding hours to a string.
                 toInstant(date, timeFromMinutes(minutesFromTime(start))).toISOString(),
                 toInstant(date, timeFromMinutes(minutesFromTime(end))).toISOString(),
-                note.trim() || undefined,
               )
             }
           >

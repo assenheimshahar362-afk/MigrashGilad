@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock, MessageSquareText, Phone, Tag, User } from 'lucide-react';
+import { Clock, FileText, MessageSquareText, Phone, Tag, User } from 'lucide-react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Ltr, TimeRange } from '@/components/ui/ltr';
 import { cn } from '@/lib/utils';
@@ -75,13 +75,18 @@ export function EventDetailSheet({
             </span>
           </DetailRow>
 
-          {/* The only free text this sheet shows. The admin-written
-              `description` used to sit above it and no longer appears here at
-              all: the day view already carries it, and repeating it in the
-              sheet left the requester's own words buried under a field that is
-              empty on most bookings anyway.
+          {/* The manager-written description is the activity context. For an
+              approved request it is entered as part of the decision; for a
+              manual activity it comes from the create/edit form. */}
+          {event.description ? (
+            <DetailRow icon={FileText} label={t('event.description')}>
+              <p className="text-sm leading-relaxed whitespace-pre-line text-(--ink)">
+                {event.description}
+              </p>
+            </DetailRow>
+          ) : null}
 
-              This one is what the requester typed on the public form, carried
+          {/* This is what the requester typed on the public form, carried
               onto the event by `approve_request` and published only once an
               admin ticks `show_note` — `toPublicEvent` returns null for it
               otherwise, so an unapproved note never reaches the browser.

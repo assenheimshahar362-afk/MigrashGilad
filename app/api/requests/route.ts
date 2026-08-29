@@ -99,8 +99,9 @@ export async function POST(request: NextRequest) {
 
     if (error || !data) throw error ?? new AppError('ERR_INTERNAL');
 
-    // FR-19 / §9.1: fan-out to ALL admins, after the response is returned.
-    notifyAdminsOfNewRequest(data);
+    // FR-19 / §9.1: push to ALL subscribed admins before this serverless
+    // invocation may end. Slow SMTP work remains scheduled with `after()`.
+    await notifyAdminsOfNewRequest(data);
 
     // The pending badge on the dashboard is derived from the schedule cache tag.
     revalidateTag(SCHEDULE_TAG, 'max');

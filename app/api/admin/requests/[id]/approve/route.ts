@@ -15,6 +15,8 @@ import { ok, parseBody, revalidateSchedule } from '@/lib/api';
  * FR-20: the first decision wins, resolved by an optimistic-concurrency check
  * on `version`; the loser gets ERR_ALREADY_DECIDED (scenario 3).
  * FR-23: passing start/end counter-offers, which sets `approved_modified`.
+ * `note` is both the decision record and the resulting activity description,
+ * so the context the manager adds during approval appears in the calendar.
  *
  * The call goes through the caller's own session, not the service role, so
  * `is_admin()` inside the RPC evaluates the real identity.

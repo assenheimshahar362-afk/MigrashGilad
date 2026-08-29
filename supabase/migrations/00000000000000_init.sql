@@ -604,6 +604,7 @@ declare
   v_end   timestamptz;
   v_event events;
   v_modified boolean;
+  v_note text;
 begin
   if not is_admin() then
     raise exception 'ERR_NOT_AUTHORIZED';
@@ -617,6 +618,7 @@ begin
   v_start := coalesce(p_start, r.requested_start);
   v_end   := coalesce(p_end,   r.requested_end);
   v_modified := (v_start, v_end) is distinct from (r.requested_start, r.requested_end);
+  v_note := nullif(btrim(coalesce(p_note, '')), '');
 
   if v_end <= v_start then raise exception 'ERR_VALIDATION'; end if;
 
@@ -630,11 +632,12 @@ begin
   -- `requester_note` always carries the requester's own words across, so the
   -- event editor can publish them later without going back to the request;
   -- `show_note` is what decides whether a visitor ever sees them.
-  -- `description` is left empty so it stays the admin's field to write in.
-  insert into events (title, usage_type, starts_at, ends_at, source, request_id,
+  -- The manager's approval note becomes the activity description, so the
+  -- calendar carries the operational context added during the decision.
+  insert into events (title, description, usage_type, starts_at, ends_at, source, request_id,
                       requester_note, show_note,
                       contact_name, contact_phone, created_by)
-  values (r.requester_name, r.usage_type, v_start, v_end, 'request', r.id,
+  values (r.requester_name, v_note, r.usage_type, v_start, v_end, 'request', r.id,
           nullif(btrim(coalesce(r.note, '')), ''), coalesce(p_show_note, false),
           r.requester_name, r.requester_phone, auth.uid())
   returning * into v_event;   -- exclusion constraint raises 23P01 => ERR_SLOT_CONFLICT
@@ -644,7 +647,7 @@ begin
   -- error 42804.
   update booking_requests
      set status = (case when v_modified then 'approved_modified' else 'approved' end)::request_status,
-         decided_by = auth.uid(), decided_at = now(), decision_note = p_note,
+         decided_by = auth.uid(), decided_at = now(), decision_note = v_note,
          final_start = v_start, final_end = v_end, version = version + 1
    where id = r.id;
 
@@ -652,7 +655,8 @@ begin
   values (auth.uid(), 'booking_request', r.id, 'approve',
           to_jsonb(r), jsonb_build_object('event_id', v_event.id,
                                           'start', v_start, 'end', v_end,
-                                          'modified', v_modified));
+                                          'modified', v_modified,
+                                          'description', v_note));
 
   return v_event;
 exception

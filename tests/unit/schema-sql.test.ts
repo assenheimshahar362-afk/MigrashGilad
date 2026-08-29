@@ -82,3 +82,17 @@ describe('init.sql enum assignments', () => {
     }
   });
 });
+
+describe('booking approval activity description', () => {
+  it('copies the normalized manager note into the event and decision', () => {
+    const approval = sql.match(
+      /create or replace function approve_request\([\s\S]*?(?=create or replace function reject_request\()/i,
+    );
+
+    expect(approval, 'approve_request function is missing').not.toBeNull();
+    expect(approval![0]).toMatch(/v_note\s*:=\s*nullif\(btrim\(coalesce\(p_note,\s*''\)\),\s*''\)/i);
+    expect(approval![0]).toMatch(/insert into events \(title, description,/i);
+    expect(approval![0]).toMatch(/values \(r\.requester_name, v_note,/i);
+    expect(approval![0]).toMatch(/decision_note\s*=\s*v_note/i);
+  });
+});
