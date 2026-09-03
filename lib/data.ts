@@ -6,9 +6,11 @@ import { reportError } from '@/lib/errors';
 import {
   SITE_SETTINGS,
   toPublicEvent,
+  uniformOpeningHours,
   type EventRow,
   type PublicEvent,
   type PublicSettings,
+  type SiteSettingsRow,
   type TrusteeRow,
 } from '@/lib/types';
 import { addLocalDays, toInstant, type LocalDate } from '@/lib/time';
@@ -22,6 +24,7 @@ import { addLocalDays, toInstant, type LocalDate } from '@/lib/time';
  * a Supabase outage from cache.
  */
 export const SCHEDULE_TAG = 'schedule';
+export const SETTINGS_TAG = 'settings';
 export const TRUSTEES_TAG = 'trustees';
 
 async function fetchScheduleUncached(from: LocalDate, to: LocalDate) {
@@ -63,14 +66,37 @@ export async function getSchedule(
   }
 }
 
-/**
- * Was a cached read of the `site_settings` row; that table (and the
- * super-admin screen for it) is gone, so this is now a fixed value — see the
- * note on `PublicSettings`. Kept `async` so every existing `await
- * getSettings()` call site needed no change.
- */
+async function fetchSettingsUncached(): Promise<PublicSettings> {
+  const supabase = createPublicClient();
+  const { data, error } = await supabase
+    .from('site_settings')
+    .select('opening_time, closing_time')
+    .eq('id', 1)
+    .maybeSingle<Pick<SiteSettingsRow, 'opening_time' | 'closing_time'>>();
+
+  if (error || !data) {
+    if (error) reportError(error, { where: 'getSettings' });
+    return SITE_SETTINGS;
+  }
+
+  return {
+    ...SITE_SETTINGS,
+    openingHours: uniformOpeningHours(data.opening_time.slice(0, 5), data.closing_time.slice(0, 5)),
+  };
+}
+
 export async function getSettings(): Promise<PublicSettings> {
-  return SITE_SETTINGS;
+  const cached = unstable_cache(fetchSettingsUncached, ['settings'], {
+    tags: [SETTINGS_TAG],
+    revalidate: 300,
+  });
+
+  try {
+    return await cached();
+  } catch (error) {
+    reportError(error, { where: 'getSettings' });
+    return SITE_SETTINGS;
+  }
 }
 
 async function fetchTrusteesUncached(): Promise<TrusteeRow[]> {

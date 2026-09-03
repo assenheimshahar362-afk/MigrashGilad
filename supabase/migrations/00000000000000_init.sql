@@ -170,6 +170,18 @@ create table if not exists trustees (
 create index if not exists trustees_visible_idx on trustees (is_archived, display_order);
 
 -- ---------------------------------------------------------------------------
+-- Global pitch opening hours (one row, same hours on every weekday)
+-- ---------------------------------------------------------------------------
+create table if not exists site_settings (
+  id            smallint primary key default 1 check (id = 1),
+  opening_time  time not null default '07:00',
+  closing_time  time not null default '23:00',
+  updated_by    uuid references auth.users(id),
+  updated_at    timestamptz not null default now(),
+  constraint site_settings_time_order check (closing_time > opening_time)
+);
+
+-- ---------------------------------------------------------------------------
 -- Booking requests
 -- ---------------------------------------------------------------------------
 create table if not exists booking_requests (
@@ -1048,6 +1060,7 @@ grant execute on function is_service_role() to authenticated, anon;
 -- ===========================================================================
 
 alter table events             enable row level security;
+alter table site_settings      enable row level security;
 alter table trustees           enable row level security;
 alter table closures           enable row level security;
 alter table booking_requests   enable row level security;
@@ -1072,6 +1085,10 @@ drop policy if exists trustees_public_read on trustees;
 create policy trustees_public_read on trustees
   for select to anon, authenticated
   using (is_archived = false);
+
+drop policy if exists site_settings_public_read on site_settings;
+create policy site_settings_public_read on site_settings
+  for select to anon, authenticated using (true);
 
 drop policy if exists closures_public_read on closures;
 create policy closures_public_read on closures
@@ -1101,6 +1118,10 @@ create policy events_admin_write on events
 drop policy if exists trustees_admin_write on trustees;
 create policy trustees_admin_write on trustees
   for all to authenticated using (is_admin()) with check (is_admin());
+
+drop policy if exists site_settings_admin_write on site_settings;
+create policy site_settings_admin_write on site_settings
+  for update to authenticated using (is_admin()) with check (is_admin());
 
 drop policy if exists closures_admin_write on closures;
 create policy closures_admin_write on closures
@@ -1218,8 +1239,8 @@ begin
         revoked_at = null;
 end $$;
 
--- Pitch name, opening hours and request limits used to live in a
--- super-admin-editable `site_settings` row here. They are fixed values in
--- code now (`lib/types.ts`, `SITE_SETTINGS`) — nothing left to bootstrap.
+insert into site_settings (id, opening_time, closing_time)
+values (1, '07:00', '23:00')
+on conflict (id) do nothing;
 
 commit;

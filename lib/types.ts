@@ -149,14 +149,24 @@ export type BookingRequestRow = {
 /** `"0".."6"` = Sunday..Saturday. A `null` value means closed all day. */
 export type OpeningHours = Record<string, [string, string] | null>;
 
+export function uniformOpeningHours(openingTime: string, closingTime: string): OpeningHours {
+  return Object.fromEntries(
+    Array.from({ length: 7 }, (_, day) => [String(day), [openingTime, closingTime]]),
+  );
+}
+
+export type SiteSettingsRow = {
+  id: number;
+  opening_time: string;
+  closing_time: string;
+  updated_by: string | null;
+  updated_at: string;
+};
+
 /**
- * Was `site_settings`, a super-admin-editable row — pitch name, opening
- * hours, request limits, a "pause requests" switch and a memorial page. Only
- * opening hours ever changed in practice, and never per-day; everything else
- * sat at whatever the schema defaulted to. The table (and the admin screen
- * for it) is gone; these are that same shape, fixed in code instead of a
- * database row. Changing one now means changing this file and redeploying,
- * not signing in.
+ * Public behavior shared by the schedule and request flow. Opening hours are
+ * loaded from the single `site_settings` row and expanded uniformly across
+ * the week; the remaining operational limits are deployment defaults.
  */
 export type PublicSettings = {
   pitchName: string;
@@ -282,17 +292,9 @@ export function eventDisplayTitle(event: PublicEvent): string {
 }
 
 /** The same range every day of the week — no per-day exceptions any more. */
-export const DEFAULT_OPENING_HOURS: OpeningHours = {
-  '0': ['07:00', '23:00'],
-  '1': ['07:00', '23:00'],
-  '2': ['07:00', '23:00'],
-  '3': ['07:00', '23:00'],
-  '4': ['07:00', '23:00'],
-  '5': ['07:00', '23:00'],
-  '6': ['07:00', '23:00'],
-};
+export const DEFAULT_OPENING_HOURS = uniformOpeningHours('07:00', '23:00');
 
-/** The fixed values `getSettings()` returns — see the note on `PublicSettings`. */
+/** Deployment defaults and the fallback used when settings cannot be loaded. */
 export const SITE_SETTINGS: PublicSettings = {
   pitchName: 'מגרש גילעד',
   openingHours: DEFAULT_OPENING_HOURS,

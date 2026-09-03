@@ -21,6 +21,7 @@ import type {
   OpeningHours,
   RecurringRuleRow,
   RequestStatus,
+  SiteSettingsRow,
   TrusteeRow,
   UsageType,
 } from '@/lib/types';
@@ -37,6 +38,12 @@ type Insertable<T, Optional extends keyof T> = Omit<T, Optional> & Partial<Pick<
 export type Database = {
   public: {
     Tables: {
+      site_settings: {
+        Row: SiteSettingsRow;
+        Insert: Insertable<SiteSettingsRow, 'updated_by' | 'updated_at'>;
+        Update: Partial<Omit<SiteSettingsRow, 'id'>>;
+        Relationships: [];
+      };
       admin_allowlist: {
         Row: ManagerRow;
         Insert: Insertable<

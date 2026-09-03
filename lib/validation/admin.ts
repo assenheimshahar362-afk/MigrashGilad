@@ -4,6 +4,15 @@ import { israeliMobile } from '@/lib/validation/request';
 
 const timeString = z.string().regex(/^\d{2}:\d{2}$/, 'ERR_VALIDATION');
 const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'ERR_VALIDATION');
+const clockTime = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'ERR_VALIDATION');
+
+export const settingsInput = z
+  .object({
+    openingTime: clockTime,
+    closingTime: clockTime,
+  })
+  .strict()
+  .refine((value) => value.closingTime > value.openingTime, 'ERR_VALIDATION');
 
 export const decisionInput = z
   .object({

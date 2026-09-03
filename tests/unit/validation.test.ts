@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createRequestInput, israeliMobile, normalisePhone } from '@/lib/validation/request';
+import { settingsInput } from '@/lib/validation/admin';
 
 /**
  * §18.2: phone normalisation, Zod schemas.
@@ -65,5 +66,21 @@ describe('createRequestInput (§8)', () => {
 
   it('rejects a name shorter than two characters', () => {
     expect(createRequestInput.safeParse({ ...valid, requesterName: 'א' }).success).toBe(false);
+  });
+});
+
+describe('settingsInput', () => {
+  it('accepts global opening hours in 24-hour format', () => {
+    expect(settingsInput.safeParse({ openingTime: '07:30', closingTime: '22:45' }).success).toBe(
+      true,
+    );
+  });
+
+  it.each([
+    { openingTime: '23:00', closingTime: '07:00' },
+    { openingTime: '09:00', closingTime: '09:00' },
+    { openingTime: '7:00', closingTime: '23:00' },
+  ])('rejects an invalid global range: $openingTime-$closingTime', (input) => {
+    expect(settingsInput.safeParse(input).success).toBe(false);
   });
 });

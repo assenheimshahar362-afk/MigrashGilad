@@ -14,7 +14,12 @@ import {
 } from '@/lib/schedule';
 import { minutesSinceMidnight, toInstant } from '@/lib/time';
 import { AppError } from '@/lib/errors';
-import { DEFAULT_OPENING_HOURS, SITE_SETTINGS, type PublicEvent } from '@/lib/types';
+import {
+  DEFAULT_OPENING_HOURS,
+  SITE_SETTINGS,
+  uniformOpeningHours,
+  type PublicEvent,
+} from '@/lib/types';
 
 const settings = { ...SITE_SETTINGS };
 
@@ -34,6 +39,18 @@ function event(start: string, end: string, date = '2026-08-05'): PublicEvent {
 }
 
 describe('opening hours (§1.4 — all seven days are ordinary)', () => {
+  it('expands global opening and closing times to every day', () => {
+    expect(uniformOpeningHours('08:30', '22:15')).toEqual({
+      '0': ['08:30', '22:15'],
+      '1': ['08:30', '22:15'],
+      '2': ['08:30', '22:15'],
+      '3': ['08:30', '22:15'],
+      '4': ['08:30', '22:15'],
+      '5': ['08:30', '22:15'],
+      '6': ['08:30', '22:15'],
+    });
+  });
+
   it('resolves hours for every weekday including Friday and Saturday', () => {
     expect(hoursForDate(DEFAULT_OPENING_HOURS, '2026-08-07')).toEqual(['07:00', '23:00']); // Fri
     expect(hoursForDate(DEFAULT_OPENING_HOURS, '2026-08-08')).toEqual(['07:00', '23:00']); // Sat
